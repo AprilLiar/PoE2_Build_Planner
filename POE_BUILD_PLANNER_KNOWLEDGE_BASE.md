@@ -248,7 +248,7 @@ FileSystem.documentDirectory + 'builds/'
 | Tool | Package |
 |---|---|
 | Utility classes | **NativeWind v4** (Tailwind for React Native) |
-| Animations | **React Native Reanimated v3** (already installed via navigation) |
+| Animations | **React Native Reanimated v4** (already installed via navigation) |
 
 ```powershell
 npm install nativewind
@@ -1052,7 +1052,7 @@ eas build --platform ios --profile production   # iOS only via EAS on Windows
     "react-native-screens": "latest",
     "react-native-safe-area-context": "latest",
     "react-native-gesture-handler": "latest",
-    "react-native-reanimated": "^3.x",
+    "react-native-reanimated": "^4.x",
     "react-native-svg": "latest",
     "react-native-draggable-flatlist": "latest",
     "react-native-toast-message": "latest",
@@ -1077,9 +1077,7 @@ eas build --platform ios --profile production   # iOS only via EAS on Windows
     "@typescript-eslint/parser": "latest",
     "eslint": "latest",
     "eslint-plugin-react-native": "latest",
-    "prettier": "latest",
-    "husky": "latest",
-    "lint-staged": "latest"
+    "prettier": "latest"
   }
 }
 ```
@@ -1201,7 +1199,7 @@ const data = JSON.parse(json);
 `skills-*.jpg`, `frame-*.png`, `mastery-*.png`, `group-background-*.png`, `background-*.png`, `line-*.png`, `ascendancy-*.webp`, `bloodline-*.webp`, `jewel-*.png` — all from GGG's skilltree-export GitHub repo. Used in the future graphical tree sprint.
 
 **Assets still needed:**
-- `assets/data/tree.json` — currently a placeholder `{"nodes":{},"groups":{}}`. Replace with the real file from https://github.com/grindinggear/skilltree-export (look for the JSON data file, not the images). The real file has a `nodes` object containing all passive nodes.
+- `assets/data/tree.json` — **DONE** — real GGG file in place (~6.5 MB, 3338 nodes from grindinggear/skilltree-export)
 - `assets/fonts/*.ttf` — Cinzel-Regular, Inter-Regular, Inter-Medium (Google Fonts) — future sprint
 - `assets/textures/leather_bg.png` — seamless dark leather — future sprint
 
