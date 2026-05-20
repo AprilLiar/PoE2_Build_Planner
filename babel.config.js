@@ -1,12 +1,13 @@
 module.exports = function (api) {
   api.cache(true);
   return {
-    presets: ['babel-preset-expo'],
-    plugins: [
-      // NativeWind enables Tailwind CSS utility classes in React Native
+    presets: [
+      // jsxImportSource wires NativeWind's JSX transform so className prop works
+      ['babel-preset-expo', { jsxImportSource: 'nativewind' }],
+      // nativewind/babel is a preset (not a plugin) — must stay in presets[]
       'nativewind/babel',
-      // Reanimated plugin must always be listed last
-      'react-native-reanimated/plugin',
     ],
+    // react-native-worklets/plugin is added automatically by babel-preset-expo
+    // when react-native-worklets is installed, so no explicit plugins needed here
   };
 };
