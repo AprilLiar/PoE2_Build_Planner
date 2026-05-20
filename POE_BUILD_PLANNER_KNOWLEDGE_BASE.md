@@ -1077,3 +1077,123 @@ eas build --platform ios --profile production   # iOS only via EAS on Windows
 ---
 
 *Last updated: May 2026. Verify all package versions against their respective npm and Expo documentation before installing — the React Native ecosystem updates frequently.*
+
+---
+
+## 17. Implementation State (Living — updated every session)
+
+> This section is the agent's memory across context clears. Read it first every session.
+
+### Working Method
+- **Agile sprints** — developer prompts each improvement; nothing is built speculatively
+- **Every session** must end with this section updated
+- All UX/design decisions are asked before implementing
+
+### Environment (confirmed)
+| Field | Value |
+|---|---|
+| OS | Windows |
+| Node.js | v24 |
+| Expo SDK | 54 (bare workflow — `/android` folder exists) |
+| Primary run command | `npx expo start` → scan QR with Expo Go on iPhone |
+| Dev device | iPhone with Expo Go app |
+| Android | No physical device — Android testing via EAS builds only |
+| iOS production builds | EAS cloud (`eas build --platform ios`) |
+
+### Expo Go Compatibility Rules
+Expo Go works as long as these packages are **never imported** in any JS/TS file:
+- `react-native-mmkv` — native only, not in Expo Go
+- `react-native-google-mobile-ads` — native only, not in Expo Go
+- `expo-in-app-purchases` — native only, not in Expo Go
+
+All three are installed in `package.json` but unused in code until the project transitions to an EAS dev build. Safe packages (all included in Expo Go SDK 54): `expo-*`, `@react-navigation/*`, `react-native-reanimated`, `react-native-gesture-handler`, `react-native-screens`, `react-native-safe-area-context`, `@gorhom/bottom-sheet`, `react-native-draggable-flatlist`, `react-native-toast-message`, `zustand`, `@tanstack/react-query`.
+
+When MMKV/AdMob/IAP are needed: run `eas build --profile development`, install the dev client on device, and switch to that instead of Expo Go.
+
+### Setup Status — DONE
+- `expo-router` boilerplate wiped
+- All dependencies from Section 15 installed
+- `index.js` (bare workflow entry), `babel.config.js`, `tailwind.config.js`, `eas.json` created
+- `/android` native folder generated via `npx expo prebuild`
+
+### Known Technical Issues
+- **`expo-sharing`** has no `app.plugin.js` — do **not** add it to `plugins[]` in `app.json`
+- **`expo-in-app-purchases`** has no `app.plugin.js` either — do **not** add it to `plugins[]`
+- **iOS prebuild** fails on Windows — use `eas build --platform ios` instead
+- **`userInterfaceStyle`** in `app.json` requires `expo-system-ui` (not installed) — removed; dark theme enforced via screen `backgroundColor` styles instead
+- **`react-native-worklets`** must stay in `package.json` — `react-native-reanimated` v4 requires it as a peer dep for its babel plugin. Removing it breaks `expo start` with a "Cannot find module 'react-native-worklets/plugin'" error.
+
+### Actual Dependencies — Installed but Not Yet Used in Code
+These are installed and will be wired in future sprints. Do not add them again:
+- `zustand`, `@tanstack/react-query` — state management (Sprint 2+)
+- `react-native-mmkv` — persistent storage (Sprint 2+)
+- `react-native-google-mobile-ads` — AdMob (final stage only)
+- `expo-in-app-purchases` — IAP (final stage only)
+- `expo-tracking-transparency` — iOS ATT (final stage only)
+- `nativewind` — Tailwind classes (will replace StyleSheet when UI matures)
+- `@gorhom/bottom-sheet` — node/item detail sheets (Sprint 3+)
+- `react-native-toast-message` — notifications (Sprint 3+)
+- `react-native-draggable-flatlist` — gem group reordering (Gems sprint)
+- `react-native-svg` — graphical skill tree (future scope)
+- `expo-file-system`, `expo-document-picker`, `expo-sharing` — import/export (Sprint 3+)
+
+### Sprint History
+
+#### Sprint 0 — Foundation (complete)
+- Wiped expo-router boilerplate, created bare workflow entry
+- Installed all deps, ran `npx expo prebuild` (Android only on Windows)
+
+#### Sprint 1 — Proof of Concept (complete)
+**Shipped:** Drawer navigation (Skills / Items / Gems) + passive skill node list on Skills screen
+
+**Files created:**
+| File | Purpose |
+|---|---|
+| `src/App.tsx` | Root: GestureHandlerRootView + SafeAreaProvider + NavigationContainer + DrawerNavigator |
+| `src/navigation/DrawerNavigator.tsx` | Drawer with 3 screens; dark theme; gold active tint |
+| `src/screens/SkillTreeScreen.tsx` | Loads tree.json via expo-asset + expo-file-system; FlatList of nodes sorted Keystone→Notable→Normal→Mastery |
+| `src/screens/ItemsScreen.tsx` | Placeholder: "Items — coming soon" |
+| `src/screens/GemsScreen.tsx` | Placeholder: "Gems — coming soon" |
+
+**Deviations from original spec (intentional for Sprint 1):**
+- `StyleSheet` used instead of NativeWind — simpler for PoC, NativeWind introduced in a later sprint
+- No Zustand stores — `useState` used in SkillTreeScreen
+- No MMKV, no file service, no AdMob, no IAP, no fonts, no leather texture
+- No BuildListScreen, no onboarding — app opens directly to Skills screen
+
+**Tree loading pattern (established):**
+```ts
+// Correct async load — avoids freezing JS thread at module level
+import { Asset } from 'expo-asset';
+import * as FileSystem from 'expo-file-system';
+
+const [asset] = await Asset.loadAsync(require('../../assets/data/tree.json'));
+const json = await FileSystem.readAsStringAsync(asset.localUri!);
+const data = JSON.parse(json);
+// data.nodes is Record<string, TreeNode> — flatten with Object.values()
+```
+
+**Official PoE 2 image assets — present in `assets/` root:**
+`skills-*.jpg`, `frame-*.png`, `mastery-*.png`, `group-background-*.png`, `background-*.png`, `line-*.png`, `ascendancy-*.webp`, `bloodline-*.webp`, `jewel-*.png` — all from GGG's skilltree-export GitHub repo. Used in the future graphical tree sprint.
+
+**Assets still needed:**
+- `assets/data/tree.json` — currently a placeholder `{"nodes":{},"groups":{}}`. Replace with the real file from https://github.com/grindinggear/skilltree-export (look for the JSON data file, not the images). The real file has a `nodes` object containing all passive nodes.
+- `assets/fonts/*.ttf` — Cinzel-Regular, Inter-Regular, Inter-Medium (Google Fonts) — future sprint
+- `assets/textures/leather_bg.png` — seamless dark leather — future sprint
+
+### Sprint Backlog
+(Ordered by approximate priority — developer decides what to pick next)
+1. Search bar + filter on Skill Tree list
+2. Tap node → bottom sheet detail (all stat lines)
+3. Allocate/deallocate toggle + passive point counter
+4. Zustand store for build state + MMKV persistence
+5. BuildListScreen (create, list, open builds)
+6. Items screen (slot grid + paste parser)
+7. Gems screen (group management)
+8. Settings screen
+9. Fonts (Cinzel + Inter)
+10. Leather texture background
+11. Ad gate (AdMob interstitial on Import/Export)
+12. IAP ("Remove Ads")
+13. Onboarding slides
+14. NativeWind migration

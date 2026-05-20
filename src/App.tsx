@@ -1,12 +1,20 @@
-// Root application component — will be fully wired in Phase 5
-// For now, renders a placeholder so the bare workflow entry point works
 import React from 'react';
-import { Text, View } from 'react-native';
+import { NavigationContainer } from '@react-navigation/native';
+import { GestureHandlerRootView } from 'react-native-gesture-handler';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
+import DrawerNavigator from './navigation/DrawerNavigator';
 
+// GestureHandlerRootView is required by react-native-gesture-handler (used by the drawer)
+// SafeAreaProvider handles notch/status-bar padding on all devices
+// NavigationContainer holds the navigation state for the whole app
 export default function App() {
   return (
-    <View style={{ flex: 1, backgroundColor: '#0A0E1A', justifyContent: 'center', alignItems: 'center' }}>
-      <Text style={{ color: '#E2E8F0', fontSize: 18 }}>PoE Build Planner — setting up...</Text>
-    </View>
+    <GestureHandlerRootView style={{ flex: 1 }}>
+      <SafeAreaProvider>
+        <NavigationContainer>
+          <DrawerNavigator />
+        </NavigationContainer>
+      </SafeAreaProvider>
+    </GestureHandlerRootView>
   );
 }
