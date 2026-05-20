@@ -55,10 +55,34 @@ If the video's setup steps conflict with bare workflow requirements, the bare wo
 
 - **Source:** `https://github.com/grindinggear/skilltree-export`
 - Officially published by Grinding Gear Games (GGG)
-- **Bundled as a static asset** at `assets/data/tree.json` — Option A for first release
-- The file is large (~10 MB+); it must be loaded asynchronously on app start, parsed once, and stored in Zustand — never require/import it synchronously at the module level
-- **Key node fields:** `id` (number), `dn` (display name string), `ks` (keystone bool), `not` (notable bool), `m` (mastery bool), `sd` (stat descriptions string array), `icon` (asset path string)
-- **Key group fields:** `x` (float), `y` (float), `n` (node ID array)
+- **Bundled as a static asset** at `assets/data/tree.json` — present in repo (~6.5 MB, 3338 nodes)
+- The file must be loaded asynchronously — never `require()` at the module level; use `expo-asset` + `expo-file-system` (see Section 17 for the established pattern)
+
+**Actual node field names (verified from the real file — these differ from poewiki docs):**
+| Field | Type | Meaning |
+|---|---|---|
+| `skill` | `number` | Unique node ID |
+| `name` | `string` | Display name |
+| `isKeystone` | `boolean?` | Keystone node |
+| `isNotable` | `boolean?` | Notable node |
+| `isMastery` | `boolean?` | Mastery node |
+| `stats` | `string[]?` | Stat description lines |
+| `icon` | `string?` | Asset path (for graphical tree) |
+| `group` | `number?` | Group ID this node belongs to |
+| `out` | `string[]?` | Connected node IDs (outgoing) |
+| `in` | `string[]?` | Connected node IDs (incoming) |
+
+**Top-level tree.json structure:**
+```ts
+{
+  nodes: Record<string, TreeNode>;  // key is stringified node ID
+  groups: Record<string, Group>;
+  classes: ClassInfo[];
+  min_x, min_y, max_x, max_y: number;  // canvas bounds
+  sprites: Record<string, SpriteInfo>; // sprite sheet info for graphical tree
+}
+```
+
 - Full schema documented at: `https://www.poewiki.net/wiki/Passive_Skill_Tree_JSON`
 
 ### 3.2 Official PoE2 API
