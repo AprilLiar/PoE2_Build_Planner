@@ -1,0 +1,13 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(rm -f expo-env.d.ts)",
+      "Bash(rmdir scripts *)",
+      "Bash(npm install *)",
+      "Bash(npm view *)",
+      "Bash(npx expo *)",
+      "Bash(Get-ChildItem -Path \"D:\\\\Apps\\\\Poe 2 Build Planner\\\\poe2-build-planner\" -ErrorAction SilentlyContinue)",
+      "Bash(Select-Object Name)"
+    ]
+  }
+}
