@@ -10,46 +10,45 @@ import {
 import { Asset } from 'expo-asset';
 import * as FileSystem from 'expo-file-system';
 
-// The shape of a single node from GGG's tree.json
-// Only the fields we need for this screen are typed here
+// Shape of a single node from GGG's tree.json (actual field names from the export file)
+// Note: GGG uses camelCase boolean flags like isKeystone, isNotable, isMastery
 interface TreeNode {
-  id: number;
-  dn: string;          // display name
-  ks?: boolean;        // keystone
-  not?: boolean;       // notable
-  m?: boolean;         // mastery
-  sd?: string[];       // stat descriptions
+  skill: number;       // unique node ID
+  name: string;        // display name
+  isKeystone?: boolean;
+  isNotable?: boolean;
+  isMastery?: boolean;
+  stats?: string[];    // list of stat description lines
+  icon?: string;       // asset path (used in future graphical tree sprint)
 }
 
-// Maps each node type to a sort priority (lower = shown first)
+// Sort order: Keystone first (most powerful), then Notable, Normal, Mastery last
 function nodeTypePriority(node: TreeNode): number {
-  if (node.ks) return 0;   // Keystone
-  if (node.not) return 1;  // Notable
-  if (node.m) return 3;    // Mastery
-  return 2;                // Normal
+  if (node.isKeystone) return 0;
+  if (node.isNotable) return 1;
+  if (node.isMastery) return 3;
+  return 2; // normal node
 }
 
-// Returns a human-readable label for the node type badge
 function nodeTypeLabel(node: TreeNode): string {
-  if (node.ks) return 'Keystone';
-  if (node.not) return 'Notable';
-  if (node.m) return 'Mastery';
+  if (node.isKeystone) return 'Keystone';
+  if (node.isNotable) return 'Notable';
+  if (node.isMastery) return 'Mastery';
   return 'Normal';
 }
 
-// Returns the colour used for the type badge text
+// Each node type gets a distinct colour in the type badge
 function nodeTypeBadgeColor(node: TreeNode): string {
-  if (node.ks) return '#C9A84C';   // gold — keystones are the most powerful nodes
-  if (node.not) return '#3B82F6';  // blue — notables are mid-tier
-  if (node.m) return '#8888FF';    // purple — masteries
-  return '#94A3B8';                // muted grey — normal nodes
+  if (node.isKeystone) return '#C9A84C'; // gold
+  if (node.isNotable) return '#3B82F6';  // blue
+  if (node.isMastery) return '#8888FF';  // purple
+  return '#94A3B8';                      // muted grey
 }
 
-// Reads assets/data/tree.json via expo-asset + expo-file-system.
-// We avoid a top-level require() because tree.json is ~10 MB — bundling it
+// Reads assets/data/tree.json asynchronously via expo-asset + expo-file-system.
+// We avoid a top-level require() because tree.json is ~6 MB — bundling it
 // synchronously would freeze the JS thread on startup.
 async function loadTree(): Promise<TreeNode[]> {
-  // expo-asset resolves the local file URI of a bundled asset
   const [asset] = await Asset.loadAsync(
     // eslint-disable-next-line @typescript-eslint/no-require-imports
     require('../../assets/data/tree.json')
@@ -59,18 +58,20 @@ async function loadTree(): Promise<TreeNode[]> {
     throw new Error('tree.json asset could not be resolved to a local URI');
   }
 
-  // Read the file as a string, then parse — keeps the main thread free until here
   const jsonString = await FileSystem.readAsStringAsync(asset.localUri);
-  const data = JSON.parse(jsonString);
+  const data = JSON.parse(jsonString) as { nodes?: Record<string, TreeNode> };
 
-  // GGG's tree JSON stores nodes as a Record<string, node> under the "nodes" key
-  const nodesRecord: Record<string, TreeNode> = data.nodes ?? {};
+  // GGG stores nodes as a Record<stringId, node> under the "nodes" key
+  const nodesRecord = data.nodes ?? {};
   const nodes = Object.values(nodesRecord);
 
-  // Sort: Keystone (0) → Notable (1) → Normal (2) → Mastery (3)
-  nodes.sort((a, b) => nodeTypePriority(a) - nodeTypePriority(b));
+  // Filter out special internal nodes that have no display name
+  const namedNodes = nodes.filter((n) => n.name && n.name.trim().length > 0);
 
-  return nodes;
+  // Sort: Keystone → Notable → Normal → Mastery
+  namedNodes.sort((a, b) => nodeTypePriority(a) - nodeTypePriority(b));
+
+  return namedNodes;
 }
 
 export default function SkillTreeScreen() {
@@ -100,7 +101,7 @@ export default function SkillTreeScreen() {
         <Text style={styles.errorText}>Failed to load tree.json</Text>
         <Text style={styles.errorDetail}>{error}</Text>
         <Text style={styles.errorHint}>
-          Make sure assets/data/tree.json exists (download from github.com/grindinggear/skilltree-export)
+          Download tree.json from github.com/grindinggear/skilltree-export and place it in assets/data/
         </Text>
       </View>
     );
@@ -109,7 +110,7 @@ export default function SkillTreeScreen() {
   const renderNode = ({ item }: ListRenderItemInfo<TreeNode>) => (
     <View style={styles.row}>
       <Text style={styles.nodeName} numberOfLines={1}>
-        {item.dn || '(unnamed node)'}
+        {item.name}
       </Text>
       <Text style={[styles.badge, { color: nodeTypeBadgeColor(item) }]}>
         {nodeTypeLabel(item)}
@@ -119,14 +120,12 @@ export default function SkillTreeScreen() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.counter}>{nodes.length} nodes loaded</Text>
+      <Text style={styles.counter}>{nodes.length} nodes</Text>
       <FlatList
         data={nodes}
-        keyExtractor={(item) => String(item.id)}
+        keyExtractor={(item) => String(item.skill)}
         renderItem={renderNode}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
-        // Boost performance on large lists by letting React Native skip
-        // offscreen items when the list is scrolled quickly
         removeClippedSubviews
         initialNumToRender={30}
         maxToRenderPerBatch={20}
@@ -189,7 +188,7 @@ const styles = StyleSheet.create({
   },
   nodeName: {
     flex: 1,
-    color: '#C9A84C',   // gold — matches PoE2 aesthetic
+    color: '#C9A84C',
     fontSize: 15,
     marginRight: 8,
   },

@@ -7,7 +7,16 @@
       "Bash(npm view *)",
       "Bash(npx expo *)",
       "Bash(Get-ChildItem -Path \"D:\\\\Apps\\\\Poe 2 Build Planner\\\\poe2-build-planner\" -ErrorAction SilentlyContinue)",
-      "Bash(Select-Object Name)"
+      "Bash(Select-Object Name)",
+      "Bash(Get-ChildItem -Path \"D:\\\\Apps\\\\Poe 2 Build Planner\\\\poe2-build-planner\" -Directory)",
+      "PowerShell(Get-ChildItem -Path \"D:\\\\Apps\\\\Poe 2 Build Planner\\\\poe2-build-planner\\\\assets\" -Recurse -Force | Select-Object FullName, @{Name='SizeKB';Expression={if\\($_.PSIsContainer\\){'[DIR]'}else{'{0:N2}' -f\\($_.Length/1KB\\)}}})",
+      "PowerShell(Get-ChildItem *)",
+      "PowerShell(Get-ChildItem \"D:\\\\Apps\\\\Poe 2 Build Planner\\\\poe2-build-planner\\\\assets\\\\textures\" | Select-Object Name, @{Name='Size \\(KB\\)';Expression={'{0:N2}' -f\\($_.Length/1KB\\)}} | Sort-Object Name)",
+      "PowerShell(Get-ChildItem \"D:\\\\Apps\\\\Poe 2 Build Planner\\\\poe2-build-planner\\\\assets\\\\fonts\" | ForEach-Object { $_.Name + \" - \" + $_.Length + \" bytes\" })",
+      "Bash(node -e \"require\\('D:/Apps/Poe 2 Build Planner/poe2-build-planner/node_modules/react-native-reanimated/plugin'\\)\")",
+      "Bash(node *)",
+      "Bash(git checkout *)",
+      "Bash(git add *)"
     ]
   }
 }
