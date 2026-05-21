@@ -1,6 +1,4 @@
 import { create } from 'zustand';
-import { Asset } from 'expo-asset';
-import * as FileSystem from 'expo-file-system';
 import { COLORS } from '../constants/colors';
 
 export interface TreeNode {
@@ -56,15 +54,8 @@ export const useTreeStore = create<TreeStoreState>((set, get) => ({
 
     set({ isLoading: true, error: null });
     try {
-      const [asset] = await Asset.loadAsync(
-        // eslint-disable-next-line @typescript-eslint/no-require-imports
-        require('../../assets/data/tree.json')
-      );
-      if (!asset.localUri) {
-        throw new Error('tree.json asset could not be resolved to a local URI');
-      }
-      const jsonString = await FileSystem.readAsStringAsync(asset.localUri);
-      const data = JSON.parse(jsonString) as {
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const data = require('../../assets/data/tree.json') as {
         nodes?: Record<string, TreeNode>;
         classes?: TreeClass[];
       };
