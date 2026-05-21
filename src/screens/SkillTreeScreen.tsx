@@ -1,92 +1,70 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
   FlatList,
+  TextInput,
+  TouchableOpacity,
+  ScrollView,
   ActivityIndicator,
   StyleSheet,
   ListRenderItemInfo,
 } from 'react-native';
-import { Asset } from 'expo-asset';
-import * as FileSystem from 'expo-file-system';
+import { BottomSheetModal } from '@gorhom/bottom-sheet';
+import {
+  useTreeStore,
+  TreeNode,
+  nodeTypePriority,
+  nodeTypeLabel,
+  nodeTypeBadgeColor,
+} from '../store/useTreeStore';
+import NodeDetailSheet from '../components/NodeDetailSheet';
 
-// Shape of a single node from GGG's tree.json (actual field names from the export file)
-// Note: GGG uses camelCase boolean flags like isKeystone, isNotable, isMastery
-interface TreeNode {
-  skill: number;       // unique node ID
-  name: string;        // display name
-  isKeystone?: boolean;
-  isNotable?: boolean;
-  isMastery?: boolean;
-  stats?: string[];    // list of stat description lines
-  icon?: string;       // asset path (used in future graphical tree sprint)
-}
-
-// Sort order: Keystone first (most powerful), then Notable, Normal, Mastery last
-function nodeTypePriority(node: TreeNode): number {
-  if (node.isKeystone) return 0;
-  if (node.isNotable) return 1;
-  if (node.isMastery) return 3;
-  return 2; // normal node
-}
-
-function nodeTypeLabel(node: TreeNode): string {
-  if (node.isKeystone) return 'Keystone';
-  if (node.isNotable) return 'Notable';
-  if (node.isMastery) return 'Mastery';
-  return 'Normal';
-}
-
-// Each node type gets a distinct colour in the type badge
-function nodeTypeBadgeColor(node: TreeNode): string {
-  if (node.isKeystone) return '#C9A84C'; // gold
-  if (node.isNotable) return '#3B82F6';  // blue
-  if (node.isMastery) return '#8888FF';  // purple
-  return '#94A3B8';                      // muted grey
-}
-
-// Reads assets/data/tree.json asynchronously via expo-asset + expo-file-system.
-// We avoid a top-level require() because tree.json is ~6 MB — bundling it
-// synchronously would freeze the JS thread on startup.
-async function loadTree(): Promise<TreeNode[]> {
-  const [asset] = await Asset.loadAsync(
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    require('../../assets/data/tree.json')
-  );
-
-  if (!asset.localUri) {
-    throw new Error('tree.json asset could not be resolved to a local URI');
-  }
-
-  const jsonString = await FileSystem.readAsStringAsync(asset.localUri);
-  const data = JSON.parse(jsonString) as { nodes?: Record<string, TreeNode> };
-
-  // GGG stores nodes as a Record<stringId, node> under the "nodes" key
-  const nodesRecord = data.nodes ?? {};
-  const nodes = Object.values(nodesRecord);
-
-  // Filter out special internal nodes that have no display name
-  const namedNodes = nodes.filter((n) => n.name && n.name.trim().length > 0);
-
-  // Sort: Keystone → Notable → Normal → Mastery
-  namedNodes.sort((a, b) => nodeTypePriority(a) - nodeTypePriority(b));
-
-  return namedNodes;
-}
+const MAX_POINTS = 123;
 
 export default function SkillTreeScreen() {
-  const [nodes, setNodes] = useState<TreeNode[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const { nodes, classes, allocatedNodes, isLoaded, error, loadTree, toggleNode } =
+    useTreeStore();
+
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedClass, setSelectedClass] = useState<string | null>(null);
+  const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
+  const sheetRef = useRef<BottomSheetModal>(null);
 
   useEffect(() => {
-    loadTree()
-      .then(setNodes)
-      .catch((err: Error) => setError(err.message))
-      .finally(() => setLoading(false));
+    loadTree();
+  }, [loadTree]);
+
+  const classAscendancyNames = useMemo(() => {
+    if (!selectedClass) return new Set<string>();
+    const cls = classes.find((c) => c.name === selectedClass);
+    return new Set(cls?.ascendancies.map((a) => a.name) ?? []);
+  }, [classes, selectedClass]);
+
+  const filteredNodes = useMemo(() => {
+    let result = Object.values(nodes);
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase();
+      result = result.filter((n) => n.name.toLowerCase().includes(q));
+    }
+    result.sort((a, b) => nodeTypePriority(a) - nodeTypePriority(b));
+    return result;
+  }, [nodes, searchQuery]);
+
+  const openSheet = useCallback((node: TreeNode) => {
+    setSelectedNode(node);
+    sheetRef.current?.present();
   }, []);
 
-  if (loading) {
+  const handleToggleFromSheet = useCallback(() => {
+    if (selectedNode) toggleNode(selectedNode.skill);
+  }, [selectedNode, toggleNode]);
+
+  const pointsUsed = allocatedNodes.size;
+  const pointsColor =
+    pointsUsed > MAX_POINTS ? '#DC2626' : pointsUsed >= 100 ? '#C9A84C' : '#16A34A';
+
+  if (!isLoaded && !error) {
     return (
       <View style={styles.centered}>
         <ActivityIndicator size="large" color="#C9A84C" />
@@ -100,36 +78,137 @@ export default function SkillTreeScreen() {
       <View style={styles.centered}>
         <Text style={styles.errorText}>Failed to load tree.json</Text>
         <Text style={styles.errorDetail}>{error}</Text>
-        <Text style={styles.errorHint}>
-          Download tree.json from github.com/grindinggear/skilltree-export and place it in assets/data/
-        </Text>
       </View>
     );
   }
 
-  const renderNode = ({ item }: ListRenderItemInfo<TreeNode>) => (
-    <View style={styles.row}>
-      <Text style={styles.nodeName} numberOfLines={1}>
-        {item.name}
-      </Text>
-      <Text style={[styles.badge, { color: nodeTypeBadgeColor(item) }]}>
-        {nodeTypeLabel(item)}
-      </Text>
-    </View>
-  );
+  const renderNode = ({ item }: ListRenderItemInfo<TreeNode>) => {
+    const allocated = allocatedNodes.has(item.skill);
+    const classHighlight =
+      !allocated && !!item.ascendancyName && classAscendancyNames.has(item.ascendancyName);
+
+    return (
+      <TouchableOpacity
+        activeOpacity={0.7}
+        onPress={() => toggleNode(item.skill)}
+        onLongPress={() => openSheet(item)}
+        style={[
+          styles.row,
+          allocated && styles.rowAllocated,
+          classHighlight && styles.rowClassHighlight,
+        ]}
+      >
+        <View style={styles.rowContent}>
+          <View style={styles.rowTop}>
+            <Text
+              style={[styles.nodeName, allocated && styles.nodeNameAllocated]}
+              numberOfLines={1}
+            >
+              {item.name}
+            </Text>
+            <View style={styles.rowRight}>
+              {allocated && <Text style={styles.checkmark}>✓</Text>}
+              <Text style={[styles.badge, { color: nodeTypeBadgeColor(item) }]}>
+                {nodeTypeLabel(item)}
+              </Text>
+            </View>
+          </View>
+          {item.stats && item.stats.length > 0 && (
+            <Text style={styles.statPreview} numberOfLines={2}>
+              {item.stats.slice(0, 2).join('  ·  ')}
+            </Text>
+          )}
+        </View>
+      </TouchableOpacity>
+    );
+  };
 
   return (
     <View style={styles.container}>
-      <Text style={styles.counter}>{nodes.length} nodes</Text>
+      {/* Class selector */}
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        style={styles.classScroll}
+        contentContainerStyle={styles.classScrollContent}
+      >
+        <TouchableOpacity
+          style={[styles.classChip, !selectedClass && styles.classChipActive]}
+          onPress={() => setSelectedClass(null)}
+        >
+          <Text style={[styles.classChipText, !selectedClass && styles.classChipTextActive]}>
+            All
+          </Text>
+        </TouchableOpacity>
+        {classes.map((cls) => (
+          <TouchableOpacity
+            key={cls.name}
+            style={[styles.classChip, selectedClass === cls.name && styles.classChipActive]}
+            onPress={() => setSelectedClass(cls.name)}
+          >
+            <Text
+              style={[
+                styles.classChipText,
+                selectedClass === cls.name && styles.classChipTextActive,
+              ]}
+            >
+              {cls.name}
+            </Text>
+          </TouchableOpacity>
+        ))}
+      </ScrollView>
+
+      {/* Search bar */}
+      <View style={styles.searchRow}>
+        <TextInput
+          style={styles.searchInput}
+          placeholder="Search nodes…"
+          placeholderTextColor="#94A3B8"
+          value={searchQuery}
+          onChangeText={setSearchQuery}
+          clearButtonMode="while-editing"
+          autoCorrect={false}
+          autoCapitalize="none"
+        />
+        {searchQuery.length > 0 && (
+          <TouchableOpacity onPress={() => setSearchQuery('')} style={styles.clearBtn}>
+            <Text style={styles.clearBtnText}>✕</Text>
+          </TouchableOpacity>
+        )}
+      </View>
+
+      {/* Point counter */}
+      <View style={styles.counterBar}>
+        <Text style={styles.counterLabel}>Passive Points Used</Text>
+        <Text style={[styles.counterValue, { color: pointsColor }]}>
+          {pointsUsed} / {MAX_POINTS}
+        </Text>
+      </View>
+
+      {/* Node list */}
       <FlatList
-        data={nodes}
+        data={filteredNodes}
         keyExtractor={(item) => String(item.skill)}
         renderItem={renderNode}
         ItemSeparatorComponent={() => <View style={styles.separator} />}
         removeClippedSubviews
-        initialNumToRender={30}
+        initialNumToRender={25}
         maxToRenderPerBatch={20}
         windowSize={10}
+        keyboardShouldPersistTaps="handled"
+        ListEmptyComponent={
+          <View style={styles.emptyState}>
+            <Text style={styles.emptyText}>No nodes match "{searchQuery}"</Text>
+          </View>
+        }
+      />
+
+      {/* Node detail bottom sheet */}
+      <NodeDetailSheet
+        sheetRef={sheetRef}
+        node={selectedNode}
+        isAllocated={selectedNode ? allocatedNodes.has(selectedNode.skill) : false}
+        onToggle={handleToggleFromSheet}
       />
     </View>
   );
@@ -163,42 +242,157 @@ const styles = StyleSheet.create({
     color: '#94A3B8',
     fontSize: 13,
     textAlign: 'center',
-    marginBottom: 12,
   },
-  errorHint: {
-    color: '#3B82F6',
-    fontSize: 12,
-    textAlign: 'center',
-  },
-  counter: {
-    color: '#94A3B8',
-    fontSize: 12,
-    paddingHorizontal: 16,
-    paddingVertical: 8,
+
+  // Class selector
+  classScroll: {
     backgroundColor: '#111827',
     borderBottomWidth: 1,
     borderBottomColor: '#1E3A5F',
+    flexGrow: 0,
   },
-  row: {
+  classScrollContent: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    gap: 8,
+  },
+  classChip: {
+    paddingHorizontal: 14,
+    paddingVertical: 6,
+    borderRadius: 16,
+    backgroundColor: '#1E293B',
+    borderWidth: 1,
+    borderColor: '#1E3A5F',
+  },
+  classChipActive: {
+    backgroundColor: '#C9A84C',
+    borderColor: '#C9A84C',
+  },
+  classChipText: {
+    color: '#94A3B8',
+    fontSize: 13,
+    fontWeight: '500',
+  },
+  classChipTextActive: {
+    color: '#0A0E1A',
+    fontWeight: '700',
+  },
+
+  // Search
+  searchRow: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    backgroundColor: '#111827',
+    borderBottomWidth: 1,
+    borderBottomColor: '#1E3A5F',
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+  },
+  searchInput: {
+    flex: 1,
+    backgroundColor: '#1E293B',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    color: '#E2E8F0',
+    fontSize: 15,
+  },
+  clearBtn: {
+    marginLeft: 8,
+    padding: 6,
+  },
+  clearBtnText: {
+    color: '#94A3B8',
+    fontSize: 14,
+  },
+
+  // Counter
+  counterBar: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
     paddingHorizontal: 16,
+    paddingVertical: 8,
+    backgroundColor: '#0D1117',
+    borderBottomWidth: 1,
+    borderBottomColor: '#1E3A5F',
+  },
+  counterLabel: {
+    color: '#94A3B8',
+    fontSize: 12,
+    textTransform: 'uppercase',
+    letterSpacing: 0.5,
+  },
+  counterValue: {
+    fontSize: 14,
+    fontWeight: '700',
+  },
+
+  // Node rows
+  row: {
+    backgroundColor: '#0A0E1A',
+    paddingHorizontal: 16,
     paddingVertical: 12,
+    borderLeftWidth: 3,
+    borderLeftColor: 'transparent',
+  },
+  rowAllocated: {
+    borderLeftColor: '#C9A84C',
+    backgroundColor: '#0D1408',
+  },
+  rowClassHighlight: {
+    borderLeftColor: '#0D9488',
+  },
+  rowContent: {
+    gap: 4,
+  },
+  rowTop: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: 8,
+  },
+  rowRight: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    gap: 6,
   },
   nodeName: {
     flex: 1,
-    color: '#C9A84C',
+    color: '#E2E8F0',
     fontSize: 15,
-    marginRight: 8,
+  },
+  nodeNameAllocated: {
+    color: '#C9A84C',
+    fontWeight: '600',
   },
   badge: {
     fontSize: 11,
     fontWeight: '600',
   },
+  checkmark: {
+    color: '#C9A84C',
+    fontSize: 13,
+    fontWeight: '700',
+  },
+  statPreview: {
+    color: '#94A3B8',
+    fontSize: 12,
+    lineHeight: 17,
+  },
+
   separator: {
     height: 1,
-    backgroundColor: '#1E3A5F',
-    marginHorizontal: 16,
+    backgroundColor: '#111827',
+    marginLeft: 16,
+  },
+
+  emptyState: {
+    paddingVertical: 48,
+    alignItems: 'center',
+  },
+  emptyText: {
+    color: '#94A3B8',
+    fontSize: 14,
   },
 });
