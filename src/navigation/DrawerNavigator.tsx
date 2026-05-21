@@ -1,10 +1,11 @@
 import React from 'react';
 import { createDrawerNavigator } from '@react-navigation/drawer';
+import type { DrawerNavigationOptions } from '@react-navigation/drawer';
 import SkillTreeScreen from '../screens/SkillTreeScreen';
 import ItemsScreen from '../screens/ItemsScreen';
 import GemsScreen from '../screens/GemsScreen';
+import { COLORS } from '../constants/colors';
 
-// Drawer screen names — kept as string constants to avoid typos
 export type DrawerParamList = {
   'Skill Tree': undefined;
   Items: undefined;
@@ -13,39 +14,30 @@ export type DrawerParamList = {
 
 const Drawer = createDrawerNavigator<DrawerParamList>();
 
+const SCREEN_OPTIONS: DrawerNavigationOptions = {
+  drawerStyle: {
+    backgroundColor: COLORS.bgDeep,
+    width: 240,
+  },
+  drawerActiveTintColor: COLORS.gold,
+  drawerInactiveTintColor: COLORS.textMuted,
+  drawerActiveBackgroundColor: COLORS.border,
+  headerStyle: {
+    backgroundColor: COLORS.bgPanel,
+  },
+  headerTintColor: COLORS.text,
+  headerTitleStyle: {
+    fontSize: 18,
+    fontWeight: '600',
+  },
+  sceneStyle: {
+    backgroundColor: COLORS.bgDeep,
+  },
+};
+
 export default function DrawerNavigator() {
   return (
-    <Drawer.Navigator
-      initialRouteName="Skill Tree"
-      screenOptions={{
-        // --- Drawer panel ---
-        drawerStyle: {
-          backgroundColor: '#0A0E1A',
-          width: 240,
-        },
-        // Active screen label colour in the drawer
-        drawerActiveTintColor: '#C9A84C',
-        // Inactive screen label colour
-        drawerInactiveTintColor: '#94A3B8',
-        // Background highlight behind the active item
-        drawerActiveBackgroundColor: '#1E3A5F',
-
-        // --- Screen header ---
-        headerStyle: {
-          backgroundColor: '#111827',
-        },
-        headerTintColor: '#E2E8F0',
-        headerTitleStyle: {
-          fontSize: 18,
-          fontWeight: '600',
-        },
-
-        // Screen background
-        sceneStyle: {
-          backgroundColor: '#0A0E1A',
-        },
-      }}
-    >
+    <Drawer.Navigator initialRouteName="Skill Tree" screenOptions={SCREEN_OPTIONS}>
       <Drawer.Screen name="Skill Tree" component={SkillTreeScreen} />
       <Drawer.Screen name="Items" component={ItemsScreen} />
       <Drawer.Screen name="Gems" component={GemsScreen} />
