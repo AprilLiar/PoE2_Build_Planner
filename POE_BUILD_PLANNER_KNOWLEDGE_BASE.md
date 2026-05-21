@@ -194,10 +194,39 @@ npm install zustand @tanstack/react-query
 - `setAdUnlockExpiry(ts: number): void`
 - `setAdsRemoved(value: boolean): void`
 
-`useTreeStore` — owns parsed tree data:
-- `nodes: Record<number, TreeNode>` — flat map of all nodes by ID
+`useTreeStore` — owns parsed tree data and allocation state (`src/store/useTreeStore.ts` — **IMPLEMENTED**):
+- `nodes: Record<number, TreeNode>` — flat map of all 4,701 nodes by ID
+- `classes: TreeClass[]` — 8 classes with ascendancy names, loaded from `tree.json`
+- `allocatedNodes: Set<number>` — set of allocated node skill IDs (in-memory only; MMKV persistence deferred to `useBuildStore` integration)
 - `isLoaded: boolean`
-- `loadTree(): Promise<void>` — reads and parses `assets/data/tree.json`
+- `error: string | null`
+- `loadTree(): Promise<void>` — reads and parses `assets/data/tree.json`; guarded (no-op if already loaded)
+- `toggleNode(id: number): void` — inserts/deletes from `allocatedNodes`
+- `clearAll(): void` — empties `allocatedNodes`
+
+**Exported helper functions** (pure, no store subscription needed):
+- `nodeTypePriority(node): number` — Keystone=0, Notable=1, Normal=2, Mastery=3
+- `nodeTypeLabel(node): string` — human-readable type name
+- `nodeTypeBadgeColor(node): string` — hex color for type badge
+
+**`TreeNode` interface (actual fields from `tree.json`):**
+```typescript
+interface TreeNode {
+  skill: number;         // unique node ID
+  name: string;
+  stats?: string[];      // stat description lines (field is `stats`, NOT `sd`)
+  icon?: string;
+  ascendancyName?: string;
+  isKeystone?: boolean;
+  isNotable?: boolean;
+  isMastery?: boolean;   // present in interface but no nodes have this set in current data
+  isJewelSocket?: boolean;
+  connections?: { id: number; orbit: number }[];
+  group?: number;
+  orbit?: number;
+  orbitIndex?: number;
+}
+```
 
 `useGemStore` — owns parsed gem list:
 - `gems: Gem[]`
@@ -328,11 +357,14 @@ npm install @gorhom/bottom-sheet
 
 Used for: node detail view (Skill Tree screen) and item detail view (Items screen). `@gorhom/bottom-sheet` requires `react-native-reanimated` and `react-native-gesture-handler` — both already installed.
 
-**Usage pattern:**
-- Import `BottomSheet` and `BottomSheetView` from `@gorhom/bottom-sheet`
-- Wrap the app root with `GestureHandlerRootView` (already required by react-native-gesture-handler)
-- Each screen that uses a bottom sheet manages its own `BottomSheetRef` via `useRef`
-- Snap points: `['50%', '90%']` as a sensible default — agent must ask developer before finalising snap points per sheet
+**Usage pattern (v5 — IMPLEMENTED):**
+- Use `BottomSheetModal` (not `BottomSheet`) for overlay sheets — it requires `BottomSheetModalProvider` in `App.tsx`
+- `App.tsx` wraps `DrawerNavigator` with `<BottomSheetModalProvider>` inside `<NavigationContainer>`
+- Each screen that needs a sheet: `const sheetRef = useRef<BottomSheetModal>(null)` — call `sheetRef.current?.present()` / `.dismiss()`
+- Pass `sheetRef` as a prop typed `React.RefObject<BottomSheetModal | null>` (React 19 changed `useRef<T>(null)` to return `RefObject<T | null>`)
+- Use `BottomSheetBackdrop` for the dim overlay, `backdropComponent` prop
+- Snap points: `['50%', '85%']` used for node detail sheet
+- `NodeDetailSheet` component lives at `src/components/NodeDetailSheet.tsx` — **IMPLEMENTED** for Skill Tree screen
 
 ### 4.13 Class Picker
 
@@ -344,23 +376,16 @@ No external library. The PoE2 class selector in the "Create Build" modal is impl
 - Extensible: search filtering, ascendancy sub-selection, or class icons can be added later without changing the underlying approach
 - Consistent appearance on both Android and iOS — no native OS rendering differences
 
-**PoE2 classes (complete list as of May 2026):**
+**PoE2 classes (verified from `tree.json` patch 0.4, May 2026):**
 ```typescript
-// src/constants/classes.ts
-export const POE2_CLASSES = [
-  'Warrior',
-  'Ranger',
-  'Sorceress',
-  'Monk',
-  'Mercenary',
-  'Witch',
-  'Druid',    // confirm availability in current patch before hardcoding
-] as const;
-
-export type Poe2Class = typeof POE2_CLASSES[number];
+// Classes are loaded directly from tree.json `classes` array — do NOT hardcode separately
+// tree.json classes: Ranger, Huntress, Warrior, Mercenary, Druid, Witch, Sorceress, Monk (8 total)
+// Each class has 2–3 ascendancies; ascendancy nodes have `ascendancyName` field set
 ```
 
-**Agent instruction:** Verify the class list against current PoE2 patch notes before hardcoding. Ask the developer if any class appears missing or incorrect.
+Ascendancy names verified from live data: Deadeye, Pathfinder (Ranger), Amazon, Ritualist (Huntress), Titan, Warbringer, Smith of Kitava (Warrior), Tactician, Witchhunter, Gemling Legionnaire (Mercenary), Shaman, Druid ascendancies (TBC), Blood Mage, Infernalist (Witch), Stormweaver, Chronomancer, Oracle (Sorceress/TBC), Invoker, Monk ascendancies (TBC), Acolyte of Chayula, Lich (TBC) — 20 ascendancy names total.
+
+**Note:** The Skill Tree screen already loads and uses the `classes` array from the store for its class selector — no separate `src/constants/classes.ts` needed.
 
 ### 4.14 expo-constants
 
@@ -546,19 +571,19 @@ const handleImport = () => {
 
 ### 7.1 Skill Tree Screen
 
-**Prototype behaviour (first release):**
-- Searchable, scrollable `FlatList` of all nodes from `tree.json`
-- Nodes pre-sorted: Keystone → Notable → Normal → Mastery
-- All nodes are shown regardless of class; nodes relevant to the build's chosen class are **visually highlighted** (e.g. a distinct border or background tint) — the exact highlight style is a design decision to be made by the developer during implementation; ask before implementing
-- Each list row displays: node name (`dn`), type badge, and the first 1–2 stat lines (`sd`) inline; remaining stats shown in a detail sheet (see below)
-- Any node can be freely toggled on/off — no connectivity rules enforced in list view
-- Allocated nodes visually highlighted: gold border, `poe-gold` text
-- Tapping a node opens a **bottom sheet detail view** showing: node name, type, all stat lines, and a toggle button to allocate/deallocate
-- Search bar filters by node name (case-insensitive substring match)
-- Passive point counter displayed in the screen header: `X / 123 points used`
-  - Maximum points: 123 (PoE2 level 100 passive points — verify against current game data before hardcoding)
-  - Counter updates live as nodes are toggled
-- Changes auto-save to `useBuildStore` and trigger the dirty flag
+**Prototype behaviour — IMPLEMENTED (Sprint 2):**
+- Horizontal class selector row: "All" + 8 class chips; selecting a class highlights its ascendancy nodes with a teal (`#0D9488`) left border
+- Search bar filters nodes by name (case-insensitive substring); clear button resets
+- Passive point counter bar: `X / 123 points used`; green < 100, gold 100–123, red > 123
+- Sorted `FlatList`: Keystone → Notable → Normal → Mastery/Jewel
+- Each row: node name + type badge + first 1–2 `stats` lines as muted subtitle
+- **Tap** a row → immediately toggles allocation (gold left border + gold text when allocated)
+- **Long-press** a row → opens `NodeDetailSheet` bottom sheet
+- `NodeDetailSheet`: node name, type badge, ascendancy label, scrollable stats list, Allocate/Deallocate button
+- All state in `useTreeStore` (Zustand v5); allocated nodes are in-memory `Set<number>` (MMKV persistence deferred)
+- `useBuildStore` integration and dirty-flag auto-save deferred to a future sprint
+
+**Stat field name:** `stats` (array of strings) — the field is `stats` not `sd` or `dn`. Node name field is `name`.
 
 **Long-term goal (future milestone — not first release):**
 - Full interactive graphical tree rendered with `react-native-svg`
@@ -1147,17 +1172,22 @@ When MMKV/AdMob/IAP are needed: run `eas build --profile development`, install t
 
 ### Actual Dependencies — Installed but Not Yet Used in Code
 These are installed and will be wired in future sprints. Do not add them again:
-- `zustand`, `@tanstack/react-query` — state management (Sprint 2+)
-- `react-native-mmkv` — persistent storage (Sprint 2+)
+- `@tanstack/react-query` — data fetching (future use)
+- `react-native-mmkv` — persistent storage (Sprint 3+; MMKV not yet imported anywhere — safe for Expo Go)
 - `react-native-google-mobile-ads` — AdMob (final stage only)
 - `expo-in-app-purchases` — IAP (final stage only)
 - `expo-tracking-transparency` — iOS ATT (final stage only)
-- `nativewind` — Tailwind classes (will replace StyleSheet when UI matures)
-- `@gorhom/bottom-sheet` — node/item detail sheets (Sprint 3+)
+- `nativewind` — Tailwind classes (wired via Babel but no `className` props used yet; all styles use `StyleSheet.create`)
 - `react-native-toast-message` — notifications (Sprint 3+)
 - `react-native-draggable-flatlist` — gem group reordering (Gems sprint)
 - `react-native-svg` — graphical skill tree (future scope)
-- `expo-file-system`, `expo-document-picker`, `expo-sharing` — import/export (Sprint 3+)
+- `expo-document-picker`, `expo-sharing` — import/export (Sprint 3+)
+
+**Now in use (wired in Sprint 2):**
+- `zustand` — `useTreeStore` at `src/store/useTreeStore.ts`
+- `@gorhom/bottom-sheet` — `NodeDetailSheet` at `src/components/NodeDetailSheet.tsx`; `BottomSheetModalProvider` in `App.tsx`
+- `react-native-reanimated`, `react-native-gesture-handler` — used by `@gorhom/bottom-sheet` (v5 requirement)
+- `expo-file-system` — used in `useTreeStore.loadTree()` to read `tree.json`
 
 ### Sprint History
 
@@ -1183,6 +1213,29 @@ These are installed and will be wired in future sprints. Do not add them again:
 - No MMKV, no file service, no AdMob, no IAP, no fonts, no leather texture
 - No BuildListScreen, no onboarding — app opens directly to Skills screen
 
+#### Sprint 2 — Skill Tree Prototype (complete)
+**Shipped:** Full interactive Skill Tree screen with search, allocation, class selector, and node detail sheet
+
+**Files created/modified:**
+| File | Change | Purpose |
+|---|---|---|
+| `src/store/useTreeStore.ts` | Created | Zustand v5 store: tree data, classes, `allocatedNodes` Set, `loadTree`, `toggleNode`, `clearAll`, helper exports |
+| `src/components/NodeDetailSheet.tsx` | Created | `@gorhom/bottom-sheet` v5 modal: node name, type, ascendancy, stats, allocate button |
+| `src/screens/SkillTreeScreen.tsx` | Rewritten | Class selector, search bar, point counter, tap-to-allocate FlatList, long-press sheet |
+| `src/App.tsx` | Modified | Added `BottomSheetModalProvider` wrapping `DrawerNavigator` |
+
+**Tree data facts (verified):**
+- 4,701 total nodes (previous KB entry of 3,338 was from an older export — now corrected)
+- 392 ascendancy nodes across 20 ascendancy names
+- 8 classes: Ranger, Huntress, Warrior, Mercenary, Druid, Witch, Sorceress, Monk
+- No nodes have `isClassStartNode` set in current patch 0.4 data
+- Stat field is `stats` (not `sd`); name field is `name` (not `dn`)
+
+**Deviations from spec:**
+- Tap = allocate toggle (not open sheet); long-press = open sheet — simpler UX than spec's "tap opens sheet"
+- `allocatedNodes` lives in `useTreeStore` not `useBuildStore` — `useBuildStore` not yet built
+- MMKV persistence for allocated nodes deferred to `useBuildStore` integration sprint
+
 **Tree loading pattern (established):**
 ```ts
 // Correct async load — avoids freezing JS thread at module level
@@ -1199,16 +1252,16 @@ const data = JSON.parse(json);
 `skills-*.jpg`, `frame-*.png`, `mastery-*.png`, `group-background-*.png`, `background-*.png`, `line-*.png`, `ascendancy-*.webp`, `bloodline-*.webp`, `jewel-*.png` — all from GGG's skilltree-export GitHub repo. Used in the future graphical tree sprint.
 
 **Assets still needed:**
-- `assets/data/tree.json` — **DONE** — real GGG file in place (~6.5 MB, 3338 nodes from grindinggear/skilltree-export)
+- `assets/data/tree.json` — **DONE** — real GGG file in place (patch 0.4, ~6.5 MB, 4,701 nodes, from grindinggear/skilltree-export)
 - `assets/fonts/*.ttf` — Cinzel-Regular, Inter-Regular, Inter-Medium (Google Fonts) — future sprint
 - `assets/textures/leather_bg.png` — seamless dark leather — future sprint
 
 ### Sprint Backlog
 (Ordered by approximate priority — developer decides what to pick next)
-1. Search bar + filter on Skill Tree list
-2. Tap node → bottom sheet detail (all stat lines)
-3. Allocate/deallocate toggle + passive point counter
-4. Zustand store for build state + MMKV persistence
+1. ~~Search bar + filter on Skill Tree list~~ ✅ Sprint 2
+2. ~~Tap node → bottom sheet detail (all stat lines)~~ ✅ Sprint 2
+3. ~~Allocate/deallocate toggle + passive point counter~~ ✅ Sprint 2
+4. Zustand `useBuildStore` + MMKV persistence (migrate `allocatedNodes` from `useTreeStore`)
 5. BuildListScreen (create, list, open builds)
 6. Items screen (slot grid + paste parser)
 7. Gems screen (group management)
