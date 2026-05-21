@@ -1282,19 +1282,69 @@ No new features — fixes and structural improvements applied after Sprint 2.
 />
 ```
 
+#### Sprint 3 — Class & Ascendancy Picker (complete)
+**Shipped:** Cog button in header opens a Character Setup modal for picking class + ascendancy; node list responds accordingly.
+
+**Files created/modified:**
+| File | Change | Purpose |
+|---|---|---|
+| `src/components/ClassPickerModal.tsx` | Created | `Modal` + `TouchableWithoutFeedback` pattern; radio-button list for class, conditional ascendancy section below |
+| `src/store/useTreeStore.ts` | Modified | Added `selectedClass`, `selectedAscendancy`, `setSelectedClass`, `setSelectedAscendancy` |
+| `src/screens/SkillTreeScreen.tsx` | Modified | Replaced horizontal chip bar with `useLayoutEffect` → `navigation.setOptions({ headerRight })` cog button; updated `filteredNodes` memo; added selection indicator strip |
+
+**Behaviour:**
+- Tap ⚙ (top-right header) → `ClassPickerModal` opens
+- Select class → ascendancy section appears in same modal; other classes' ascendancy nodes are hidden from the list
+- Select ascendancy → list narrows to universal nodes + that ascendancy only; matching nodes get teal left border (`COLORS.teal`)
+- Active selection shown in a dismissible indicator strip (`selectionBar`) between search and counter bars
+- Tap ✕ on strip or "None" in modal → clears selection; all nodes shown
+- `selectedClass` / `selectedAscendancy` live in Zustand store — persist across screen switches
+
+**Pattern used for header button:**
+```ts
+// In the screen component:
+useLayoutEffect(() => {
+  navigation.setOptions({
+    headerRight: () => (
+      <TouchableOpacity onPress={openPicker} style={styles.cogBtn} hitSlop={8}>
+        <Text style={styles.cogText}>⚙</Text>
+      </TouchableOpacity>
+    ),
+  });
+}, [navigation, openPicker]);
+```
+
+**Modal backdrop dismiss pattern (established):**
+```tsx
+<Modal visible={visible} transparent animationType="fade" onRequestClose={onClose}>
+  <TouchableWithoutFeedback onPress={onClose}>
+    <View style={styles.backdrop}>
+      <TouchableWithoutFeedback>
+        <View style={styles.card}>
+          {/* content — inner TWF absorbs taps, outer doesn't fire */}
+        </View>
+      </TouchableWithoutFeedback>
+    </View>
+  </TouchableWithoutFeedback>
+</Modal>
+```
+
+**`ascendancyName` reminder:** The field on a node is the **ascendancy name** (e.g. `"Titan"`), not the class name (`"Warrior"`). Build a `Set` of the selected class's ascendancy names from `classes` to match correctly.
+
 ### Sprint Backlog
 (Ordered by approximate priority — developer decides what to pick next)
 1. ~~Search bar + filter on Skill Tree list~~ ✅ Sprint 2
 2. ~~Tap node → bottom sheet detail (all stat lines)~~ ✅ Sprint 2
 3. ~~Allocate/deallocate toggle + passive point counter~~ ✅ Sprint 2
-4. Zustand `useBuildStore` + MMKV persistence (migrate `allocatedNodes` from `useTreeStore`)
-5. BuildListScreen (create, list, open builds)
-6. Items screen (slot grid + paste parser)
-7. Gems screen (group management)
-8. Settings screen
-9. Fonts (Cinzel + Inter)
-10. Leather texture background
-11. Ad gate (AdMob interstitial on Import/Export)
-12. IAP ("Remove Ads")
-13. Onboarding slides
-14. NativeWind migration
+4. ~~Class & ascendancy picker (cog button)~~ ✅ Sprint 3
+5. Zustand `useBuildStore` + MMKV persistence (migrate `allocatedNodes` from `useTreeStore`)
+6. BuildListScreen (create, list, open builds)
+7. Items screen (slot grid + paste parser)
+8. Gems screen (group management)
+9. Settings screen
+10. Fonts (Cinzel + Inter)
+11. Leather texture background
+12. Ad gate (AdMob interstitial on Import/Export)
+13. IAP ("Remove Ads")
+14. Onboarding slides
+15. NativeWind migration
