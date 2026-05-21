@@ -28,18 +28,24 @@ interface TreeStoreState {
   nodes: Record<number, TreeNode>;
   classes: TreeClass[];
   allocatedNodes: Set<number>;
+  selectedClass: string | null;
+  selectedAscendancy: string | null;
   isLoaded: boolean;
   isLoading: boolean;
   error: string | null;
   loadTree: () => Promise<void>;
   toggleNode: (id: number) => void;
   clearAll: () => void;
+  setSelectedClass: (name: string | null) => void;
+  setSelectedAscendancy: (name: string | null) => void;
 }
 
 export const useTreeStore = create<TreeStoreState>((set, get) => ({
   nodes: {},
   classes: [],
   allocatedNodes: new Set(),
+  selectedClass: null,
+  selectedAscendancy: null,
   isLoaded: false,
   isLoading: false,
   error: null,
@@ -90,6 +96,9 @@ export const useTreeStore = create<TreeStoreState>((set, get) => ({
   },
 
   clearAll: () => set({ allocatedNodes: new Set() }),
+
+  setSelectedClass: (name) => set({ selectedClass: name }),
+  setSelectedAscendancy: (name) => set({ selectedAscendancy: name }),
 }));
 
 export function nodeTypePriority(node: TreeNode): number {

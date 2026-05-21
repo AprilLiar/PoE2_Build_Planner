@@ -1,15 +1,15 @@
-import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useLayoutEffect, useRef, useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
   FlatList,
   TextInput,
   TouchableOpacity,
-  ScrollView,
   ActivityIndicator,
   StyleSheet,
   ListRenderItemInfo,
 } from 'react-native';
+import { useNavigation } from '@react-navigation/native';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import {
   useTreeStore,
@@ -19,25 +19,49 @@ import {
   nodeTypeBadgeColor,
 } from '../store/useTreeStore';
 import NodeDetailSheet from '../components/NodeDetailSheet';
+import ClassPickerModal from '../components/ClassPickerModal';
 import { COLORS } from '../constants/colors';
 
 const MAX_POINTS = 123;
 
-// Stable separator — defined outside component to avoid recreating on every render
 const Separator = () => <View style={styles.separator} />;
 
 export default function SkillTreeScreen() {
-  const { nodes, classes, allocatedNodes, isLoaded, error, loadTree, toggleNode } =
-    useTreeStore();
+  const navigation = useNavigation();
+  const {
+    nodes,
+    classes,
+    allocatedNodes,
+    isLoaded,
+    error,
+    loadTree,
+    toggleNode,
+    selectedClass,
+    selectedAscendancy,
+    setSelectedClass,
+    setSelectedAscendancy,
+  } = useTreeStore();
 
   const [searchQuery, setSearchQuery] = useState('');
-  const [selectedClass, setSelectedClass] = useState<string | null>(null);
+  const [pickerVisible, setPickerVisible] = useState(false);
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
   const sheetRef = useRef<BottomSheetModal>(null);
 
   useEffect(() => {
     loadTree();
   }, [loadTree]);
+
+  const openPicker = useCallback(() => setPickerVisible(true), []);
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      headerRight: () => (
+        <TouchableOpacity onPress={openPicker} style={styles.cogBtn} hitSlop={8}>
+          <Text style={styles.cogText}>⚙</Text>
+        </TouchableOpacity>
+      ),
+    });
+  }, [navigation, openPicker]);
 
   const classAscendancyNames = useMemo(() => {
     if (!selectedClass) return new Set<string>();
@@ -47,13 +71,25 @@ export default function SkillTreeScreen() {
 
   const filteredNodes = useMemo(() => {
     let result = Object.values(nodes);
+
+    // When a class is selected, hide ascendancy nodes that don't belong to it.
+    // When an ascendancy is selected, further narrow to only that ascendancy's nodes.
+    if (selectedAscendancy) {
+      result = result.filter((n) => !n.ascendancyName || n.ascendancyName === selectedAscendancy);
+    } else if (selectedClass) {
+      result = result.filter(
+        (n) => !n.ascendancyName || classAscendancyNames.has(n.ascendancyName)
+      );
+    }
+
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
       result = result.filter((n) => n.name.toLowerCase().includes(q));
     }
+
     result.sort((a, b) => nodeTypePriority(a) - nodeTypePriority(b));
     return result;
-  }, [nodes, searchQuery]);
+  }, [nodes, searchQuery, selectedClass, selectedAscendancy, classAscendancyNames]);
 
   const openSheet = useCallback((node: TreeNode) => {
     setSelectedNode(node);
@@ -67,8 +103,15 @@ export default function SkillTreeScreen() {
   const renderNode = useCallback(
     ({ item }: ListRenderItemInfo<TreeNode>) => {
       const allocated = allocatedNodes.has(item.skill);
-      const classHighlight =
-        !allocated && !!item.ascendancyName && classAscendancyNames.has(item.ascendancyName);
+      const isAscendancyNode = !!item.ascendancyName;
+      const isSelectedAscNode =
+        selectedAscendancy != null && item.ascendancyName === selectedAscendancy;
+      const isClassAscNode =
+        selectedClass != null &&
+        selectedAscendancy == null &&
+        isAscendancyNode &&
+        classAscendancyNames.has(item.ascendancyName!);
+      const highlighted = !allocated && (isSelectedAscNode || isClassAscNode);
 
       return (
         <TouchableOpacity
@@ -78,7 +121,7 @@ export default function SkillTreeScreen() {
           style={[
             styles.row,
             allocated && styles.rowAllocated,
-            classHighlight && styles.rowClassHighlight,
+            highlighted && styles.rowClassHighlight,
           ]}
         >
           <View style={styles.rowContent}>
@@ -105,7 +148,7 @@ export default function SkillTreeScreen() {
         </TouchableOpacity>
       );
     },
-    [allocatedNodes, classAscendancyNames, toggleNode, openSheet]
+    [allocatedNodes, classAscendancyNames, selectedClass, selectedAscendancy, toggleNode, openSheet]
   );
 
   const renderEmpty = useCallback(
@@ -120,6 +163,11 @@ export default function SkillTreeScreen() {
   const pointsUsed = allocatedNodes.size;
   const pointsColor =
     pointsUsed > MAX_POINTS ? COLORS.danger : pointsUsed >= 100 ? COLORS.gold : COLORS.success;
+
+  const clearSelection = useCallback(() => {
+    setSelectedClass(null);
+    setSelectedAscendancy(null);
+  }, [setSelectedClass, setSelectedAscendancy]);
 
   if (!isLoaded && !error) {
     return (
@@ -139,41 +187,14 @@ export default function SkillTreeScreen() {
     );
   }
 
+  const selectionLabel = selectedClass
+    ? selectedAscendancy
+      ? `${selectedClass}  ·  ${selectedAscendancy}`
+      : selectedClass
+    : null;
+
   return (
     <View style={styles.container}>
-      {/* Class selector */}
-      <ScrollView
-        horizontal
-        showsHorizontalScrollIndicator={false}
-        style={styles.classScroll}
-        contentContainerStyle={styles.classScrollContent}
-      >
-        <TouchableOpacity
-          style={[styles.classChip, !selectedClass && styles.classChipActive]}
-          onPress={() => setSelectedClass(null)}
-        >
-          <Text style={[styles.classChipText, !selectedClass && styles.classChipTextActive]}>
-            All
-          </Text>
-        </TouchableOpacity>
-        {classes.map((cls) => (
-          <TouchableOpacity
-            key={cls.name}
-            style={[styles.classChip, selectedClass === cls.name && styles.classChipActive]}
-            onPress={() => setSelectedClass(cls.name)}
-          >
-            <Text
-              style={[
-                styles.classChipText,
-                selectedClass === cls.name && styles.classChipTextActive,
-              ]}
-            >
-              {cls.name}
-            </Text>
-          </TouchableOpacity>
-        ))}
-      </ScrollView>
-
       {/* Search bar */}
       <View style={styles.searchRow}>
         <TextInput
@@ -191,6 +212,16 @@ export default function SkillTreeScreen() {
           </TouchableOpacity>
         )}
       </View>
+
+      {/* Active class/ascendancy indicator */}
+      {selectionLabel && (
+        <View style={styles.selectionBar}>
+          <Text style={styles.selectionText}>{selectionLabel}</Text>
+          <TouchableOpacity onPress={clearSelection} hitSlop={8} style={styles.selectionClearBtn}>
+            <Text style={styles.selectionClearText}>✕</Text>
+          </TouchableOpacity>
+        </View>
+      )}
 
       {/* Point counter */}
       <View style={styles.counterBar}>
@@ -221,6 +252,17 @@ export default function SkillTreeScreen() {
         node={selectedNode}
         isAllocated={selectedNode ? allocatedNodes.has(selectedNode.skill) : false}
         onToggle={handleToggleFromSheet}
+      />
+
+      {/* Class / ascendancy picker modal */}
+      <ClassPickerModal
+        visible={pickerVisible}
+        onClose={() => setPickerVisible(false)}
+        classes={classes}
+        selectedClass={selectedClass}
+        selectedAscendancy={selectedAscendancy}
+        onSelectClass={setSelectedClass}
+        onSelectAscendancy={setSelectedAscendancy}
       />
     </View>
   );
@@ -256,38 +298,14 @@ const styles = StyleSheet.create({
     textAlign: 'center',
   },
 
-  // Class selector
-  classScroll: {
-    backgroundColor: COLORS.bgPanel,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-    flexGrow: 0,
+  // Cog button in header
+  cogBtn: {
+    marginRight: 12,
+    padding: 4,
   },
-  classScrollContent: {
-    paddingHorizontal: 12,
-    paddingVertical: 8,
-    gap: 8,
-  },
-  classChip: {
-    paddingHorizontal: 14,
-    paddingVertical: 6,
-    borderRadius: 16,
-    backgroundColor: COLORS.bgInput,
-    borderWidth: 1,
-    borderColor: COLORS.border,
-  },
-  classChipActive: {
-    backgroundColor: COLORS.gold,
-    borderColor: COLORS.gold,
-  },
-  classChipText: {
+  cogText: {
     color: COLORS.textMuted,
-    fontSize: 13,
-    fontWeight: '500',
-  },
-  classChipTextActive: {
-    color: COLORS.bgDeep,
-    fontWeight: '700',
+    fontSize: 22,
   },
 
   // Search
@@ -316,6 +334,30 @@ const styles = StyleSheet.create({
   clearBtnText: {
     color: COLORS.textMuted,
     fontSize: 14,
+  },
+
+  // Active selection indicator
+  selectionBar: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 16,
+    paddingVertical: 7,
+    backgroundColor: COLORS.bgInput,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  selectionText: {
+    color: COLORS.teal,
+    fontSize: 13,
+    fontWeight: '600',
+  },
+  selectionClearBtn: {
+    padding: 4,
+  },
+  selectionClearText: {
+    color: COLORS.textMuted,
+    fontSize: 13,
   },
 
   // Counter
