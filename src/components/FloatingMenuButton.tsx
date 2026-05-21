@@ -1,14 +1,13 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import {
   View,
   Text,
   Modal,
   TouchableOpacity,
-  TouchableWithoutFeedback,
+  Pressable,
   StyleSheet,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigationState } from '@react-navigation/native';
 import { navigationRef } from '../navigation/navigationRef';
 import { DrawerParamList } from '../navigation/DrawerNavigator';
 import { COLORS } from '../constants/colors';
@@ -22,25 +21,27 @@ const SCREENS: { name: keyof DrawerParamList; label: string }[] = [
 export default function FloatingMenuButton() {
   const [open, setOpen] = useState(false);
   const insets = useSafeAreaInsets();
+  const [currentRoute, setCurrentRoute] = useState<string | null>(null);
 
-  // Track the active screen so we can highlight it in the menu.
-  const currentRoute = useNavigationState((state) => {
-    if (!state) return null;
-    return state.routes[state.index]?.name;
-  });
+  useEffect(() => {
+    if (navigationRef.isReady()) {
+      setCurrentRoute(navigationRef.getCurrentRoute()?.name ?? null);
+    }
+    return navigationRef.addListener('state', () => {
+      setCurrentRoute(navigationRef.getCurrentRoute()?.name ?? null);
+    });
+  }, []);
 
   const navigate = (screen: keyof DrawerParamList) => {
     navigationRef.navigate(screen);
     setOpen(false);
   };
 
-  // Position the button just inside the safe area.
   const btnTop = insets.top + 12;
   const btnLeft = insets.left + 16;
 
   return (
     <>
-      {/* Floating round hamburger button */}
       <View style={[styles.shadow, { top: btnTop, left: btnLeft }]}>
         <TouchableOpacity style={styles.button} onPress={() => setOpen(true)} activeOpacity={0.8}>
           <View style={styles.bar} />
@@ -49,7 +50,6 @@ export default function FloatingMenuButton() {
         </TouchableOpacity>
       </View>
 
-      {/* Overlay menu */}
       <Modal
         visible={open}
         transparent
@@ -57,45 +57,36 @@ export default function FloatingMenuButton() {
         onRequestClose={() => setOpen(false)}
         statusBarTranslucent
       >
-        <TouchableWithoutFeedback onPress={() => setOpen(false)}>
-          <View style={styles.backdrop}>
-            <TouchableWithoutFeedback>
-              {/* Menu card appears just below the button */}
-              <View style={[styles.menu, { top: btnTop + 54, left: btnLeft }]}>
-                {SCREENS.map((screen) => {
-                  const active = currentRoute === screen.name;
-                  return (
-                    <TouchableOpacity
-                      key={screen.name}
-                      style={[styles.menuItem, active && styles.menuItemActive]}
-                      onPress={() => navigate(screen.name)}
-                      activeOpacity={0.7}
-                    >
-                      <Text style={[styles.menuLabel, active && styles.menuLabelActive]}>
-                        {screen.label}
-                      </Text>
-                    </TouchableOpacity>
-                  );
-                })}
-              </View>
-            </TouchableWithoutFeedback>
-          </View>
-        </TouchableWithoutFeedback>
+        <Pressable style={styles.backdrop} onPress={() => setOpen(false)}>
+          <Pressable style={[styles.menu, { top: btnTop + 54, left: btnLeft }]}>
+            {SCREENS.map((screen) => {
+              const active = currentRoute === screen.name;
+              return (
+                <TouchableOpacity
+                  key={screen.name}
+                  style={[styles.menuItem, active && styles.menuItemActive]}
+                  onPress={() => navigate(screen.name)}
+                  activeOpacity={0.7}
+                >
+                  <Text style={[styles.menuLabel, active && styles.menuLabelActive]}>
+                    {screen.label}
+                  </Text>
+                </TouchableOpacity>
+              );
+            })}
+          </Pressable>
+        </Pressable>
       </Modal>
     </>
   );
 }
 
 const styles = StyleSheet.create({
-  // Wrapper carries the shadow so the shadow is not clipped by the button's overflow.
   shadow: {
     position: 'absolute',
     zIndex: 100,
     borderRadius: 22,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 3 },
-    shadowOpacity: 0.45,
-    shadowRadius: 8,
+    boxShadow: '0px 3px 8px rgba(0,0,0,0.45)',
     elevation: 10,
   },
   button: {
@@ -128,10 +119,7 @@ const styles = StyleSheet.create({
     minWidth: 160,
     borderWidth: 1,
     borderColor: COLORS.border,
-    shadowColor: '#000',
-    shadowOffset: { width: 0, height: 6 },
-    shadowOpacity: 0.4,
-    shadowRadius: 12,
+    boxShadow: '0px 6px 12px rgba(0,0,0,0.4)',
     elevation: 14,
   },
   menuItem: {
