@@ -72,7 +72,11 @@ export default function SkillTreeScreen() {
 
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase();
-      result = result.filter((n) => n.name.toLowerCase().includes(q));
+      result = result.filter(
+        (n) =>
+          n.name.toLowerCase().includes(q) ||
+          n.stats?.some((s) => s.toLowerCase().includes(q))
+      );
     }
 
     result.sort((a, b) => nodeTypePriority(a) - nodeTypePriority(b));
@@ -306,7 +310,8 @@ const styles = StyleSheet.create({
     backgroundColor: COLORS.bgPanel,
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
-    paddingHorizontal: 12,
+    paddingLeft: 70,
+    paddingRight: 12,
     paddingVertical: 8,
   },
   searchInput: {
