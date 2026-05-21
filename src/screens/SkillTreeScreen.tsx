@@ -1,4 +1,4 @@
-import React, { useEffect, useLayoutEffect, useRef, useState, useMemo, useCallback } from 'react';
+import React, { useEffect, useRef, useState, useMemo, useCallback } from 'react';
 import {
   View,
   Text,
@@ -9,7 +9,6 @@ import {
   StyleSheet,
   ListRenderItemInfo,
 } from 'react-native';
-import { useNavigation } from '@react-navigation/native';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import {
   useTreeStore,
@@ -27,7 +26,6 @@ const MAX_POINTS = 123;
 const Separator = () => <View style={styles.separator} />;
 
 export default function SkillTreeScreen() {
-  const navigation = useNavigation();
   const {
     nodes,
     classes,
@@ -52,16 +50,6 @@ export default function SkillTreeScreen() {
   }, [loadTree]);
 
   const openPicker = useCallback(() => setPickerVisible(true), []);
-
-  useLayoutEffect(() => {
-    navigation.setOptions({
-      headerRight: () => (
-        <TouchableOpacity onPress={openPicker} style={styles.cogBtn} hitSlop={8}>
-          <Text style={styles.cogText}>⚙</Text>
-        </TouchableOpacity>
-      ),
-    });
-  }, [navigation, openPicker]);
 
   const classAscendancyNames = useMemo(() => {
     if (!selectedClass) return new Set<string>();
@@ -195,7 +183,7 @@ export default function SkillTreeScreen() {
 
   return (
     <View style={styles.container}>
-      {/* Search bar */}
+      {/* Search bar — cog on the right opens the class/ascendancy picker */}
       <View style={styles.searchRow}>
         <TextInput
           style={styles.searchInput}
@@ -211,6 +199,9 @@ export default function SkillTreeScreen() {
             <Text style={styles.clearBtnText}>✕</Text>
           </TouchableOpacity>
         )}
+        <TouchableOpacity onPress={openPicker} style={styles.cogBtn} hitSlop={8}>
+          <Text style={styles.cogText}>⚙</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Active class/ascendancy indicator */}

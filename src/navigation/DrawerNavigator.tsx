@@ -15,6 +15,10 @@ export type DrawerParamList = {
 const Drawer = createDrawerNavigator<DrawerParamList>();
 
 const SCREEN_OPTIONS: DrawerNavigationOptions = {
+  // Header replaced by FloatingMenuButton — hide the built-in one.
+  headerShown: false,
+  // Disable swipe-to-open so the old drawer doesn't interfere.
+  swipeEnabled: false,
   drawerStyle: {
     backgroundColor: COLORS.bgDeep,
     width: 240,
@@ -22,14 +26,6 @@ const SCREEN_OPTIONS: DrawerNavigationOptions = {
   drawerActiveTintColor: COLORS.gold,
   drawerInactiveTintColor: COLORS.textMuted,
   drawerActiveBackgroundColor: COLORS.border,
-  headerStyle: {
-    backgroundColor: COLORS.bgPanel,
-  },
-  headerTintColor: COLORS.text,
-  headerTitleStyle: {
-    fontSize: 18,
-    fontWeight: '600',
-  },
   sceneStyle: {
     backgroundColor: COLORS.bgDeep,
   },
