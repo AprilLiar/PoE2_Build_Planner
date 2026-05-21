@@ -1,4 +1,4 @@
-import React, { useCallback } from 'react';
+import React from 'react';
 import { View, Text, TouchableOpacity, StyleSheet } from 'react-native';
 import {
   BottomSheetModal,
@@ -8,6 +8,7 @@ import {
   BottomSheetBackdropProps,
 } from '@gorhom/bottom-sheet';
 import { TreeNode, nodeTypeLabel, nodeTypeBadgeColor } from '../store/useTreeStore';
+import { COLORS } from '../constants/colors';
 
 interface NodeDetailSheetProps {
   sheetRef: React.RefObject<BottomSheetModal | null>;
@@ -18,24 +19,22 @@ interface NodeDetailSheetProps {
 
 const SNAP_POINTS = ['50%', '85%'];
 
+// Stable backdrop component — defined outside to avoid recreating on every render
+function Backdrop(props: BottomSheetBackdropProps) {
+  return <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />;
+}
+
 export default function NodeDetailSheet({
   sheetRef,
   node,
   isAllocated,
   onToggle,
 }: NodeDetailSheetProps) {
-  const renderBackdrop = useCallback(
-    (props: BottomSheetBackdropProps) => (
-      <BottomSheetBackdrop {...props} disappearsOnIndex={-1} appearsOnIndex={0} />
-    ),
-    []
-  );
-
   return (
     <BottomSheetModal
       ref={sheetRef}
       snapPoints={SNAP_POINTS}
-      backdropComponent={renderBackdrop}
+      backdropComponent={Backdrop}
       backgroundStyle={styles.sheetBackground}
       handleIndicatorStyle={styles.handle}
       enablePanDownToClose
@@ -85,10 +84,10 @@ export default function NodeDetailSheet({
 
 const styles = StyleSheet.create({
   sheetBackground: {
-    backgroundColor: '#111827',
+    backgroundColor: COLORS.bgPanel,
   },
   handle: {
-    backgroundColor: '#1E3A5F',
+    backgroundColor: COLORS.border,
     width: 40,
   },
   header: {
@@ -96,7 +95,7 @@ const styles = StyleSheet.create({
     paddingTop: 8,
     paddingBottom: 12,
     borderBottomWidth: 1,
-    borderBottomColor: '#1E3A5F',
+    borderBottomColor: COLORS.border,
   },
   titleRow: {
     flexDirection: 'row',
@@ -106,7 +105,7 @@ const styles = StyleSheet.create({
   },
   nodeName: {
     flex: 1,
-    color: '#E2E8F0',
+    color: COLORS.text,
     fontSize: 20,
     fontWeight: '700',
   },
@@ -117,7 +116,7 @@ const styles = StyleSheet.create({
     letterSpacing: 0.5,
   },
   ascendancy: {
-    color: '#0D9488',
+    color: COLORS.teal,
     fontSize: 12,
     marginTop: 4,
   },
@@ -127,12 +126,12 @@ const styles = StyleSheet.create({
     gap: 8,
   },
   stat: {
-    color: '#94A3B8',
+    color: COLORS.textMuted,
     fontSize: 15,
     lineHeight: 22,
   },
   noStats: {
-    color: '#94A3B8',
+    color: COLORS.textMuted,
     fontSize: 14,
     fontStyle: 'italic',
   },
@@ -140,23 +139,23 @@ const styles = StyleSheet.create({
     paddingHorizontal: 20,
     paddingVertical: 16,
     borderTopWidth: 1,
-    borderTopColor: '#1E3A5F',
+    borderTopColor: COLORS.border,
   },
   toggleBtn: {
-    backgroundColor: '#1E3A5F',
+    backgroundColor: COLORS.border,
     borderRadius: 8,
     paddingVertical: 14,
     alignItems: 'center',
   },
   toggleBtnActive: {
-    backgroundColor: '#7C2D12',
+    backgroundColor: COLORS.bgDeallocate,
   },
   toggleBtnText: {
-    color: '#E2E8F0',
+    color: COLORS.text,
     fontSize: 16,
     fontWeight: '600',
   },
   toggleBtnTextActive: {
-    color: '#FCA5A5',
+    color: COLORS.textDanger,
   },
 });

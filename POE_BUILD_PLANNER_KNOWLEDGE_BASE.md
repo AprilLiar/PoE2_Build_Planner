@@ -199,9 +199,10 @@ npm install zustand @tanstack/react-query
 - `classes: TreeClass[]` — 8 classes with ascendancy names, loaded from `tree.json`
 - `allocatedNodes: Set<number>` — set of allocated node skill IDs (in-memory only; MMKV persistence deferred to `useBuildStore` integration)
 - `isLoaded: boolean`
+- `isLoading: boolean` — true while async load is in progress; `loadTree` checks both flags to prevent concurrent calls
 - `error: string | null`
-- `loadTree(): Promise<void>` — reads and parses `assets/data/tree.json`; guarded (no-op if already loaded)
-- `toggleNode(id: number): void` — inserts/deletes from `allocatedNodes`
+- `loadTree(): Promise<void>` — reads and parses `assets/data/tree.json`; guarded (no-op if already loaded OR currently loading)
+- `toggleNode(id: number): void` — inserts/deletes from `allocatedNodes`; always creates a new `Set` reference so React detects the change
 - `clearAll(): void` — empties `allocatedNodes`
 
 **Exported helper functions** (pure, no store subscription needed):
@@ -946,10 +947,10 @@ PoEBuildPlanner/
 │   ├── types/
 │   │   └── build.ts                # All TypeScript interfaces (Section 5)
 │   ├── constants/
-│   │   ├── colors.ts               # Color palette constants mirroring tailwind config
-│   │   ├── slots.ts                # ItemSlot enum and display names
-│   │   ├── classes.ts              # POE2_CLASSES list and Poe2Class type
-│   │   └── screenNames.ts          # Drawer screen name enum
+│   │   ├── colors.ts               # Color palette — IMPLEMENTED; all screens import from here
+│   │   ├── slots.ts                # ItemSlot enum and display names (future)
+│   │   ├── classes.ts              # Not needed — classes loaded from tree.json (see §4.13)
+│   │   └── screenNames.ts          # Drawer screen name enum (future)
 │   └── utils/
 │       ├── buildMigration.ts       # Upgrade schema_version on load
 │       ├── itemParser.ts           # Parse raw PoE item text into Item interface
@@ -1255,6 +1256,31 @@ const data = JSON.parse(json);
 - `assets/data/tree.json` — **DONE** — real GGG file in place (patch 0.4, ~6.5 MB, 4,701 nodes, from grindinggear/skilltree-export)
 - `assets/fonts/*.ttf` — Cinzel-Regular, Inter-Regular, Inter-Medium (Google Fonts) — future sprint
 - `assets/textures/leather_bg.png` — seamless dark leather — future sprint
+
+#### Sprint 2 Refactor — Code Quality (complete)
+No new features — fixes and structural improvements applied after Sprint 2.
+
+| Change | Reason |
+|---|---|
+| `src/constants/colors.ts` created | ~30 duplicated hex strings across 4 files → single source of truth |
+| `FlatList extraData={allocatedNodes}` added | **Bug fix**: rows weren't visually updating on tap without this |
+| `renderNode` wrapped in `useCallback` | Prevents new `renderItem` ref on unrelated parent re-renders |
+| `Separator` → stable module-level component | Was an anonymous arrow function recreated every render |
+| `renderEmpty` → `useCallback` | Recreates only when `searchQuery` changes |
+| `NodeDetailSheet` backdrop → stable component | Replaced `useCallback`-wrapped closure |
+| `DrawerNavigator` screenOptions → `SCREEN_OPTIONS` const | Was rebuilt on every navigator render |
+| `isLoading` guard added to `loadTree` | Concurrent calls now safely no-op |
+
+**FlatList pattern to follow in all future list screens:**
+```tsx
+// Always pass extraData for any value renderItem reads that isn't in `data`
+<FlatList
+  data={filteredItems}
+  extraData={someExternalState}
+  renderItem={useCallback(renderFn, [someExternalState, ...])}
+  ItemSeparatorComponent={StableSeparatorComponent}  // defined outside component
+/>
+```
 
 ### Sprint Backlog
 (Ordered by approximate priority — developer decides what to pick next)

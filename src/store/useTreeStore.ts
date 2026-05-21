@@ -1,6 +1,7 @@
 import { create } from 'zustand';
 import { Asset } from 'expo-asset';
 import * as FileSystem from 'expo-file-system';
+import { COLORS } from '../constants/colors';
 
 export interface TreeNode {
   skill: number;
@@ -28,6 +29,7 @@ interface TreeStoreState {
   classes: TreeClass[];
   allocatedNodes: Set<number>;
   isLoaded: boolean;
+  isLoading: boolean;
   error: string | null;
   loadTree: () => Promise<void>;
   toggleNode: (id: number) => void;
@@ -39,10 +41,14 @@ export const useTreeStore = create<TreeStoreState>((set, get) => ({
   classes: [],
   allocatedNodes: new Set(),
   isLoaded: false,
+  isLoading: false,
   error: null,
 
   loadTree: async () => {
-    if (get().isLoaded) return;
+    const { isLoaded, isLoading } = get();
+    if (isLoaded || isLoading) return;
+
+    set({ isLoading: true, error: null });
     try {
       const [asset] = await Asset.loadAsync(
         // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -66,9 +72,9 @@ export const useTreeStore = create<TreeStoreState>((set, get) => ({
         }
       }
 
-      set({ nodes, classes: data.classes ?? [], isLoaded: true, error: null });
+      set({ nodes, classes: data.classes ?? [], isLoaded: true, isLoading: false });
     } catch (err) {
-      set({ error: (err as Error).message });
+      set({ error: (err as Error).message, isLoading: false });
     }
   },
 
@@ -102,9 +108,9 @@ export function nodeTypeLabel(node: TreeNode): string {
 }
 
 export function nodeTypeBadgeColor(node: TreeNode): string {
-  if (node.isKeystone) return '#C9A84C';
-  if (node.isNotable) return '#3B82F6';
-  if (node.isMastery) return '#8888FF';
-  if (node.isJewelSocket) return '#10B981';
-  return '#94A3B8';
+  if (node.isKeystone) return COLORS.nodeKeystone;
+  if (node.isNotable) return COLORS.nodeNotable;
+  if (node.isMastery) return COLORS.nodeMastery;
+  if (node.isJewelSocket) return COLORS.nodeJewel;
+  return COLORS.nodeNormal;
 }

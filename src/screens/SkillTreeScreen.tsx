@@ -19,8 +19,12 @@ import {
   nodeTypeBadgeColor,
 } from '../store/useTreeStore';
 import NodeDetailSheet from '../components/NodeDetailSheet';
+import { COLORS } from '../constants/colors';
 
 const MAX_POINTS = 123;
+
+// Stable separator — defined outside component to avoid recreating on every render
+const Separator = () => <View style={styles.separator} />;
 
 export default function SkillTreeScreen() {
   const { nodes, classes, allocatedNodes, isLoaded, error, loadTree, toggleNode } =
@@ -60,14 +64,67 @@ export default function SkillTreeScreen() {
     if (selectedNode) toggleNode(selectedNode.skill);
   }, [selectedNode, toggleNode]);
 
+  const renderNode = useCallback(
+    ({ item }: ListRenderItemInfo<TreeNode>) => {
+      const allocated = allocatedNodes.has(item.skill);
+      const classHighlight =
+        !allocated && !!item.ascendancyName && classAscendancyNames.has(item.ascendancyName);
+
+      return (
+        <TouchableOpacity
+          activeOpacity={0.7}
+          onPress={() => toggleNode(item.skill)}
+          onLongPress={() => openSheet(item)}
+          style={[
+            styles.row,
+            allocated && styles.rowAllocated,
+            classHighlight && styles.rowClassHighlight,
+          ]}
+        >
+          <View style={styles.rowContent}>
+            <View style={styles.rowTop}>
+              <Text
+                style={[styles.nodeName, allocated && styles.nodeNameAllocated]}
+                numberOfLines={1}
+              >
+                {item.name}
+              </Text>
+              <View style={styles.rowRight}>
+                {allocated && <Text style={styles.checkmark}>✓</Text>}
+                <Text style={[styles.badge, { color: nodeTypeBadgeColor(item) }]}>
+                  {nodeTypeLabel(item)}
+                </Text>
+              </View>
+            </View>
+            {item.stats && item.stats.length > 0 && (
+              <Text style={styles.statPreview} numberOfLines={2}>
+                {item.stats.slice(0, 2).join('  ·  ')}
+              </Text>
+            )}
+          </View>
+        </TouchableOpacity>
+      );
+    },
+    [allocatedNodes, classAscendancyNames, toggleNode, openSheet]
+  );
+
+  const renderEmpty = useCallback(
+    () => (
+      <View style={styles.emptyState}>
+        <Text style={styles.emptyText}>No nodes match "{searchQuery}"</Text>
+      </View>
+    ),
+    [searchQuery]
+  );
+
   const pointsUsed = allocatedNodes.size;
   const pointsColor =
-    pointsUsed > MAX_POINTS ? '#DC2626' : pointsUsed >= 100 ? '#C9A84C' : '#16A34A';
+    pointsUsed > MAX_POINTS ? COLORS.danger : pointsUsed >= 100 ? COLORS.gold : COLORS.success;
 
   if (!isLoaded && !error) {
     return (
       <View style={styles.centered}>
-        <ActivityIndicator size="large" color="#C9A84C" />
+        <ActivityIndicator size="large" color={COLORS.gold} />
         <Text style={styles.loadingText}>Loading passive tree…</Text>
       </View>
     );
@@ -81,47 +138,6 @@ export default function SkillTreeScreen() {
       </View>
     );
   }
-
-  const renderNode = ({ item }: ListRenderItemInfo<TreeNode>) => {
-    const allocated = allocatedNodes.has(item.skill);
-    const classHighlight =
-      !allocated && !!item.ascendancyName && classAscendancyNames.has(item.ascendancyName);
-
-    return (
-      <TouchableOpacity
-        activeOpacity={0.7}
-        onPress={() => toggleNode(item.skill)}
-        onLongPress={() => openSheet(item)}
-        style={[
-          styles.row,
-          allocated && styles.rowAllocated,
-          classHighlight && styles.rowClassHighlight,
-        ]}
-      >
-        <View style={styles.rowContent}>
-          <View style={styles.rowTop}>
-            <Text
-              style={[styles.nodeName, allocated && styles.nodeNameAllocated]}
-              numberOfLines={1}
-            >
-              {item.name}
-            </Text>
-            <View style={styles.rowRight}>
-              {allocated && <Text style={styles.checkmark}>✓</Text>}
-              <Text style={[styles.badge, { color: nodeTypeBadgeColor(item) }]}>
-                {nodeTypeLabel(item)}
-              </Text>
-            </View>
-          </View>
-          {item.stats && item.stats.length > 0 && (
-            <Text style={styles.statPreview} numberOfLines={2}>
-              {item.stats.slice(0, 2).join('  ·  ')}
-            </Text>
-          )}
-        </View>
-      </TouchableOpacity>
-    );
-  };
 
   return (
     <View style={styles.container}>
@@ -163,10 +179,9 @@ export default function SkillTreeScreen() {
         <TextInput
           style={styles.searchInput}
           placeholder="Search nodes…"
-          placeholderTextColor="#94A3B8"
+          placeholderTextColor={COLORS.textMuted}
           value={searchQuery}
           onChangeText={setSearchQuery}
-          clearButtonMode="while-editing"
           autoCorrect={false}
           autoCapitalize="none"
         />
@@ -190,17 +205,14 @@ export default function SkillTreeScreen() {
         data={filteredNodes}
         keyExtractor={(item) => String(item.skill)}
         renderItem={renderNode}
-        ItemSeparatorComponent={() => <View style={styles.separator} />}
+        extraData={allocatedNodes}
+        ItemSeparatorComponent={Separator}
+        ListEmptyComponent={renderEmpty}
         removeClippedSubviews
         initialNumToRender={25}
         maxToRenderPerBatch={20}
         windowSize={10}
         keyboardShouldPersistTaps="handled"
-        ListEmptyComponent={
-          <View style={styles.emptyState}>
-            <Text style={styles.emptyText}>No nodes match "{searchQuery}"</Text>
-          </View>
-        }
       />
 
       {/* Node detail bottom sheet */}
@@ -217,38 +229,38 @@ export default function SkillTreeScreen() {
 const styles = StyleSheet.create({
   container: {
     flex: 1,
-    backgroundColor: '#0A0E1A',
+    backgroundColor: COLORS.bgDeep,
   },
   centered: {
     flex: 1,
-    backgroundColor: '#0A0E1A',
+    backgroundColor: COLORS.bgDeep,
     justifyContent: 'center',
     alignItems: 'center',
     paddingHorizontal: 24,
   },
   loadingText: {
-    color: '#94A3B8',
+    color: COLORS.textMuted,
     marginTop: 12,
     fontSize: 15,
   },
   errorText: {
-    color: '#DC2626',
+    color: COLORS.danger,
     fontSize: 18,
     fontWeight: 'bold',
     marginBottom: 8,
     textAlign: 'center',
   },
   errorDetail: {
-    color: '#94A3B8',
+    color: COLORS.textMuted,
     fontSize: 13,
     textAlign: 'center',
   },
 
   // Class selector
   classScroll: {
-    backgroundColor: '#111827',
+    backgroundColor: COLORS.bgPanel,
     borderBottomWidth: 1,
-    borderBottomColor: '#1E3A5F',
+    borderBottomColor: COLORS.border,
     flexGrow: 0,
   },
   classScrollContent: {
@@ -260,21 +272,21 @@ const styles = StyleSheet.create({
     paddingHorizontal: 14,
     paddingVertical: 6,
     borderRadius: 16,
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.bgInput,
     borderWidth: 1,
-    borderColor: '#1E3A5F',
+    borderColor: COLORS.border,
   },
   classChipActive: {
-    backgroundColor: '#C9A84C',
-    borderColor: '#C9A84C',
+    backgroundColor: COLORS.gold,
+    borderColor: COLORS.gold,
   },
   classChipText: {
-    color: '#94A3B8',
+    color: COLORS.textMuted,
     fontSize: 13,
     fontWeight: '500',
   },
   classChipTextActive: {
-    color: '#0A0E1A',
+    color: COLORS.bgDeep,
     fontWeight: '700',
   },
 
@@ -282,19 +294,19 @@ const styles = StyleSheet.create({
   searchRow: {
     flexDirection: 'row',
     alignItems: 'center',
-    backgroundColor: '#111827',
+    backgroundColor: COLORS.bgPanel,
     borderBottomWidth: 1,
-    borderBottomColor: '#1E3A5F',
+    borderBottomColor: COLORS.border,
     paddingHorizontal: 12,
     paddingVertical: 8,
   },
   searchInput: {
     flex: 1,
-    backgroundColor: '#1E293B',
+    backgroundColor: COLORS.bgInput,
     borderRadius: 8,
     paddingHorizontal: 12,
     paddingVertical: 8,
-    color: '#E2E8F0',
+    color: COLORS.text,
     fontSize: 15,
   },
   clearBtn: {
@@ -302,7 +314,7 @@ const styles = StyleSheet.create({
     padding: 6,
   },
   clearBtnText: {
-    color: '#94A3B8',
+    color: COLORS.textMuted,
     fontSize: 14,
   },
 
@@ -313,12 +325,12 @@ const styles = StyleSheet.create({
     justifyContent: 'space-between',
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: '#0D1117',
+    backgroundColor: COLORS.bgCounter,
     borderBottomWidth: 1,
-    borderBottomColor: '#1E3A5F',
+    borderBottomColor: COLORS.border,
   },
   counterLabel: {
-    color: '#94A3B8',
+    color: COLORS.textMuted,
     fontSize: 12,
     textTransform: 'uppercase',
     letterSpacing: 0.5,
@@ -330,18 +342,18 @@ const styles = StyleSheet.create({
 
   // Node rows
   row: {
-    backgroundColor: '#0A0E1A',
+    backgroundColor: COLORS.bgDeep,
     paddingHorizontal: 16,
     paddingVertical: 12,
     borderLeftWidth: 3,
     borderLeftColor: 'transparent',
   },
   rowAllocated: {
-    borderLeftColor: '#C9A84C',
-    backgroundColor: '#0D1408',
+    borderLeftColor: COLORS.gold,
+    backgroundColor: COLORS.bgAllocated,
   },
   rowClassHighlight: {
-    borderLeftColor: '#0D9488',
+    borderLeftColor: COLORS.teal,
   },
   rowContent: {
     gap: 4,
@@ -359,11 +371,11 @@ const styles = StyleSheet.create({
   },
   nodeName: {
     flex: 1,
-    color: '#E2E8F0',
+    color: COLORS.text,
     fontSize: 15,
   },
   nodeNameAllocated: {
-    color: '#C9A84C',
+    color: COLORS.gold,
     fontWeight: '600',
   },
   badge: {
@@ -371,19 +383,19 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
   checkmark: {
-    color: '#C9A84C',
+    color: COLORS.gold,
     fontSize: 13,
     fontWeight: '700',
   },
   statPreview: {
-    color: '#94A3B8',
+    color: COLORS.textMuted,
     fontSize: 12,
     lineHeight: 17,
   },
 
   separator: {
     height: 1,
-    backgroundColor: '#111827',
+    backgroundColor: COLORS.bgPanel,
     marginLeft: 16,
   },
 
@@ -392,7 +404,7 @@ const styles = StyleSheet.create({
     alignItems: 'center',
   },
   emptyText: {
-    color: '#94A3B8',
+    color: COLORS.textMuted,
     fontSize: 14,
   },
 });
