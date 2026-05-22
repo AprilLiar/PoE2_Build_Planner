@@ -4,14 +4,27 @@ import { GestureHandlerRootView } from 'react-native-gesture-handler';
 import { SafeAreaProvider } from 'react-native-safe-area-context';
 import { BottomSheetModalProvider } from '@gorhom/bottom-sheet';
 import DrawerNavigator from './navigation/DrawerNavigator';
+import FloatingMenuButton from './components/FloatingMenuButton';
+import { navigationRef } from './navigation/navigationRef';
+
+// AppContent is a separate component so FloatingMenuButton can use
+// navigation hooks (useNavigationState) that require being inside NavigationContainer.
+function AppContent() {
+  return (
+    <>
+      <DrawerNavigator />
+      <FloatingMenuButton />
+    </>
+  );
+}
 
 export default function App() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
-        <NavigationContainer>
+        <NavigationContainer ref={navigationRef}>
           <BottomSheetModalProvider>
-            <DrawerNavigator />
+            <AppContent />
           </BottomSheetModalProvider>
         </NavigationContainer>
       </SafeAreaProvider>

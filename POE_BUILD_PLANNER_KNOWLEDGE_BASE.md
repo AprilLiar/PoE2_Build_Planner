@@ -1340,7 +1340,7 @@ useLayoutEffect(() => {
 | File | Change | Purpose |
 |---|---|---|
 | `src/utils/treeLayout.ts` | Created | Pure layout utilities: position computation (PoB/GGG orbital formula), tree bounds, adjacency list, class start map, `canAllocate`, `canDeallocate` |
-| `src/store/useTreeStore.ts` | Modified | Added `nodePositions`, `treeBounds`, `adjacency`, `classStartNodes` to state; updated `loadTree()` to call layout utils; updated `toggleNode()` with adjacency enforcement; added `nodeRadius()` export |
+| `src/store/useTreeStore.ts` | Modified | Added `nodePositions`, `treeBounds`, `adjacency`, `classStartNodes` to state; updated `loadTree()` to use `require()` directly; updated `toggleNode()` with adjacency enforcement; added `nodeRadius()` export |
 | `src/components/GraphicalSkillTree.tsx` | Created | SVG canvas: `AnimatedG` with string transform for UI-thread pan/zoom, `Gesture.Simultaneous(pan, pinch, Exclusive(longPress, tap))`, hit testing via `runOnJS`, memoized edges + nodes |
 | `src/screens/SkillTreeScreen.tsx` | Rewritten | Removed FlatList/search bar/header cog; added `GraphicalSkillTree` full-screen with `topOverlay` (⚙ + selection chip) and `counterOverlay` (passive points) as absolute-positioned semi-transparent layers |
 
@@ -1352,6 +1352,8 @@ useLayoutEffect(() => {
 - Hit test threshold: 30 screen-px (tap) / 40 screen-px (long-press), converted to world units by dividing by `scale.value`
 - Edges deduplicated: only rendered where `node.skill < conn.id` (lower ID → higher ID)
 - No viewport culling in Phase 1 — SVG clips naturally; Phase 2 will add spatial index if needed
+- `visuallyAllocated` set adds class start node ID for rendering only — real `allocatedNodes` unchanged (preserves point counter and BFS correctness)
+- tree.json loaded via `require()` directly (simpler than `Asset.loadAsync + FileSystem`)
 
 **Node position formula (PoB/GGG convention):**
 ```ts
