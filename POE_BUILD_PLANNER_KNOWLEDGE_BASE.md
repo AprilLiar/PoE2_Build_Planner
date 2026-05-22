@@ -594,10 +594,10 @@ const handleImport = () => {
 - Adjacency-enforced allocation + BFS de-allocation check
 - Camera fly-to class start on class selection
 
-**Future Phase 2 improvements (not yet implemented):**
-- Viewport culling with spatial index (render only nodes in current viewport)
-- Minimap overlay
-- Search → pan-to-node feature
+**Phase 2 graphical tree improvements — IMPLEMENTED (Sprint 5):**
+- Viewport culling with 500wu spatial grid — see Sprint 5 notes
+- Minimap overlay — bottom-right corner, 130px, `AnimatedRect` viewport indicator
+- Search → pan-to-node — 🔍 button opens `NodeSearchModal`; selecting a node springs camera to it
 
 ### 7.2 Items Screen
 
@@ -1378,6 +1378,27 @@ const y = group.y - Math.cos(angle) * radius;
 - **De-allocate**: blocked if removing the node would disconnect any other allocated node from the class start (BFS reachability check through remaining allocated nodes)
 - **No class selected**: free toggle in both directions
 
+#### Sprint 5 — Graphical Tree Phase 2 (complete)
+**Shipped:** Viewport culling with spatial index, minimap overlay, and search → pan-to-node.
+
+**Files created/modified:**
+| File | Change | Purpose |
+|---|---|---|
+| `src/utils/treeLayout.ts` | Modified | Added `SpatialGrid` type, `buildSpatialGrid(positions, cellSize=500)`, `queryVisibleNodes(grid, minX, minY, maxX, maxY)` |
+| `src/store/useTreeStore.ts` | Modified | Added `spatialGrid: SpatialGrid | null` (built in `loadTree()`); added `flyToNodeId: number | null` + `setFlyToNodeId` action for search-triggered camera animation |
+| `src/components/GraphicalSkillTree.tsx` | Modified | Viewport state tracked on gesture end + initial load (25% padding); `visibleNodeIds` filters edges + nodes via spatial grid; minimap panel with `AnimatedRect` viewport indicator (UI-thread); `useEffect` watches `flyToNodeId` and spring-animates camera |
+| `src/components/NodeSearchModal.tsx` | Created | Modal with text input + FlatList of results (keystones first, capped at 30); tap → `setFlyToNodeId` + close |
+| `src/screens/SkillTreeScreen.tsx` | Modified | Added 🔍 button (right side of top overlay); selection chip moved into `topMiddle` flex container; renders `NodeSearchModal` |
+
+**Key technical decisions:**
+- **Spatial grid**: 500 world-unit cells over the ~33,000×33,000 world → 66×66 = 4,356 cells, avg ~1.1 nodes/cell. Viewport query is O(cells_in_viewport). At ×10 zoom, ~96% of nodes are skipped.
+- **Viewport update frequency**: Only on gesture end (`onEnd` callbacks) + initial load. 25% world-unit padding pre-renders nodes just off-screen to hide pop-in during short pans.
+- **Fly-to**: Pre-sets culling viewport to the target camera position before spring starts, so the target node is in the render set immediately.
+- **Minimap**: `AnimatedRect` created via `Animated.createAnimatedComponent(Rect)` from react-native-svg. `useAnimatedProps` worklet reads `panX/Y/scale` shared values → world-coordinate rect `{x, y, width, height}`; SVG `viewBox` set to tree bounds so coordinates are in world units, SVG handles the pixel scaling. `strokeWidth={500}` world units ≈ 1.5–2 px at minimap scale.
+- **Minimap dots**: Static memoized circles (no allocation state) — keystones r=180wu, notables r=130wu, normal r=80wu — re-render only when `nodes`/`nodePositions` change (i.e., never after load).
+- **Search modal**: Follows the established `TouchableWithoutFeedback` backdrop-dismiss pattern from `ClassPickerModal`.
+- **Top overlay layout restructure**: `[⚙] [topMiddle flex:1] [🔍]` — selection chip sits inside `topMiddle` so it doesn't push the search button off-screen.
+
 ### Sprint Backlog
 (Ordered by approximate priority — developer decides what to pick next)
 1. ~~Search bar + filter on Skill Tree list~~ ✅ Sprint 2
@@ -1385,14 +1406,15 @@ const y = group.y - Math.cos(angle) * radius;
 3. ~~Allocate/deallocate toggle + passive point counter~~ ✅ Sprint 2
 4. ~~Class & ascendancy picker (cog button)~~ ✅ Sprint 3
 5. ~~Graphical SVG skill tree (pan/zoom canvas, adjacency enforcement)~~ ✅ Sprint 4
-6. Zustand `useBuildStore` + MMKV persistence (migrate `allocatedNodes` from `useTreeStore`)
-6. BuildListScreen (create, list, open builds)
-7. Items screen (slot grid + paste parser)
-8. Gems screen (group management)
-9. Settings screen
-10. Fonts (Cinzel + Inter)
-11. Leather texture background
-12. Ad gate (AdMob interstitial on Import/Export)
-13. IAP ("Remove Ads")
-14. Onboarding slides
-15. NativeWind migration
+6. ~~Viewport culling, minimap, search → pan-to-node~~ ✅ Sprint 5
+7. Zustand `useBuildStore` + MMKV persistence (migrate `allocatedNodes` from `useTreeStore`)
+8. BuildListScreen (create, list, open builds)
+9. Items screen (slot grid + paste parser)
+10. Gems screen (group management)
+11. Settings screen
+12. Fonts (Cinzel + Inter)
+13. Leather texture background
+14. Ad gate (AdMob interstitial on Import/Export)
+15. IAP ("Remove Ads")
+16. Onboarding slides
+17. NativeWind migration
