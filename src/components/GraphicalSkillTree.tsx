@@ -239,6 +239,18 @@ export default function GraphicalSkillTree({ onNodeLongPress }: Props) {
     return new Set<string>();
   }, [selectedAscendancy, selectedClass, classAscendancyNames]);
 
+  // The class start node is the player's origin — always shown as allocated visually,
+  // but NOT added to the real allocatedNodes Set (which would break canDeallocate BFS
+  // and inflate the passive point counter).
+  const visuallyAllocated = useMemo(() => {
+    if (!selectedClass) return allocatedNodes;
+    const startId = classStartNodes[selectedClass];
+    if (startId == null) return allocatedNodes;
+    const expanded = new Set(allocatedNodes);
+    expanded.add(startId);
+    return expanded;
+  }, [allocatedNodes, selectedClass, classStartNodes]);
+
   // -----------------------------------------------------------------------
   // SVG element arrays — memoized to avoid unnecessary re-creation
   // All positions are in raw world coordinates; the AnimatedG transform
@@ -258,7 +270,7 @@ export default function GraphicalSkillTree({ onNodeLongPress }: Props) {
         if (node.skill >= conn.id) continue;
         const toPos = nodePositions[conn.id];
         if (!toPos) continue;
-        const bothAllocated = allocatedNodes.has(node.skill) && allocatedNodes.has(conn.id);
+        const bothAllocated = visuallyAllocated.has(node.skill) && visuallyAllocated.has(conn.id);
         lines.push(
           <Line
             key={`e-${node.skill}-${conn.id}`}
@@ -274,7 +286,7 @@ export default function GraphicalSkillTree({ onNodeLongPress }: Props) {
       }
     }
     return lines;
-  }, [nodes, nodePositions, allocatedNodes]);
+  }, [nodes, nodePositions, visuallyAllocated]);
 
   const nodeElements = useMemo(() => {
     if (!Object.keys(nodePositions).length) return null;
@@ -284,7 +296,7 @@ export default function GraphicalSkillTree({ onNodeLongPress }: Props) {
       const pos = nodePositions[node.skill];
       if (!pos) continue;
 
-      const allocated = allocatedNodes.has(node.skill);
+      const allocated = visuallyAllocated.has(node.skill);
       const color = nodeTypeBadgeColor(node);
       const r = nodeRadius(node);
       const isHighlighted =
@@ -320,7 +332,7 @@ export default function GraphicalSkillTree({ onNodeLongPress }: Props) {
       );
     }
     return circles;
-  }, [nodes, nodePositions, allocatedNodes, highlightedAscendancies]);
+  }, [nodes, nodePositions, visuallyAllocated, highlightedAscendancies]);
 
   // -----------------------------------------------------------------------
   // Render
