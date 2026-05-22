@@ -586,16 +586,18 @@ const handleImport = () => {
 
 **Stat field name:** `stats` (array of strings) — the field is `stats` not `sd` or `dn`. Node name field is `name`.
 
-**Long-term goal (future milestone — not first release):**
-- Full interactive graphical tree rendered with `react-native-svg`
-- Pan (finger drag) and pinch-to-zoom via `react-native-gesture-handler`
-- Viewport culling: only render nodes visible in the current viewport rectangle
-- Node visual types: Normal (small circle), Notable (medium, gold outline), Keystone (large, gold filled), Mastery (star)
-- Connections: `Line` elements between adjacent node coordinates from the JSON
-- Allocated nodes: filled; unallocated: outline only
-- Class start nodes marked distinctly
-- Connectivity rules enforced: a node can only be allocated if adjacent to an already-allocated node or a class start node
-- `react-native-svg` is already installed from the initial setup (listed in dependencies) — no additional install needed at this stage
+**Graphical tree — IMPLEMENTED (Sprint 4):**
+- Full interactive SVG canvas at `src/components/GraphicalSkillTree.tsx`
+- Pan + pinch-to-zoom; `AnimatedG` with SVG string transform for UI-thread animation
+- All 4,701 nodes as styled circles (type-colored, filled when allocated)
+- All 5,630 connection edges (gold when both endpoints allocated)
+- Adjacency-enforced allocation + BFS de-allocation check
+- Camera fly-to class start on class selection
+
+**Future Phase 2 improvements (not yet implemented):**
+- Viewport culling with spatial index (render only nodes in current viewport)
+- Minimap overlay
+- Search → pan-to-node feature
 
 ### 7.2 Items Screen
 
@@ -1043,8 +1045,8 @@ eas build --platform ios --profile production   # iOS only via EAS on Windows
 | GGG PoE2 API limited (May 2026) | Bundle static `tree.json`; OAuth import is future scope |
 | Expo Go not usable | Always run via `npx expo run:android` or EAS builds — native modules require it |
 | PoB is Lua/XML | Reference only; do not port code; use our own JSON schema |
-| Skill tree prototype | FlatList with free toggle; graphical tree is a separate future milestone |
-| No connectivity rules in prototype | Nodes toggled freely; rules enforced only in future graphical tree |
+| Graphical skill tree | SVG canvas implemented in Sprint 4 — replaced FlatList entirely |
+| Connectivity rules | Adjacency + BFS de-allocation enforced in `useTreeStore.toggleNode()` when a class is selected |
 | Auto-save + manual save | 3-second debounce auto-save; manual Save button in header |
 | Unsaved-change guard | Modal on back/leave when `isDirty === true` |
 | Item input | Paste raw PoE text only; app parses it |
@@ -1331,13 +1333,57 @@ useLayoutEffect(() => {
 
 **`ascendancyName` reminder:** The field on a node is the **ascendancy name** (e.g. `"Titan"`), not the class name (`"Warrior"`). Build a `Set` of the selected class's ascendancy names from `classes` to match correctly.
 
+#### Sprint 4 — Graphical SVG Skill Tree (complete)
+**Shipped:** Full interactive SVG passive skill tree replacing the FlatList node browser. Pan + pinch-to-zoom canvas, all 4,701 nodes as styled circles, all 5,630 edges, adjacency-enforced allocation with BFS de-allocation check, camera fly-to on class selection, long-press detail sheet.
+
+**Files created/modified:**
+| File | Change | Purpose |
+|---|---|---|
+| `src/utils/treeLayout.ts` | Created | Pure layout utilities: position computation (PoB/GGG orbital formula), tree bounds, adjacency list, class start map, `canAllocate`, `canDeallocate` |
+| `src/store/useTreeStore.ts` | Modified | Added `nodePositions`, `treeBounds`, `adjacency`, `classStartNodes` to state; updated `loadTree()` to call layout utils; updated `toggleNode()` with adjacency enforcement; added `nodeRadius()` export |
+| `src/components/GraphicalSkillTree.tsx` | Created | SVG canvas: `AnimatedG` with string transform for UI-thread pan/zoom, `Gesture.Simultaneous(pan, pinch, Exclusive(longPress, tap))`, hit testing via `runOnJS`, memoized edges + nodes |
+| `src/screens/SkillTreeScreen.tsx` | Rewritten | Removed FlatList/search bar/header cog; added `GraphicalSkillTree` full-screen with `topOverlay` (⚙ + selection chip) and `counterOverlay` (passive points) as absolute-positioned semi-transparent layers |
+
+**Key technical decisions:**
+- `AnimatedG` (react-native-svg `G` wrapped by Reanimated) with SVG string transform `"translate(tx,ty) scale(s)"` — scale is around SVG origin (0,0), making focal-zoom formula exact: `panX_new = focalX - (focalX - savedPanX) × ratio`
+- Node positions stored as normalised world coords (≥0); `fitScale ≈ 0.011` maps the full ~32,470×33,738 world to screen
+- Pinch zoom range: `fitScale × 0.5` (zoom out) to `fitScale × 500` (extreme zoom in)
+- Class selection triggers `withSpring` camera animation to class start node at `fitScale × 10`
+- Hit test threshold: 30 screen-px (tap) / 40 screen-px (long-press), converted to world units by dividing by `scale.value`
+- Edges deduplicated: only rendered where `node.skill < conn.id` (lower ID → higher ID)
+- No viewport culling in Phase 1 — SVG clips naturally; Phase 2 will add spatial index if needed
+
+**Node position formula (PoB/GGG convention):**
+```ts
+const angle = n <= 1 ? 0 : (2 * Math.PI * orbitIndex) / n;
+const x = group.x + Math.sin(angle) * radius;
+const y = group.y - Math.cos(angle) * radius;
+// then normalise: subtract minX, minY so all coords ≥ 0
+```
+
+**Class start node IDs (from `classesStart` field in tree.json):**
+| PoE2 Classes | Node ID | Raw field value |
+|---|---|---|
+| Ranger, Huntress | 50459 | RANGER |
+| Warrior | 47175 | MARAUDER |
+| Mercenary | 50986 | DUELIST |
+| Witch, Sorceress | 54447 | WITCH |
+| Druid | 61525 | TEMPLAR |
+| Monk | 44683 | SIX |
+
+**Allocation rules enforced (when a class is selected):**
+- **Allocate**: blocked unless at least one neighbour is the class start node or already allocated
+- **De-allocate**: blocked if removing the node would disconnect any other allocated node from the class start (BFS reachability check through remaining allocated nodes)
+- **No class selected**: free toggle in both directions
+
 ### Sprint Backlog
 (Ordered by approximate priority — developer decides what to pick next)
 1. ~~Search bar + filter on Skill Tree list~~ ✅ Sprint 2
 2. ~~Tap node → bottom sheet detail (all stat lines)~~ ✅ Sprint 2
 3. ~~Allocate/deallocate toggle + passive point counter~~ ✅ Sprint 2
 4. ~~Class & ascendancy picker (cog button)~~ ✅ Sprint 3
-5. Zustand `useBuildStore` + MMKV persistence (migrate `allocatedNodes` from `useTreeStore`)
+5. ~~Graphical SVG skill tree (pan/zoom canvas, adjacency enforcement)~~ ✅ Sprint 4
+6. Zustand `useBuildStore` + MMKV persistence (migrate `allocatedNodes` from `useTreeStore`)
 6. BuildListScreen (create, list, open builds)
 7. Items screen (slot grid + paste parser)
 8. Gems screen (group management)
