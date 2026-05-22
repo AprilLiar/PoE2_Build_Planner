@@ -5,9 +5,11 @@ import {
   computeTreeBounds,
   computeAdjacency,
   buildClassStartMap,
+  buildSpatialGrid,
   canAllocate,
   canDeallocate,
   TreeBounds,
+  SpatialGrid,
 } from '../utils/treeLayout';
 
 // Re-export helpers so screens can import them from one place
@@ -51,6 +53,11 @@ interface TreeStoreState {
   treeBounds: TreeBounds;
   adjacency: Record<number, number[]>;
   classStartNodes: Record<string, number>; // PoE2 class name → start node ID
+  spatialGrid: SpatialGrid | null;         // grid index for viewport culling
+
+  // Camera fly-to: set a node ID to trigger the canvas to spring-animate to it
+  flyToNodeId: number | null;
+  setFlyToNodeId: (id: number | null) => void;
 
   loadTree: () => Promise<void>;
   toggleNode: (id: number) => void;
@@ -75,6 +82,8 @@ export const useTreeStore = create<TreeStoreState>((set, get) => ({
   treeBounds: EMPTY_BOUNDS,
   adjacency: {},
   classStartNodes: {},
+  spatialGrid: null,
+  flyToNodeId: null,
 
   loadTree: async () => {
     const { isLoaded, isLoading } = get();
@@ -108,6 +117,8 @@ export const useTreeStore = create<TreeStoreState>((set, get) => ({
       const treeBounds = computeTreeBounds(nodePositions);
       const adjacency = computeAdjacency(rawNodes as any);
       const classStartNodes = buildClassStartMap(rawNodes as any);
+      // Build a 500-world-unit grid for fast viewport culling
+      const spatialGrid = buildSpatialGrid(nodePositions, 500);
 
       set({
         nodes,
@@ -116,6 +127,7 @@ export const useTreeStore = create<TreeStoreState>((set, get) => ({
         treeBounds,
         adjacency,
         classStartNodes,
+        spatialGrid,
         isLoaded: true,
         isLoading: false,
       });
@@ -153,6 +165,7 @@ export const useTreeStore = create<TreeStoreState>((set, get) => ({
 
   setSelectedClass: (name) => set({ selectedClass: name }),
   setSelectedAscendancy: (name) => set({ selectedAscendancy: name }),
+  setFlyToNodeId: (id) => set({ flyToNodeId: id }),
 }));
 
 // --- Pure helper functions exported for use in components ---

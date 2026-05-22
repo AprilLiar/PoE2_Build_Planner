@@ -172,6 +172,65 @@ export function canAllocate(
   return false;
 }
 
+// ---------------------------------------------------------------------------
+// Spatial index — grid-based lookup for viewport culling
+// ---------------------------------------------------------------------------
+
+export type SpatialGrid = {
+  cellSize: number;
+  cells: Record<string, number[]>; // "gridX,gridY" → list of node IDs in that cell
+};
+
+/**
+ * Builds a uniform-grid spatial index from node world positions.
+ * Each cell covers cellSize × cellSize world units (~500 is a good default).
+ * Lets the renderer skip the ~96% of nodes outside the visible viewport
+ * by querying only the grid cells that overlap the viewport rect.
+ */
+export function buildSpatialGrid(
+  positions: Record<number, { x: number; y: number }>,
+  cellSize: number = 500
+): SpatialGrid {
+  const cells: Record<string, number[]> = {};
+  for (const [idStr, pos] of Object.entries(positions)) {
+    const gx = Math.floor(pos.x / cellSize);
+    const gy = Math.floor(pos.y / cellSize);
+    const key = `${gx},${gy}`;
+    if (!cells[key]) cells[key] = [];
+    cells[key].push(Number(idStr));
+  }
+  return { cellSize, cells };
+}
+
+/**
+ * Returns the set of node IDs whose grid cells overlap the given viewport rect.
+ * Nodes in boundary cells are included (conservative: may include a few off-screen).
+ */
+export function queryVisibleNodes(
+  grid: SpatialGrid,
+  minX: number,
+  minY: number,
+  maxX: number,
+  maxY: number
+): Set<number> {
+  const { cellSize, cells } = grid;
+  const gxMin = Math.floor(minX / cellSize);
+  const gyMin = Math.floor(minY / cellSize);
+  const gxMax = Math.floor(maxX / cellSize);
+  const gyMax = Math.floor(maxY / cellSize);
+
+  const visible = new Set<number>();
+  for (let gx = gxMin; gx <= gxMax; gx++) {
+    for (let gy = gyMin; gy <= gyMax; gy++) {
+      const ids = cells[`${gx},${gy}`];
+      if (ids) {
+        for (const id of ids) visible.add(id);
+      }
+    }
+  }
+  return visible;
+}
+
 /**
  * Returns true if nodeId can be safely removed without disconnecting any other
  * allocated node from the class start.
