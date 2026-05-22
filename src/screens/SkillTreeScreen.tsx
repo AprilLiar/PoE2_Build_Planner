@@ -11,6 +11,7 @@ import { useTreeStore, TreeNode } from '../store/useTreeStore';
 import NodeDetailSheet from '../components/NodeDetailSheet';
 import ClassPickerModal from '../components/ClassPickerModal';
 import GraphicalSkillTree from '../components/GraphicalSkillTree';
+import NodeSearchModal from '../components/NodeSearchModal';
 import { COLORS } from '../constants/colors';
 
 const MAX_POINTS = 123;
@@ -30,6 +31,7 @@ export default function SkillTreeScreen() {
   } = useTreeStore();
 
   const [pickerVisible, setPickerVisible] = useState(false);
+  const [searchVisible, setSearchVisible] = useState(false);
   const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
   const sheetRef = useRef<BottomSheetModal>(null);
 
@@ -86,7 +88,7 @@ export default function SkillTreeScreen() {
       {/* Full-screen graphical skill tree canvas */}
       <GraphicalSkillTree onNodeLongPress={openSheet} />
 
-      {/* Top overlay: cog button + active class/ascendancy indicator */}
+      {/* Top overlay: cog (left) + optional class chip (centre) + search icon (right) */}
       <View style={styles.topOverlay} pointerEvents="box-none">
         <TouchableOpacity
           onPress={() => setPickerVisible(true)}
@@ -96,14 +98,26 @@ export default function SkillTreeScreen() {
           <Text style={styles.cogText}>⚙</Text>
         </TouchableOpacity>
 
-        {selectionLabel && (
-          <View style={styles.selectionChip}>
-            <Text style={styles.selectionText}>{selectionLabel}</Text>
-            <TouchableOpacity onPress={clearSelection} hitSlop={8} style={styles.selectionClearBtn}>
-              <Text style={styles.selectionClearText}>✕</Text>
-            </TouchableOpacity>
-          </View>
-        )}
+        {/* Flexible middle: holds the class/ascendancy selection chip if active */}
+        <View style={styles.topMiddle} pointerEvents="box-none">
+          {selectionLabel && (
+            <View style={styles.selectionChip}>
+              <Text style={styles.selectionText}>{selectionLabel}</Text>
+              <TouchableOpacity onPress={clearSelection} hitSlop={8} style={styles.selectionClearBtn}>
+                <Text style={styles.selectionClearText}>✕</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+
+        {/* Search button — always right-aligned */}
+        <TouchableOpacity
+          onPress={() => setSearchVisible(true)}
+          style={styles.searchBtn}
+          hitSlop={8}
+        >
+          <Text style={styles.searchIcon}>🔍</Text>
+        </TouchableOpacity>
       </View>
 
       {/* Bottom overlay: passive point counter */}
@@ -131,6 +145,12 @@ export default function SkillTreeScreen() {
         selectedAscendancy={selectedAscendancy}
         onSelectClass={setSelectedClass}
         onSelectAscendancy={setSelectedAscendancy}
+      />
+
+      {/* Node search modal — tap a result to fly the camera to that node */}
+      <NodeSearchModal
+        visible={searchVisible}
+        onClose={() => setSearchVisible(false)}
       />
     </View>
   );
@@ -188,8 +208,17 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     fontSize: 22,
   },
-  selectionChip: {
+  topMiddle: {
     flex: 1,
+    marginRight: 8,
+  },
+  searchBtn: {
+    padding: 4,
+  },
+  searchIcon: {
+    fontSize: 20,
+  },
+  selectionChip: {
     flexDirection: 'row',
     alignItems: 'center',
     justifyContent: 'space-between',
