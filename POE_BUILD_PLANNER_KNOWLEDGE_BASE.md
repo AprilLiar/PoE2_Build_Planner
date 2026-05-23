@@ -1156,7 +1156,7 @@ Expo Go works as long as these packages are **never imported** in any JS/TS file
 - `react-native-google-mobile-ads` — native only, not in Expo Go
 - `expo-in-app-purchases` — native only, not in Expo Go
 
-All three are installed in `package.json` but unused in code until the project transitions to an EAS dev build. Safe packages (all included in Expo Go SDK 54): `expo-*`, `@react-navigation/*`, `react-native-reanimated`, `react-native-gesture-handler`, `react-native-screens`, `react-native-safe-area-context`, `@gorhom/bottom-sheet`, `react-native-draggable-flatlist`, `react-native-toast-message`, `zustand`, `@tanstack/react-query`.
+All three are installed in `package.json` but unused in code until the project transitions to an EAS dev build. Safe packages (all included in Expo Go SDK 54): `expo-*`, `@react-navigation/*`, `react-native-reanimated`, `react-native-gesture-handler`, `react-native-screens`, `react-native-safe-area-context`, `@gorhom/bottom-sheet`, `react-native-draggable-flatlist`, `react-native-toast-message`, `zustand`, `@tanstack/react-query`, `@shopify/react-native-skia` (bundled at v2.2.12).
 
 When MMKV/AdMob/IAP are needed: run `eas build --profile development`, install the dev client on device, and switch to that instead of Expo Go.
 
@@ -1183,7 +1183,7 @@ These are installed and will be wired in future sprints. Do not add them again:
 - `nativewind` — Tailwind classes (wired via Babel but no `className` props used yet; all styles use `StyleSheet.create`)
 - `react-native-toast-message` — notifications (Sprint 3+)
 - `react-native-draggable-flatlist` — gem group reordering (Gems sprint)
-- `react-native-svg` — graphical skill tree (future scope)
+- `react-native-svg` — installed but no longer imported (replaced by Skia in Sprint 5)
 - `expo-document-picker`, `expo-sharing` — import/export (Sprint 3+)
 
 **Now in use (wired in Sprint 2):**
@@ -1191,6 +1191,7 @@ These are installed and will be wired in future sprints. Do not add them again:
 - `@gorhom/bottom-sheet` — `NodeDetailSheet` at `src/components/NodeDetailSheet.tsx`; `BottomSheetModalProvider` in `App.tsx`
 - `react-native-reanimated`, `react-native-gesture-handler` — used by `@gorhom/bottom-sheet` (v5 requirement)
 - `expo-file-system` — used in `useTreeStore.loadTree()` to read `tree.json`
+- `@shopify/react-native-skia` v2.2.12 — used in `src/components/GraphicalSkillTree.tsx` for GPU-accelerated canvas rendering
 
 ### Sprint History
 
@@ -1378,6 +1379,37 @@ const y = group.y - Math.cos(angle) * radius;
 - **De-allocate**: blocked if removing the node would disconnect any other allocated node from the class start (BFS reachability check through remaining allocated nodes)
 - **No class selected**: free toggle in both directions
 
+#### Sprint 5 — React Native Skia Rendering (complete)
+**Shipped:** Replaced `react-native-svg` canvas with `@shopify/react-native-skia` for GPU-accelerated pan/zoom. Pan/zoom now runs entirely on the UI thread with zero JS bridge traffic during gestures.
+
+**Root cause of SVG lag:** `AnimatedG + useAnimatedProps` serialises the `translate/scale` transform string across the JS bridge on every gesture frame. Even with batched path strings, this bridge crossing caused frame drops on iPhone.
+
+**Files modified:**
+| File | Change | Purpose |
+|---|---|---|
+| `src/components/GraphicalSkillTree.tsx` | Rewritten | Skia `Canvas`/`Group`/`Path`/`Rect` replacing SVG; `useDerivedValue` for UI-thread transforms |
+| `package.json` | Added `@shopify/react-native-skia@^2.2.12` | Installed via `npm install --legacy-peer-deps` |
+
+**Key technical decisions:**
+- `@shopify/react-native-skia` v2.2.12 is bundled in Expo Go SDK 54 — no native rebuild needed
+- `Group transform={useDerivedValue(...)}` — Skia detects `_isReanimatedSharedValue: true` flag and re-draws on the UI thread via Reanimated; camera state never leaves the UI thread during gestures
+- `Skia.Path.Make()` + `path.addCircle(x, y, r)` for nodes (replaces SVG arc string trick); `path.moveTo/lineTo` for edges
+- Unallocated nodes: `style="fill"` at 40% opacity (replaces `fill="none" + vectorEffect="non-scaling-stroke"` workaround)
+- Allocated nodes: `style="fill"` at 100% opacity
+- Minimap: separate `Canvas` component with `Group transform={[{scaleX}, {scaleY}]}`; viewport rect uses `DerivedValue<number>` for each `Rect` prop
+- `react-native-svg` stays in `package.json` but is no longer imported in `GraphicalSkillTree.tsx`
+- All gestures, hit testing, camera, allocation, viewport culling, fly-to logic unchanged
+
+**Skia + Reanimated v4 integration mechanism:**
+```ts
+// Skia's isSharedValue() check (in sksg/utils.js):
+const isSharedValue = value => value?._isReanimatedSharedValue === true;
+// Reanimated v4 sets this flag on all SharedValue/DerivedValue objects (in mutables.js)
+// → Skia subscribes to updates and redraws on the UI thread automatically
+```
+
+**npm install note:** `npm install --legacy-peer-deps` required because `eslint-plugin-react-native@4.1.0` has an unresolved peer conflict with `eslint@9`. This is a dev-only dependency and safe to bypass.
+
 ### Sprint Backlog
 (Ordered by approximate priority — developer decides what to pick next)
 1. ~~Search bar + filter on Skill Tree list~~ ✅ Sprint 2
@@ -1385,14 +1417,15 @@ const y = group.y - Math.cos(angle) * radius;
 3. ~~Allocate/deallocate toggle + passive point counter~~ ✅ Sprint 2
 4. ~~Class & ascendancy picker (cog button)~~ ✅ Sprint 3
 5. ~~Graphical SVG skill tree (pan/zoom canvas, adjacency enforcement)~~ ✅ Sprint 4
-6. Zustand `useBuildStore` + MMKV persistence (migrate `allocatedNodes` from `useTreeStore`)
-6. BuildListScreen (create, list, open builds)
-7. Items screen (slot grid + paste parser)
-8. Gems screen (group management)
-9. Settings screen
-10. Fonts (Cinzel + Inter)
-11. Leather texture background
-12. Ad gate (AdMob interstitial on Import/Export)
-13. IAP ("Remove Ads")
-14. Onboarding slides
-15. NativeWind migration
+6. ~~React Native Skia rendering (smooth pan/zoom on GPU)~~ ✅ Sprint 5
+7. Zustand `useBuildStore` + MMKV persistence (migrate `allocatedNodes` from `useTreeStore`)
+8. BuildListScreen (create, list, open builds)
+9. Items screen (slot grid + paste parser)
+10. Gems screen (group management)
+11. Settings screen
+12. Fonts (Cinzel + Inter)
+13. Leather texture background
+14. Ad gate (AdMob interstitial on Import/Export)
+15. IAP ("Remove Ads")
+16. Onboarding slides
+17. NativeWind migration

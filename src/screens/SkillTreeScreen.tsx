@@ -1,4 +1,4 @@
-import React, { useRef, useState, useCallback } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View,
   Text,
@@ -6,9 +6,8 @@ import {
   ActivityIndicator,
   StyleSheet,
 } from 'react-native';
-import { BottomSheetModal } from '@gorhom/bottom-sheet';
-import { useTreeStore, TreeNode } from '../store/useTreeStore';
-import NodeDetailSheet from '../components/NodeDetailSheet';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useTreeStore } from '../store/useTreeStore';
 import ClassPickerModal from '../components/ClassPickerModal';
 import GraphicalSkillTree from '../components/GraphicalSkillTree';
 import NodeSearchModal from '../components/NodeSearchModal';
@@ -23,46 +22,34 @@ export default function SkillTreeScreen() {
     isLoaded,
     error,
     loadTree,
-    toggleNode,
     selectedClass,
     selectedAscendancy,
     setSelectedClass,
     setSelectedAscendancy,
   } = useTreeStore();
 
+  const insets = useSafeAreaInsets();
   const [pickerVisible, setPickerVisible] = useState(false);
   const [searchVisible, setSearchVisible] = useState(false);
-  const [selectedNode, setSelectedNode] = useState<TreeNode | null>(null);
-  const sheetRef = useRef<BottomSheetModal>(null);
 
   // loadTree is idempotent — safe to call on every mount
   React.useEffect(() => {
     loadTree();
   }, [loadTree]);
 
-  const openSheet = useCallback((node: TreeNode) => {
-    setSelectedNode(node);
-    sheetRef.current?.present();
-  }, []);
-
-  const handleToggleFromSheet = useCallback(() => {
-    if (selectedNode) toggleNode(selectedNode.skill);
-  }, [selectedNode, toggleNode]);
-
-  const clearSelection = useCallback(() => {
-    setSelectedClass(null);
+  // Only clears the ascendancy — class is always required
+  const clearAscendancy = useCallback(() => {
     setSelectedAscendancy(null);
-  }, [setSelectedClass, setSelectedAscendancy]);
+  }, [setSelectedAscendancy]);
 
   const pointsUsed = allocatedNodes.size;
   const pointsColor =
     pointsUsed > MAX_POINTS ? COLORS.danger : pointsUsed >= 100 ? COLORS.gold : COLORS.success;
 
-  const selectionLabel = selectedClass
-    ? selectedAscendancy
-      ? `${selectedClass}  ·  ${selectedAscendancy}`
-      : selectedClass
-    : null;
+  // Chip shows "Class · Ascendancy" or just "Class"; ✕ clears only the ascendancy
+  const selectionLabel = selectedAscendancy
+    ? `${selectedClass}  ·  ${selectedAscendancy}`
+    : selectedClass;
 
   // While tree is loading show a spinner over the dark background
   if (!isLoaded && !error) {
@@ -86,10 +73,10 @@ export default function SkillTreeScreen() {
   return (
     <View style={styles.container}>
       {/* Full-screen graphical skill tree canvas */}
-      <GraphicalSkillTree onNodeLongPress={openSheet} />
+      <GraphicalSkillTree />
 
       {/* Top overlay: cog (left) + optional class chip (centre) + search icon (right) */}
-      <View style={styles.topOverlay} pointerEvents="box-none">
+      <View style={[styles.topOverlay, { paddingTop: insets.top + 8 }]} pointerEvents="box-none">
         <TouchableOpacity
           onPress={() => setPickerVisible(true)}
           style={styles.cogBtn}
@@ -98,14 +85,16 @@ export default function SkillTreeScreen() {
           <Text style={styles.cogText}>⚙</Text>
         </TouchableOpacity>
 
-        {/* Flexible middle: holds the class/ascendancy selection chip if active */}
+        {/* Middle: class/ascendancy chip; ✕ clears only the ascendancy */}
         <View style={styles.topMiddle} pointerEvents="box-none">
           {selectionLabel && (
             <View style={styles.selectionChip}>
-              <Text style={styles.selectionText}>{selectionLabel}</Text>
-              <TouchableOpacity onPress={clearSelection} hitSlop={8} style={styles.selectionClearBtn}>
-                <Text style={styles.selectionClearText}>✕</Text>
-              </TouchableOpacity>
+              <Text style={styles.selectionText} numberOfLines={1}>{selectionLabel}</Text>
+              {selectedAscendancy && (
+                <TouchableOpacity onPress={clearAscendancy} hitSlop={8} style={styles.selectionClearBtn}>
+                  <Text style={styles.selectionClearText}>✕</Text>
+                </TouchableOpacity>
+              )}
             </View>
           )}
         </View>
@@ -121,20 +110,12 @@ export default function SkillTreeScreen() {
       </View>
 
       {/* Bottom overlay: passive point counter */}
-      <View style={styles.counterOverlay} pointerEvents="none">
+      <View style={[styles.counterOverlay, { paddingBottom: insets.bottom + 10 }]} pointerEvents="none">
         <Text style={styles.counterLabel}>Passive Points</Text>
         <Text style={[styles.counterValue, { color: pointsColor }]}>
           {pointsUsed} / {MAX_POINTS}
         </Text>
       </View>
-
-      {/* Node detail bottom sheet (long-press) */}
-      <NodeDetailSheet
-        sheetRef={sheetRef}
-        node={selectedNode}
-        isAllocated={selectedNode ? allocatedNodes.has(selectedNode.skill) : false}
-        onToggle={handleToggleFromSheet}
-      />
 
       {/* Class / ascendancy picker modal */}
       <ClassPickerModal

@@ -54,6 +54,7 @@ interface TreeStoreState {
   adjacency: Record<number, number[]>;
   classStartNodes: Record<string, number>; // PoE2 class name → start node ID
   spatialGrid: SpatialGrid | null;         // grid index for viewport culling
+  treeConstants: { orbitRadii: number[]; skillsPerOrbit: number[] }; // for arc rendering
 
   // Camera fly-to: set a node ID to trigger the canvas to spring-animate to it
   flyToNodeId: number | null;
@@ -72,8 +73,8 @@ export const useTreeStore = create<TreeStoreState>((set, get) => ({
   nodes: {},
   classes: [],
   allocatedNodes: new Set(),
-  selectedClass: null,
-  selectedAscendancy: null,
+  selectedClass: 'Warrior',
+  selectedAscendancy: 'Titan',
   isLoaded: false,
   isLoading: false,
   error: null,
@@ -83,6 +84,7 @@ export const useTreeStore = create<TreeStoreState>((set, get) => ({
   adjacency: {},
   classStartNodes: {},
   spatialGrid: null,
+  treeConstants: { orbitRadii: [], skillsPerOrbit: [] },
   flyToNodeId: null,
 
   loadTree: async () => {
@@ -128,6 +130,7 @@ export const useTreeStore = create<TreeStoreState>((set, get) => ({
         adjacency,
         classStartNodes,
         spatialGrid,
+        treeConstants: constants,
         isLoaded: true,
         isLoading: false,
       });

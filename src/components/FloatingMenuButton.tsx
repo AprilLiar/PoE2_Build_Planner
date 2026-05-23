@@ -37,7 +37,8 @@ export default function FloatingMenuButton() {
     setOpen(false);
   };
 
-  const btnTop = insets.top + 12;
+  // Position below SkillTreeScreen's top overlay (insets.top + ~46px) with a small gap
+  const btnTop = insets.top + 58;
   const btnLeft = insets.left + 16;
 
   return (
