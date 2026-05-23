@@ -11,11 +11,9 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import {
   Canvas,
   Group,
-  Image as SkiaImage,
   Path as SkiaPath,
   Rect,
   Skia,
-  useImage,
 } from '@shopify/react-native-skia';
 import type { SkPath } from '@shopify/react-native-skia';
 import { useTreeStore, TreeNode } from '../store/useTreeStore';
@@ -163,9 +161,6 @@ const tooltipStyles = StyleSheet.create({
 export default function GraphicalSkillTree(_props: Props) {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
-
-  // Group background texture — loaded once, reused for every visible group
-  const groupBgImg = useImage(require('../../assets/group-background-1.png'));
 
   const {
     nodes,
@@ -752,23 +747,6 @@ export default function GraphicalSkillTree(_props: Props) {
                 strokeWidth={orbitRingStroke as any}
                 opacity={0.4}
               />
-
-              {/* Layer 2: Group background textures — drawn per visible group */}
-              {groupBgImg && visibleGroups
-                .filter(g => !g.isAscendancy && g.maxOrbitRadius > 0)
-                .map(g => (
-                  <SkiaImage
-                    key={g.id}
-                    image={groupBgImg}
-                    x={g.x - g.maxOrbitRadius * 1.2}
-                    y={g.y - g.maxOrbitRadius * 1.2}
-                    width={g.maxOrbitRadius * 2.4}
-                    height={g.maxOrbitRadius * 2.4}
-                    fit="cover"
-                    opacity={0.35}
-                  />
-                ))
-              }
 
               {/* Layer 3: Unallocated edges */}
               <SkiaPath
