@@ -11,9 +11,11 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import {
   Canvas,
   Group,
+  Image as SkiaImage,
   Path as SkiaPath,
   Rect,
   Skia,
+  useImage,
 } from '@shopify/react-native-skia';
 import type { SkPath } from '@shopify/react-native-skia';
 import { useTreeStore, TreeNode } from '../store/useTreeStore';
@@ -33,13 +35,13 @@ type Viewport = { minX: number; minY: number; maxX: number; maxY: number };
 
 type NodeCategory = 'keystone' | 'notable' | 'mastery' | 'ascNormal' | 'jewel' | 'normal';
 
-const CATEGORY_STYLE: Record<NodeCategory, { color: string; r: number }> = {
-  keystone:  { color: COLORS.nodeKeystone, r: 30 },
-  notable:   { color: COLORS.nodeNotable,  r: 22 },
-  mastery:   { color: COLORS.nodeMastery,  r: 18 },
-  ascNormal: { color: COLORS.nodeNormal,   r: 18 },
-  jewel:     { color: COLORS.nodeJewel,    r: 15 },
-  normal:    { color: COLORS.nodeNormal,   r: 15 },
+const CATEGORY_STYLE: Record<NodeCategory, { color: string; r: number; outerR: number }> = {
+  keystone:  { color: COLORS.nodeKeystone, r: 30, outerR: 43 },
+  notable:   { color: COLORS.nodeNotable,  r: 22, outerR: 32 },
+  mastery:   { color: COLORS.nodeMastery,  r: 18, outerR: 26 },
+  ascNormal: { color: COLORS.nodeNormal,   r: 18, outerR: 26 },
+  jewel:     { color: COLORS.nodeJewel,    r: 15, outerR: 23 },
+  normal:    { color: COLORS.nodeNormal,   r: 15, outerR: 22 },
 };
 
 const CATEGORY_KEYS = Object.keys(CATEGORY_STYLE) as NodeCategory[];
@@ -162,6 +164,9 @@ export default function GraphicalSkillTree(_props: Props) {
   const { width: screenWidth, height: screenHeight } = useWindowDimensions();
   const insets = useSafeAreaInsets();
 
+  // Group background texture — loaded once, reused for every visible group
+  const groupBgImg = useImage(require('../../assets/group-background-1.png'));
+
   const {
     nodes,
     nodePositions,
@@ -174,6 +179,7 @@ export default function GraphicalSkillTree(_props: Props) {
     toggleNode,
     spatialGrid,
     treeConstants,
+    groupData,
     flyToNodeId,
     setFlyToNodeId,
   } = useTreeStore();
@@ -372,6 +378,9 @@ export default function GraphicalSkillTree(_props: Props) {
   const edgeStrokeUnalloc = useDerivedValue(() => 1.5 / scale.value);
   const edgeStrokeAlloc   = useDerivedValue(() => 2.5 / scale.value);
   const highlightStroke   = useDerivedValue(() => 3.0 / scale.value);
+  const edgeGlowStroke    = useDerivedValue(() => 10.0 / scale.value); // wide glow pass
+  const orbitRingStroke   = useDerivedValue(() => 1.5 / scale.value);
+  const nodeRingStroke    = useDerivedValue(() => 2.0 / scale.value);
 
   // -------------------------------------------------------------------------
   // Minimap viewport rect — world-coordinate positions animated on UI thread
@@ -526,6 +535,36 @@ export default function GraphicalSkillTree(_props: Props) {
   }, [spatialGrid, viewport, selectedAscendancy, nodes]);
 
   // -------------------------------------------------------------------------
+  // Group visibility — filter groups to those overlapping the current viewport
+  // -------------------------------------------------------------------------
+  const visibleGroups = useMemo(() => {
+    if (!viewport) return groupData;
+    return groupData.filter((g) => {
+      const r = g.maxOrbitRadius + 200;
+      return (
+        g.x + r > viewport.minX && g.x - r < viewport.maxX &&
+        g.y + r > viewport.minY && g.y - r < viewport.maxY
+      );
+    });
+  }, [groupData, viewport]);
+
+  // -------------------------------------------------------------------------
+  // Orbit ring path — one circle per orbit per visible non-ascendancy group
+  // -------------------------------------------------------------------------
+  const orbitRingPath = useMemo(() => {
+    const path = Skia.Path.Make();
+    const { orbitRadii } = treeConstants;
+    for (const g of visibleGroups) {
+      if (g.isAscendancy) continue;
+      for (const o of g.orbits) {
+        const r = orbitRadii[o] ?? 0;
+        if (r > 0) path.addCircle(g.x, g.y, r);
+      }
+    }
+    return path;
+  }, [visibleGroups, treeConstants]);
+
+  // -------------------------------------------------------------------------
   // SKIA PATH BUILDING — edges
   // -------------------------------------------------------------------------
   const { unallocEdgePath, allocEdgePath } = useMemo(() => {
@@ -625,6 +664,27 @@ export default function GraphicalSkillTree(_props: Props) {
   }, [nodes, displayPositions, visuallyAllocated, highlightedAscendancies, visibleNodeIds]);
 
   // -------------------------------------------------------------------------
+  // SKIA PATH BUILDING — node outer rings (frame effect per node type)
+  // -------------------------------------------------------------------------
+  const nodeRingPaths = useMemo(() => {
+    const unalloc = makeCategoryPaths();
+    const alloc   = makeCategoryPaths();
+    for (const node of Object.values(nodes)) {
+      const pos = displayPositions[node.skill];
+      if (!pos) continue;
+      if (visibleNodeIds && !visibleNodeIds.has(node.skill)) continue;
+      const cat = getCategory(node);
+      const outerR = CATEGORY_STYLE[cat].outerR;
+      if (visuallyAllocated.has(node.skill)) {
+        alloc[cat].addCircle(pos.x, pos.y, outerR);
+      } else {
+        unalloc[cat].addCircle(pos.x, pos.y, outerR);
+      }
+    }
+    return { unalloc, alloc };
+  }, [nodes, displayPositions, visuallyAllocated, visibleNodeIds]);
+
+  // -------------------------------------------------------------------------
   // SKIA PATH BUILDING — minimap (once after tree loads)
   // -------------------------------------------------------------------------
   const minimapPaths = useMemo(() => {
@@ -644,6 +704,39 @@ export default function GraphicalSkillTree(_props: Props) {
   const mmScaleX = showMinimap ? MINIMAP_INNER / treeBounds.width  : 1;
   const mmScaleY = showMinimap ? MINIMAP_INNER / treeBounds.height : 1;
 
+  // Shared values so the minimap gesture worklet can read the current scale factors
+  const mmScaleXSV = useSharedValue(mmScaleX);
+  const mmScaleYSV = useSharedValue(mmScaleY);
+  useEffect(() => {
+    mmScaleXSV.value = mmScaleX;
+    mmScaleYSV.value = mmScaleY;
+  }, [mmScaleX, mmScaleY, mmScaleXSV, mmScaleYSV]);
+
+  // Minimap padding: the inner canvas sits centred inside the outer View with this offset
+  const MINIMAP_PAD = (MINIMAP_SIZE - MINIMAP_INNER) / 2; // = 10
+
+  const minimapGesture = Gesture.Pan()
+    .onBegin((e) => {
+      // Convert minimap touch → world coordinate → re-centre camera
+      const worldX = (e.x - MINIMAP_PAD) / mmScaleXSV.value;
+      const worldY = (e.y - MINIMAP_PAD) / mmScaleYSV.value;
+      panX.value = screenWidthSV.value  / 2 - worldX * scale.value;
+      panY.value = screenHeightSV.value / 2 - worldY * scale.value;
+      savedPanX.value = panX.value;
+      savedPanY.value = panY.value;
+    })
+    .onUpdate((e) => {
+      const worldX = (e.x - MINIMAP_PAD) / mmScaleXSV.value;
+      const worldY = (e.y - MINIMAP_PAD) / mmScaleYSV.value;
+      panX.value = screenWidthSV.value  / 2 - worldX * scale.value;
+      panY.value = screenHeightSV.value / 2 - worldY * scale.value;
+    })
+    .onEnd(() => {
+      savedPanX.value = panX.value;
+      savedPanY.value = panY.value;
+      runOnJS(updateViewportJS)();
+    });
+
   return (
     <View style={styles.container}>
       {/* Main canvas */}
@@ -651,7 +744,33 @@ export default function GraphicalSkillTree(_props: Props) {
         <View style={StyleSheet.absoluteFill}>
           <Canvas style={StyleSheet.absoluteFill}>
             <Group transform={transform as any}>
-              {/* Unallocated edges — non-scaling stroke stays ~1.5 screen px */}
+              {/* Layer 1: Orbit ring grid — the constellation pattern behind all nodes */}
+              <SkiaPath
+                path={orbitRingPath}
+                color="#1E3A5F"
+                style="stroke"
+                strokeWidth={orbitRingStroke as any}
+                opacity={0.4}
+              />
+
+              {/* Layer 2: Group background textures — drawn per visible group */}
+              {groupBgImg && visibleGroups
+                .filter(g => !g.isAscendancy && g.maxOrbitRadius > 0)
+                .map(g => (
+                  <SkiaImage
+                    key={g.id}
+                    image={groupBgImg}
+                    x={g.x - g.maxOrbitRadius * 1.2}
+                    y={g.y - g.maxOrbitRadius * 1.2}
+                    width={g.maxOrbitRadius * 2.4}
+                    height={g.maxOrbitRadius * 2.4}
+                    fit="cover"
+                    opacity={0.35}
+                  />
+                ))
+              }
+
+              {/* Layer 3: Unallocated edges */}
               <SkiaPath
                 path={unallocEdgePath}
                 color={COLORS.border}
@@ -659,7 +778,15 @@ export default function GraphicalSkillTree(_props: Props) {
                 strokeWidth={edgeStrokeUnalloc as any}
                 opacity={0.75}
               />
-              {/* Allocated edges — gold, slightly thicker */}
+              {/* Layer 4: Allocated edge glow — wide transparent pass */}
+              <SkiaPath
+                path={allocEdgePath}
+                color={COLORS.gold}
+                style="stroke"
+                strokeWidth={edgeGlowStroke as any}
+                opacity={0.15}
+              />
+              {/* Layer 5: Allocated edges — solid gold */}
               <SkiaPath
                 path={allocEdgePath}
                 color={COLORS.gold}
@@ -667,7 +794,8 @@ export default function GraphicalSkillTree(_props: Props) {
                 strokeWidth={edgeStrokeAlloc as any}
                 opacity={0.9}
               />
-              {/* Ascendancy highlight rings */}
+
+              {/* Layer 6: Ascendancy highlight rings */}
               <SkiaPath
                 path={nodePaths.highlight}
                 color={COLORS.teal}
@@ -675,7 +803,19 @@ export default function GraphicalSkillTree(_props: Props) {
                 strokeWidth={highlightStroke as any}
                 opacity={0.8}
               />
-              {/* Unallocated nodes */}
+
+              {/* Layer 7: Unallocated node outer rings */}
+              {CATEGORY_KEYS.map(cat => (
+                <SkiaPath
+                  key={`ur-${cat}`}
+                  path={nodeRingPaths.unalloc[cat]}
+                  color={COLORS.border}
+                  style="stroke"
+                  strokeWidth={nodeRingStroke as any}
+                  opacity={0.6}
+                />
+              ))}
+              {/* Layer 8: Unallocated nodes filled */}
               {CATEGORY_KEYS.map(cat => (
                 <SkiaPath
                   key={`u-${cat}`}
@@ -685,7 +825,19 @@ export default function GraphicalSkillTree(_props: Props) {
                   opacity={0.45}
                 />
               ))}
-              {/* Allocated nodes */}
+
+              {/* Layer 9: Allocated node outer rings — category colour for glow effect */}
+              {CATEGORY_KEYS.map(cat => (
+                <SkiaPath
+                  key={`ar-${cat}`}
+                  path={nodeRingPaths.alloc[cat]}
+                  color={CATEGORY_STYLE[cat].color}
+                  style="stroke"
+                  strokeWidth={nodeRingStroke as any}
+                  opacity={0.9}
+                />
+              ))}
+              {/* Layer 10: Allocated nodes filled */}
               {CATEGORY_KEYS.map(cat => (
                 <SkiaPath
                   key={`a-${cat}`}
@@ -699,39 +851,41 @@ export default function GraphicalSkillTree(_props: Props) {
         </View>
       </GestureDetector>
 
-      {/* Minimap */}
+      {/* Minimap — touch/drag to pan the main camera (MOBA-style) */}
       {showMinimap && (
-        <View style={[styles.minimap, { bottom: minimapBottom }]}>
-          <Canvas style={{ width: MINIMAP_INNER, height: MINIMAP_INNER }}>
-            <Group transform={[{ scaleX: mmScaleX }, { scaleY: mmScaleY }]}>
-              {CATEGORY_KEYS.map(cat => (
-                <SkiaPath
-                  key={cat}
-                  path={minimapPaths[cat]}
-                  color={CATEGORY_STYLE[cat].color}
-                  opacity={0.65}
+        <GestureDetector gesture={minimapGesture}>
+          <View style={[styles.minimap, { bottom: minimapBottom }]}>
+            <Canvas style={{ width: MINIMAP_INNER, height: MINIMAP_INNER }}>
+              <Group transform={[{ scaleX: mmScaleX }, { scaleY: mmScaleY }]}>
+                {CATEGORY_KEYS.map(cat => (
+                  <SkiaPath
+                    key={cat}
+                    path={minimapPaths[cat]}
+                    color={CATEGORY_STYLE[cat].color}
+                    opacity={0.65}
+                  />
+                ))}
+                <Rect
+                  x={minimapViewX as any}
+                  y={minimapViewY as any}
+                  width={minimapViewW as any}
+                  height={minimapViewH as any}
+                  color="rgba(201,168,76,0.06)"
                 />
-              ))}
-              <Rect
-                x={minimapViewX as any}
-                y={minimapViewY as any}
-                width={minimapViewW as any}
-                height={minimapViewH as any}
-                color="rgba(201,168,76,0.06)"
-              />
-              <Rect
-                x={minimapViewX as any}
-                y={minimapViewY as any}
-                width={minimapViewW as any}
-                height={minimapViewH as any}
-                color={COLORS.gold}
-                style="stroke"
-                strokeWidth={500}
-                opacity={0.85}
-              />
-            </Group>
-          </Canvas>
-        </View>
+                <Rect
+                  x={minimapViewX as any}
+                  y={minimapViewY as any}
+                  width={minimapViewW as any}
+                  height={minimapViewH as any}
+                  color={COLORS.gold}
+                  style="stroke"
+                  strokeWidth={500}
+                  opacity={0.85}
+                />
+              </Group>
+            </Canvas>
+          </View>
+        </GestureDetector>
       )}
 
       {/* Node tooltip — pointerEvents="none" so gestures pass through */}

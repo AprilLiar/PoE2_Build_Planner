@@ -19,9 +19,17 @@ interface Props {
 
 const MAX_RESULTS = 30;
 
+// Module-level: persists across open/close cycles without remounting
+let lastQuery = '';
+
 export default function NodeSearchModal({ visible, onClose }: Props) {
   const { nodes, setFlyToNodeId } = useTreeStore();
-  const [query, setQuery] = useState('');
+  const [query, setQuery] = useState(lastQuery);
+
+  const handleQueryChange = useCallback((text: string) => {
+    setQuery(text);
+    lastQuery = text;
+  }, []);
 
   // Filter and sort results whenever query changes.
   // Order: Keystone → Notable → Normal → Mastery, then alphabetical within each type.
@@ -43,14 +51,14 @@ export default function NodeSearchModal({ visible, onClose }: Props) {
     (node: TreeNode) => {
       setFlyToNodeId(node.skill); // GraphicalSkillTree reacts to this
       onClose();
-      setQuery('');
+      // Keep query for next open — lastQuery already up-to-date
     },
     [setFlyToNodeId, onClose]
   );
 
   const handleClose = useCallback(() => {
     onClose();
-    setQuery('');
+    // Keep query for next open
   }, [onClose]);
 
   const renderItem = useCallback(
@@ -95,7 +103,7 @@ export default function NodeSearchModal({ visible, onClose }: Props) {
               <TextInput
                 style={styles.input}
                 value={query}
-                onChangeText={setQuery}
+                onChangeText={handleQueryChange}
                 placeholder="Node name…"
                 placeholderTextColor={COLORS.textMuted}
                 autoFocus

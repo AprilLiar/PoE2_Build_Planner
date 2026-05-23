@@ -75,27 +75,23 @@ export default function SkillTreeScreen() {
       {/* Full-screen graphical skill tree canvas */}
       <GraphicalSkillTree />
 
-      {/* Top overlay: cog (left) + optional class chip (centre) + search icon (right) */}
+      {/* Top overlay: class chip (centre, tappable) + search icon (right) */}
       <View style={[styles.topOverlay, { paddingTop: insets.top + 8 }]} pointerEvents="box-none">
-        <TouchableOpacity
-          onPress={() => setPickerVisible(true)}
-          style={styles.cogBtn}
-          hitSlop={8}
-        >
-          <Text style={styles.cogText}>⚙</Text>
-        </TouchableOpacity>
-
-        {/* Middle: class/ascendancy chip; ✕ clears only the ascendancy */}
+        {/* Tapping the chip opens the class/ascendancy picker */}
         <View style={styles.topMiddle} pointerEvents="box-none">
           {selectionLabel && (
-            <View style={styles.selectionChip}>
+            <TouchableOpacity
+              style={styles.selectionChip}
+              onPress={() => setPickerVisible(true)}
+              activeOpacity={0.7}
+            >
               <Text style={styles.selectionText} numberOfLines={1}>{selectionLabel}</Text>
               {selectedAscendancy && (
                 <TouchableOpacity onPress={clearAscendancy} hitSlop={8} style={styles.selectionClearBtn}>
                   <Text style={styles.selectionClearText}>✕</Text>
                 </TouchableOpacity>
               )}
-            </View>
+            </TouchableOpacity>
           )}
         </View>
 
@@ -180,14 +176,6 @@ const styles = StyleSheet.create({
     backgroundColor: 'rgba(10, 14, 26, 0.85)',
     borderBottomWidth: 1,
     borderBottomColor: COLORS.border,
-  },
-  cogBtn: {
-    padding: 4,
-    marginRight: 10,
-  },
-  cogText: {
-    color: COLORS.textMuted,
-    fontSize: 22,
   },
   topMiddle: {
     flex: 1,

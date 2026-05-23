@@ -6,14 +6,17 @@ import {
   computeAdjacency,
   buildClassStartMap,
   buildSpatialGrid,
+  buildGroupData,
   canAllocate,
   canDeallocate,
   TreeBounds,
   SpatialGrid,
+  GroupData,
 } from '../utils/treeLayout';
 
 // Re-export helpers so screens can import them from one place
 export { canAllocate, canDeallocate } from '../utils/treeLayout';
+export type { GroupData } from '../utils/treeLayout';
 
 export interface TreeNode {
   skill: number;
@@ -55,6 +58,7 @@ interface TreeStoreState {
   classStartNodes: Record<string, number>; // PoE2 class name → start node ID
   spatialGrid: SpatialGrid | null;         // grid index for viewport culling
   treeConstants: { orbitRadii: number[]; skillsPerOrbit: number[] }; // for arc rendering
+  groupData: GroupData[];                  // group centers + orbit radii for background rendering
 
   // Camera fly-to: set a node ID to trigger the canvas to spring-animate to it
   flyToNodeId: number | null;
@@ -85,6 +89,7 @@ export const useTreeStore = create<TreeStoreState>((set, get) => ({
   classStartNodes: {},
   spatialGrid: null,
   treeConstants: { orbitRadii: [], skillsPerOrbit: [] },
+  groupData: [],
   flyToNodeId: null,
 
   loadTree: async () => {
@@ -115,12 +120,15 @@ export const useTreeStore = create<TreeStoreState>((set, get) => ({
       const groups = data.groups ?? {};
       const constants = data.constants ?? { orbitRadii: [], skillsPerOrbit: [] };
 
-      const nodePositions = computeNodePositions(rawNodes as any, groups, constants);
+      const { positions: nodePositions, normOffsetX, normOffsetY } =
+        computeNodePositions(rawNodes as any, groups, constants);
       const treeBounds = computeTreeBounds(nodePositions);
       const adjacency = computeAdjacency(rawNodes as any);
       const classStartNodes = buildClassStartMap(rawNodes as any);
       // Build a 500-world-unit grid for fast viewport culling
       const spatialGrid = buildSpatialGrid(nodePositions, 500);
+      // Group centers + orbit radii for background ring rendering
+      const groupData = buildGroupData(groups as any, constants, normOffsetX, normOffsetY);
 
       set({
         nodes,
@@ -131,6 +139,7 @@ export const useTreeStore = create<TreeStoreState>((set, get) => ({
         classStartNodes,
         spatialGrid,
         treeConstants: constants,
+        groupData,
         isLoaded: true,
         isLoading: false,
       });
