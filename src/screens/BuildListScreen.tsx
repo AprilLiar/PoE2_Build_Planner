@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 import {
   View,
   Text,
@@ -86,6 +86,62 @@ function BuildCard({ entry, onPress, onLongPress }: BuildCardProps) {
   );
 }
 
+// ─── Rename modal (cross-platform — replaces iOS-only Alert.prompt) ──────────
+
+interface RenameModalProps {
+  visible: boolean;
+  currentName: string;
+  onConfirm: (name: string) => void;
+  onCancel: () => void;
+}
+
+function RenameModal({ visible, currentName, onConfirm, onCancel }: RenameModalProps) {
+  const [name, setName] = useState('');
+
+  useEffect(() => {
+    if (visible) setName(currentName);
+  }, [visible, currentName]);
+
+  const canConfirm = name.trim().length > 0;
+
+  return (
+    <Modal visible={visible} transparent animationType="fade" onRequestClose={onCancel}>
+      <TouchableWithoutFeedback onPress={onCancel}>
+        <View style={renameStyles.backdrop}>
+          <TouchableWithoutFeedback onPress={Keyboard.dismiss}>
+            <View style={renameStyles.card}>
+              <Text style={renameStyles.title}>Rename Build</Text>
+              <TextInput
+                style={renameStyles.input}
+                value={name}
+                onChangeText={setName}
+                autoFocus
+                selectTextOnFocus
+                placeholderTextColor={COLORS.textMuted}
+                returnKeyType="done"
+                onSubmitEditing={() => canConfirm && onConfirm(name.trim())}
+                maxLength={60}
+              />
+              <View style={renameStyles.actions}>
+                <TouchableOpacity style={renameStyles.cancelBtn} onPress={onCancel}>
+                  <Text style={renameStyles.cancelLabel}>Cancel</Text>
+                </TouchableOpacity>
+                <TouchableOpacity
+                  style={[renameStyles.confirmBtn, !canConfirm && renameStyles.confirmBtnDisabled]}
+                  onPress={() => canConfirm && onConfirm(name.trim())}
+                  disabled={!canConfirm}
+                >
+                  <Text style={renameStyles.confirmLabel}>Rename</Text>
+                </TouchableOpacity>
+              </View>
+            </View>
+          </TouchableWithoutFeedback>
+        </View>
+      </TouchableWithoutFeedback>
+    </Modal>
+  );
+}
+
 // ─── Main screen ──────────────────────────────────────────────────────────────
 
 export default function BuildListScreen() {
@@ -98,6 +154,7 @@ export default function BuildListScreen() {
   const [builds, setBuilds] = useState<BuildEntry[]>([]);
   const [loading, setLoading] = useState(true);
   const [showCreate, setShowCreate] = useState(false);
+  const [renameEntry, setRenameEntry] = useState<BuildEntry | null>(null);
 
   // ── Load builds from filesystem whenever this screen gains focus ──────────
   const loadBuilds = useCallback(async () => {
@@ -132,6 +189,44 @@ export default function BuildListScreen() {
   }, [setBuild, setSelectedClass, setSelectedAscendancy, navigation]);
 
   // ── Long-press context menu ───────────────────────────────────────────────
+  const promptRename = useCallback((entry: BuildEntry) => {
+    setRenameEntry(entry);
+  }, []);
+
+  const handleRenameConfirm = useCallback(async (newName: string) => {
+    if (!renameEntry) return;
+    const entry = renameEntry;
+    setRenameEntry(null);
+    try {
+      await fileService.renameBuild(entry.path, newName);
+      await loadBuilds();
+    } catch {
+      Alert.alert('Error', 'Could not rename build.');
+    }
+  }, [renameEntry, loadBuilds]);
+
+  const confirmDelete = useCallback((entry: BuildEntry) => {
+    Alert.alert(
+      'Delete Build',
+      `Delete "${entry.build.name}"? This cannot be undone.`,
+      [
+        { text: 'Cancel', style: 'cancel' },
+        {
+          text: 'Delete',
+          style: 'destructive',
+          onPress: async () => {
+            try {
+              await fileService.deleteBuild(entry.path);
+              await loadBuilds();
+            } catch {
+              Alert.alert('Error', 'Could not delete build.');
+            }
+          },
+        },
+      ],
+    );
+  }, [loadBuilds]);
+
   const showActions = useCallback((entry: BuildEntry) => {
     Alert.alert(entry.build.name, undefined, [
       {
@@ -156,48 +251,7 @@ export default function BuildListScreen() {
       },
       { text: 'Cancel', style: 'cancel' },
     ]);
-  }, [loadBuilds]);
-
-  const promptRename = useCallback((entry: BuildEntry) => {
-    // Alert.prompt is iOS-only. On Android a custom modal would be needed.
-    Alert.prompt(
-      'Rename Build',
-      'Enter a new name:',
-      async (newName) => {
-        if (!newName?.trim()) return;
-        try {
-          await fileService.renameBuild(entry.path, newName.trim());
-          await loadBuilds();
-        } catch {
-          Alert.alert('Error', 'Could not rename build.');
-        }
-      },
-      'plain-text',
-      entry.build.name,
-    );
-  }, [loadBuilds]);
-
-  const confirmDelete = useCallback((entry: BuildEntry) => {
-    Alert.alert(
-      'Delete Build',
-      `Delete "${entry.build.name}"? This cannot be undone.`,
-      [
-        { text: 'Cancel', style: 'cancel' },
-        {
-          text: 'Delete',
-          style: 'destructive',
-          onPress: async () => {
-            try {
-              await fileService.deleteBuild(entry.path);
-              await loadBuilds();
-            } catch {
-              Alert.alert('Error', 'Could not delete build.');
-            }
-          },
-        },
-      ],
-    );
-  }, [loadBuilds]);
+  }, [promptRename, confirmDelete, loadBuilds]);
 
   // ── Render ────────────────────────────────────────────────────────────────
   return (
@@ -247,6 +301,14 @@ export default function BuildListScreen() {
       >
         <Text style={styles.fabLabel}>+ New Build</Text>
       </TouchableOpacity>
+
+      {/* Rename modal — cross-platform replacement for Alert.prompt */}
+      <RenameModal
+        visible={renameEntry !== null}
+        currentName={renameEntry?.build.name ?? ''}
+        onConfirm={handleRenameConfirm}
+        onCancel={() => setRenameEntry(null)}
+      />
 
       {/* Create Build modal */}
       <CreateBuildModal
@@ -553,6 +615,70 @@ const styles = StyleSheet.create({
   fabLabel: {
     color: COLORS.bgDeep,
     fontSize: 15,
+    fontWeight: '700',
+  },
+});
+
+const renameStyles = StyleSheet.create({
+  backdrop: {
+    flex: 1,
+    backgroundColor: 'rgba(0,0,0,0.65)',
+    justifyContent: 'center',
+    paddingHorizontal: 28,
+  },
+  card: {
+    backgroundColor: COLORS.bgPanel,
+    borderRadius: 14,
+    padding: 20,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  title: {
+    color: COLORS.gold,
+    fontSize: 17,
+    fontWeight: '700',
+    marginBottom: 14,
+  },
+  input: {
+    backgroundColor: COLORS.bgInput,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    color: COLORS.text,
+    fontSize: 15,
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    marginBottom: 16,
+  },
+  actions: {
+    flexDirection: 'row',
+    justifyContent: 'flex-end',
+    gap: 10,
+  },
+  cancelBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 16,
+    borderRadius: 8,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+  },
+  cancelLabel: {
+    color: COLORS.textMuted,
+    fontSize: 14,
+    fontWeight: '500',
+  },
+  confirmBtn: {
+    paddingVertical: 10,
+    paddingHorizontal: 20,
+    borderRadius: 8,
+    backgroundColor: COLORS.gold,
+  },
+  confirmBtnDisabled: {
+    opacity: 0.4,
+  },
+  confirmLabel: {
+    color: COLORS.bgDeep,
+    fontSize: 14,
     fontWeight: '700',
   },
 });
