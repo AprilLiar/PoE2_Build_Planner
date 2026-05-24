@@ -34,11 +34,11 @@ type Viewport = { minX: number; minY: number; maxX: number; maxY: number };
 type NodeCategory = 'keystone' | 'notable' | 'mastery' | 'ascNormal' | 'jewel' | 'normal';
 
 const CATEGORY_STYLE: Record<NodeCategory, { color: string; r: number; outerR: number }> = {
-  keystone:  { color: COLORS.nodeKeystone, r: 30, outerR: 43 },
-  notable:   { color: COLORS.nodeNotable,  r: 22, outerR: 32 },
+  keystone:  { color: COLORS.nodeKeystone, r: 30, outerR: 50 }, // large hex — needs extra clearance
+  notable:   { color: COLORS.nodeNotable,  r: 22, outerR: 34 },
   mastery:   { color: COLORS.nodeMastery,  r: 18, outerR: 26 },
   ascNormal: { color: COLORS.nodeNormal,   r: 18, outerR: 26 },
-  jewel:     { color: COLORS.nodeJewel,    r: 15, outerR: 23 },
+  jewel:     { color: COLORS.nodeJewel,    r: 16, outerR: 26 }, // diamond corner-to-corner r
   normal:    { color: COLORS.nodeNormal,   r: 15, outerR: 22 },
 };
 
@@ -60,6 +60,29 @@ function getCategory(node: TreeNode): NodeCategory {
   if (node.isJewelSocket) return 'jewel';
   if (node.ascendancyName) return 'ascNormal';
   return 'normal';
+}
+
+// ─── Shape helpers ────────────────────────────────────────────────────────────
+
+/** Pointy-top regular hexagon — matches the PoE2 keystone frame silhouette. */
+function addHexagon(path: SkPath, cx: number, cy: number, r: number): void {
+  for (let i = 0; i < 6; i++) {
+    const angle = (Math.PI / 3) * i - Math.PI / 2; // start vertex at 12 o'clock
+    const x = cx + r * Math.cos(angle);
+    const y = cy + r * Math.sin(angle);
+    if (i === 0) path.moveTo(x, y);
+    else path.lineTo(x, y);
+  }
+  path.close();
+}
+
+/** Axis-aligned diamond (square rotated 45°) — matches the PoE2 jewel socket shape. */
+function addDiamond(path: SkPath, cx: number, cy: number, r: number): void {
+  path.moveTo(cx,     cy - r);
+  path.lineTo(cx + r, cy    );
+  path.lineTo(cx,     cy + r);
+  path.lineTo(cx - r, cy    );
+  path.close();
 }
 
 function clamp(value: number, lo: number, hi: number): number {
@@ -178,6 +201,7 @@ export default function GraphicalSkillTree(_props: Props) {
     flyToNodeId,
     setFlyToNodeId,
   } = useTreeStore();
+
 
   // -------------------------------------------------------------------------
   // Fit scale: maps world coords → screen pixels at "view whole tree" zoom
@@ -370,12 +394,15 @@ export default function GraphicalSkillTree(_props: Props) {
   // Non-scaling stroke widths — divide by scale so edges stay 1–3 screen px
   // regardless of zoom level (Skia equivalent of SVG vectorEffect=non-scaling-stroke)
   // -------------------------------------------------------------------------
-  const edgeStrokeUnalloc = useDerivedValue(() => 1.5 / scale.value);
-  const edgeStrokeAlloc   = useDerivedValue(() => 2.5 / scale.value);
-  const highlightStroke   = useDerivedValue(() => 3.0 / scale.value);
-  const edgeGlowStroke    = useDerivedValue(() => 10.0 / scale.value); // wide glow pass
-  const orbitRingStroke   = useDerivedValue(() => 1.5 / scale.value);
-  const nodeRingStroke    = useDerivedValue(() => 2.0 / scale.value);
+  const edgeStrokeUnalloc    = useDerivedValue(() => 1.5  / scale.value);
+  const edgeStrokeAlloc      = useDerivedValue(() => 2.5  / scale.value);
+  const highlightStroke      = useDerivedValue(() => 3.0  / scale.value);
+  const edgeGlowStroke       = useDerivedValue(() => 10.0 / scale.value);
+  const orbitRingStroke      = useDerivedValue(() => 1.5  / scale.value);
+  const nodeRingStroke       = useDerivedValue(() => 2.0  / scale.value); // normal / mastery / asc
+  const keystoneRingStroke   = useDerivedValue(() => 5.0  / scale.value); // heavy hex frame
+  const notableRingStroke    = useDerivedValue(() => 3.5  / scale.value);
+  const jewelRingStroke      = useDerivedValue(() => 3.0  / scale.value);
 
   // -------------------------------------------------------------------------
   // Minimap viewport rect — world-coordinate positions animated on UI thread
@@ -644,12 +671,15 @@ export default function GraphicalSkillTree(_props: Props) {
       const pos = displayPositions[node.skill];
       if (!pos) continue;
       if (visibleNodeIds && !visibleNodeIds.has(node.skill)) continue;
-      const cat = getCategory(node);
-      const r   = CATEGORY_STYLE[cat].r;
-      if (visuallyAllocated.has(node.skill)) {
-        alloc[cat].addCircle(pos.x, pos.y, r);
+      const cat    = getCategory(node);
+      const r      = CATEGORY_STYLE[cat].r;
+      const target = visuallyAllocated.has(node.skill) ? alloc : unalloc;
+      if (cat === 'keystone') {
+        addHexagon(target[cat], pos.x, pos.y, r);
+      } else if (cat === 'jewel') {
+        addDiamond(target[cat], pos.x, pos.y, r);
       } else {
-        unalloc[cat].addCircle(pos.x, pos.y, r);
+        target[cat].addCircle(pos.x, pos.y, r);
       }
       if (node.ascendancyName && highlightedAscendancies.has(node.ascendancyName)) {
         highlight.addCircle(pos.x, pos.y, r + 10);
@@ -668,15 +698,35 @@ export default function GraphicalSkillTree(_props: Props) {
       const pos = displayPositions[node.skill];
       if (!pos) continue;
       if (visibleNodeIds && !visibleNodeIds.has(node.skill)) continue;
-      const cat = getCategory(node);
+      const cat    = getCategory(node);
       const outerR = CATEGORY_STYLE[cat].outerR;
-      if (visuallyAllocated.has(node.skill)) {
-        alloc[cat].addCircle(pos.x, pos.y, outerR);
+      const target = visuallyAllocated.has(node.skill) ? alloc : unalloc;
+      if (cat === 'keystone') {
+        addHexagon(target[cat], pos.x, pos.y, outerR);
+      } else if (cat === 'jewel') {
+        addDiamond(target[cat], pos.x, pos.y, outerR);
       } else {
-        unalloc[cat].addCircle(pos.x, pos.y, outerR);
+        target[cat].addCircle(pos.x, pos.y, outerR);
       }
     }
     return { unalloc, alloc };
+  }, [nodes, displayPositions, visuallyAllocated, visibleNodeIds]);
+
+  // -------------------------------------------------------------------------
+  // SKIA PATH BUILDING — keystone soft glow (large transparent circle behind
+  // each allocated keystone to give it a halo / aura effect)
+  // -------------------------------------------------------------------------
+  const keystoneGlowPath = useMemo(() => {
+    const path = Skia.Path.Make();
+    for (const node of Object.values(nodes)) {
+      if (!node.isKeystone) continue;
+      if (!visuallyAllocated.has(node.skill)) continue;
+      const pos = displayPositions[node.skill];
+      if (!pos) continue;
+      if (visibleNodeIds && !visibleNodeIds.has(node.skill)) continue;
+      path.addCircle(pos.x, pos.y, CATEGORY_STYLE.keystone.outerR * 2.2);
+    }
+    return path;
   }, [nodes, displayPositions, visuallyAllocated, visibleNodeIds]);
 
   // -------------------------------------------------------------------------
@@ -738,14 +788,17 @@ export default function GraphicalSkillTree(_props: Props) {
       <GestureDetector gesture={gesture}>
         <View style={StyleSheet.absoluteFill}>
           <Canvas style={StyleSheet.absoluteFill}>
+            {/* Layer 0: Solid dark background */}
+            <Rect x={0} y={0} width={screenWidth} height={screenHeight} color={COLORS.bgDeep} />
+
             <Group transform={transform as any}>
-              {/* Layer 1: Orbit ring grid — the constellation pattern behind all nodes */}
+              {/* Layer 1: Orbit ring grid — hidden */}
               <SkiaPath
                 path={orbitRingPath}
                 color="#1E3A5F"
                 style="stroke"
                 strokeWidth={orbitRingStroke as any}
-                opacity={0.4}
+                opacity={0}
               />
 
               {/* Layer 3: Unallocated edges */}
@@ -782,6 +835,14 @@ export default function GraphicalSkillTree(_props: Props) {
                 opacity={0.8}
               />
 
+              {/* Layer 6.5: Keystone aura — soft glow behind allocated keystones */}
+              <SkiaPath
+                path={keystoneGlowPath}
+                color={COLORS.nodeKeystone}
+                style="fill"
+                opacity={0.07}
+              />
+
               {/* Layer 7: Unallocated node outer rings */}
               {CATEGORY_KEYS.map(cat => (
                 <SkiaPath
@@ -789,33 +850,43 @@ export default function GraphicalSkillTree(_props: Props) {
                   path={nodeRingPaths.unalloc[cat]}
                   color={COLORS.border}
                   style="stroke"
-                  strokeWidth={nodeRingStroke as any}
-                  opacity={0.6}
+                  strokeWidth={(
+                    cat === 'keystone' ? keystoneRingStroke :
+                    cat === 'notable'  ? notableRingStroke  :
+                    cat === 'jewel'    ? jewelRingStroke    :
+                    nodeRingStroke
+                  ) as any}
+                  opacity={0.55}
                 />
               ))}
-              {/* Layer 8: Unallocated nodes filled */}
+              {/* Layer 8: Unallocated node fill */}
               {CATEGORY_KEYS.map(cat => (
                 <SkiaPath
                   key={`u-${cat}`}
                   path={nodePaths.unalloc[cat]}
                   color={CATEGORY_STYLE[cat].color}
                   style="fill"
-                  opacity={0.45}
+                  opacity={0.35}
                 />
               ))}
 
-              {/* Layer 9: Allocated node outer rings — category colour for glow effect */}
+              {/* Layer 9: Allocated node outer rings — category colour, heavier stroke */}
               {CATEGORY_KEYS.map(cat => (
                 <SkiaPath
                   key={`ar-${cat}`}
                   path={nodeRingPaths.alloc[cat]}
                   color={CATEGORY_STYLE[cat].color}
                   style="stroke"
-                  strokeWidth={nodeRingStroke as any}
-                  opacity={0.9}
+                  strokeWidth={(
+                    cat === 'keystone' ? keystoneRingStroke :
+                    cat === 'notable'  ? notableRingStroke  :
+                    cat === 'jewel'    ? jewelRingStroke    :
+                    nodeRingStroke
+                  ) as any}
+                  opacity={0.95}
                 />
               ))}
-              {/* Layer 10: Allocated nodes filled */}
+              {/* Layer 10: Allocated node fill */}
               {CATEGORY_KEYS.map(cat => (
                 <SkiaPath
                   key={`a-${cat}`}
@@ -824,6 +895,7 @@ export default function GraphicalSkillTree(_props: Props) {
                   style="fill"
                 />
               ))}
+
             </Group>
           </Canvas>
         </View>

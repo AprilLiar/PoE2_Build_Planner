@@ -67,6 +67,7 @@ interface TreeStoreState {
   loadTree: () => Promise<void>;
   toggleNode: (id: number) => void;
   clearAll: () => void;
+  setAllocatedNodes: (nodes: Set<number>) => void;
   setSelectedClass: (name: string | null) => void;
   setSelectedAscendancy: (name: string | null) => void;
 }
@@ -174,6 +175,7 @@ export const useTreeStore = create<TreeStoreState>((set, get) => ({
   },
 
   clearAll: () => set({ allocatedNodes: new Set() }),
+  setAllocatedNodes: (nodes) => set({ allocatedNodes: nodes }),
 
   setSelectedClass: (name) => set({ selectedClass: name }),
   setSelectedAscendancy: (name) => set({ selectedAscendancy: name }),
