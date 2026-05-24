@@ -64,6 +64,17 @@ interface TreeStoreState {
   flyToNodeId: number | null;
   setFlyToNodeId: (id: number | null) => void;
 
+  // Persistent search filters — each query is a chip on the tree overlay
+  searchFilters: Array<{ id: string; query: string }>;
+  // Logical connectives between adjacent filters (length = searchFilters.length - 1)
+  searchConnectives: Array<'AND' | 'OR'>;
+  // Live query while the search modal is open — drives the real-time glow preview
+  liveSearchQuery: string;
+  addSearchFilter: (query: string) => void;
+  removeSearchFilter: (id: string) => void;
+  toggleSearchConnective: (index: number) => void;
+  setLiveSearchQuery: (q: string) => void;
+
   loadTree: () => Promise<void>;
   toggleNode: (id: number) => void;
   clearAll: () => void;
@@ -92,6 +103,9 @@ export const useTreeStore = create<TreeStoreState>((set, get) => ({
   treeConstants: { orbitRadii: [], skillsPerOrbit: [] },
   groupData: [],
   flyToNodeId: null,
+  searchFilters: [],
+  searchConnectives: [],
+  liveSearchQuery: '',
 
   loadTree: async () => {
     const { isLoaded, isLoading } = get();
@@ -125,6 +139,25 @@ export const useTreeStore = create<TreeStoreState>((set, get) => ({
         computeNodePositions(rawNodes as any, groups, constants);
       const treeBounds = computeTreeBounds(nodePositions);
       const adjacency = computeAdjacency(rawNodes as any);
+
+      // Collapse anchor nodes (no-stat placeholders) out of the adjacency so that
+      // real nodes on either side of an anchor remain reachable for allocation BFS.
+      const anchorIds = new Set<number>(
+        Object.values(nodes).filter(isAnchorNode).map((n) => n.skill)
+      );
+      for (const anchorId of anchorIds) {
+        const neighbors = (adjacency[anchorId] ?? []).filter((n) => !anchorIds.has(n));
+        for (let i = 0; i < neighbors.length; i++) {
+          for (let j = i + 1; j < neighbors.length; j++) {
+            const a = neighbors[i], b = neighbors[j];
+            if (!adjacency[a]) adjacency[a] = [];
+            if (!adjacency[b]) adjacency[b] = [];
+            if (!adjacency[a].includes(b)) adjacency[a].push(b);
+            if (!adjacency[b].includes(a)) adjacency[b].push(a);
+          }
+        }
+      }
+
       const classStartNodes = buildClassStartMap(rawNodes as any);
       // Build a 500-world-unit grid for fast viewport culling
       const spatialGrid = buildSpatialGrid(nodePositions, 500);
@@ -180,9 +213,49 @@ export const useTreeStore = create<TreeStoreState>((set, get) => ({
   setSelectedClass: (name) => set({ selectedClass: name }),
   setSelectedAscendancy: (name) => set({ selectedAscendancy: name }),
   setFlyToNodeId: (id) => set({ flyToNodeId: id }),
+
+  addSearchFilter: (query) => {
+    const q = query.trim();
+    if (!q) return;
+    const { searchFilters, searchConnectives } = get();
+    const newFilter = { id: String(Date.now()), query: q };
+    const newConnectives: Array<'AND' | 'OR'> =
+      searchFilters.length > 0 ? [...searchConnectives, 'AND'] : [];
+    set({ searchFilters: [...searchFilters, newFilter], searchConnectives: newConnectives });
+  },
+
+  removeSearchFilter: (id) => {
+    const { searchFilters, searchConnectives } = get();
+    const idx = searchFilters.findIndex((f) => f.id === id);
+    if (idx === -1) return;
+    const newFilters = searchFilters.filter((f) => f.id !== id);
+    const newConnectives = [...searchConnectives];
+    // Remove the connective touching this filter: at idx, or idx-1 if it's the last
+    if (newConnectives.length > 0) {
+      newConnectives.splice(Math.min(idx, newConnectives.length - 1), 1);
+    }
+    set({ searchFilters: newFilters, searchConnectives: newConnectives });
+  },
+
+  toggleSearchConnective: (index) => {
+    const { searchConnectives } = get();
+    const next = [...searchConnectives];
+    next[index] = next[index] === 'AND' ? 'OR' : 'AND';
+    set({ searchConnectives: next });
+  },
+
+  setLiveSearchQuery: (q) => set({ liveSearchQuery: q }),
 }));
 
 // --- Pure helper functions exported for use in components ---
+
+/** Nodes with no stats and no special type are art-only anchors — invisible and non-interactive. */
+export function isAnchorNode(node: TreeNode): boolean {
+  if (node.isKeystone || node.isNotable || node.isJewelSocket) return false;
+  if (node.ascendancyName) return false;
+  if (node.classesStart?.length) return false;
+  return !node.stats || node.stats.length === 0;
+}
 
 export function nodeTypePriority(node: TreeNode): number {
   if (node.isKeystone) return 0;

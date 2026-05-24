@@ -1,0 +1,4469 @@
+﻿[
+    {
+        "id":  "leap_slam",
+        "name":  "Leap Slam",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/BruteLeapSlam.webp",
+        "tags":  [
+                     "attack",
+                     "movement",
+                     "melee"
+                 ]
+    },
+    {
+        "id":  "shield_charge",
+        "name":  "Shield Charge",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/BruteShieldCharge.webp",
+        "tags":  [
+                     "attack",
+                     "movement",
+                     "melee"
+                 ]
+    },
+    {
+        "id":  "armour_breaker",
+        "name":  "Armour Breaker",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/BruteHeavyStrike.webp",
+        "tags":  [
+                     "attack",
+                     "melee"
+                 ]
+    },
+    {
+        "id":  "shockwave_totem",
+        "name":  "Shockwave Totem",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/BruteShockwaveTotem.webp",
+        "tags":  [
+                     "totem",
+                     "aoe",
+                     "physical"
+                 ]
+    },
+    {
+        "id":  "herald_of_ash",
+        "name":  "Herald of Ash",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/HeraldOfAshSkill.webp",
+        "tags":  [
+                     "herald",
+                     "fire",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "infernal_cry",
+        "name":  "Infernal Cry",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/BruteInfernalCry.webp",
+        "tags":  [
+                     "warcry",
+                     "fire",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "earthquake",
+        "name":  "Earthquake",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/BruteEarthquake.webp",
+        "tags":  [
+                     "attack",
+                     "aoe",
+                     "physical",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "sunder",
+        "name":  "Sunder",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/BruteSunder.webp",
+        "tags":  [
+                     "attack",
+                     "aoe",
+                     "melee",
+                     "physical"
+                 ]
+    },
+    {
+        "id":  "seismic_cry",
+        "name":  "Seismic Cry",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/BruteSeismicCry.webp",
+        "tags":  [
+                     "warcry",
+                     "physical"
+                 ]
+    },
+    {
+        "id":  "earthshatter",
+        "name":  "Earthshatter",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/BruteEarthshatter.webp",
+        "tags":  [
+                     "attack",
+                     "aoe",
+                     "melee",
+                     "physical"
+                 ]
+    },
+    {
+        "id":  "boneshatter",
+        "name":  "Boneshatter",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/BruteBoneshatter.webp",
+        "tags":  [
+                     "attack",
+                     "melee",
+                     "physical",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "volcanic_fissure",
+        "name":  "Volcanic Fissure",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/BruteVolcanicFissure.webp",
+        "tags":  [
+                     "attack",
+                     "aoe",
+                     "fire",
+                     "melee",
+                     "physical"
+                 ]
+    },
+    {
+        "id":  "rolling_slam",
+        "name":  "Rolling Slam",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/BruteDoubleSlam.webp",
+        "tags":  [
+                     "attack",
+                     "melee",
+                     "physical",
+                     "movement"
+                 ]
+    },
+    {
+        "id":  "supercharged_slam",
+        "name":  "Supercharged Slam",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/BruteSuperchargedSlam.webp",
+        "tags":  [
+                     "attack",
+                     "melee",
+                     "physical",
+                     "lightning"
+                 ]
+    },
+    {
+        "id":  "ancestral_warrior_totem",
+        "name":  "Ancestral Warrior Totem",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/BruteAncestralWarriorTotem.webp",
+        "tags":  [
+                     "totem",
+                     "attack",
+                     "melee",
+                     "physical"
+                 ]
+    },
+    {
+        "id":  "perfect_strike",
+        "name":  "Perfect Strike",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/BrutePerfectStrike.webp",
+        "tags":  [
+                     "attack",
+                     "melee",
+                     "physical"
+                 ]
+    },
+    {
+        "id":  "resonating_shield",
+        "name":  "Resonating Shield",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/BruteResonatingShield.webp",
+        "tags":  [
+                     "attack",
+                     "aoe",
+                     "physical"
+                 ]
+    },
+    {
+        "id":  "magma_barrier",
+        "name":  "Magma Barrier",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/BruteMagmaBarrier.webp",
+        "tags":  [
+                     "fire",
+                     "duration",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "scavenged_plating",
+        "name":  "Scavenged Plating",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/BruteScavengedPlating.webp",
+        "tags":  [
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "molten_blast",
+        "name":  "Molten Blast",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/BruteMoltenBlast.webp",
+        "tags":  [
+                     "attack",
+                     "projectile",
+                     "fire"
+                 ]
+    },
+    {
+        "id":  "hammer_of_the_gods",
+        "name":  "Hammer of the Gods",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/BruteHammerOfTheGods.webp",
+        "tags":  [
+                     "attack",
+                     "melee",
+                     "physical",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "stampede",
+        "name":  "Stampede",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/BruteStampede.webp",
+        "tags":  [
+                     "attack",
+                     "movement",
+                     "melee",
+                     "physical"
+                 ]
+    },
+    {
+        "id":  "shield_wall",
+        "name":  "Shield Wall",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/BruteShieldWall.webp",
+        "tags":  [
+                     "physical",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "fortifying_cry",
+        "name":  "Fortifying Cry",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WarriorShieldingCry.webp",
+        "tags":  [
+                     "warcry"
+                 ]
+    },
+    {
+        "id":  "time_of_need",
+        "name":  "Time of Need",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/TimeOfNeedSkill.webp",
+        "tags":  [
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "overwhelming_presence",
+        "name":  "Overwhelming Presence",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/OverwhelmingPressureSkill.webp",
+        "tags":  [
+                     "aoe",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "berserk",
+        "name":  "Berserk",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/BeserkSkill.webp",
+        "tags":  [
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "iron_ward",
+        "name":  "Iron Ward",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WardingSteel.webp",
+        "tags":  [
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "forge_hammer",
+        "name":  "Forge Hammer",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WarriorForgeHammer.webp",
+        "tags":  [
+                     "attack",
+                     "melee",
+                     "physical",
+                     "fire"
+                 ]
+    },
+    {
+        "id":  "ancestral_cry",
+        "name":  "Ancestral Cry",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WarriorAncestralCry.webp",
+        "tags":  [
+                     "warcry"
+                 ]
+    },
+    {
+        "id":  "eternal_rage",
+        "name":  "Eternal Rage",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/CeaselessRageSkill.webp",
+        "tags":  [
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "sniper_s_mark",
+        "name":  "Sniper\u0027s Mark",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/projectileweakness.webp",
+        "tags":  [
+                     "curse",
+                     "projectile",
+                     "mark"
+                 ]
+    },
+    {
+        "id":  "rain_of_arrows",
+        "name":  "Rain of Arrows",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/RangerRainOfArrowsSkill.webp",
+        "tags":  [
+                     "attack",
+                     "aoe",
+                     "projectile"
+                 ]
+    },
+    {
+        "id":  "lightning_arrow",
+        "name":  "Lightning Arrow",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/RangerLightningArrow.webp",
+        "tags":  [
+                     "attack",
+                     "projectile",
+                     "lightning",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "barrage",
+        "name":  "Barrage",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/RangerBarrageSkill.webp",
+        "tags":  [
+                     "attack",
+                     "projectile"
+                 ]
+    },
+    {
+        "id":  "herald_of_thunder",
+        "name":  "Herald of Thunder",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/HeraldOfThunderSkill.webp",
+        "tags":  [
+                     "herald",
+                     "lightning",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "plague_bearer",
+        "name":  "Plague Bearer",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/RangerPlagueBearerSkill.webp",
+        "tags":  [
+                     "chaos",
+                     "duration",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "rapid_assault",
+        "name":  "Rapid Assault",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/HuntressRapidAssault.webp",
+        "tags":  [
+                     "attack",
+                     "melee"
+                 ]
+    },
+    {
+        "id":  "disengage",
+        "name":  "Disengage",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/ImpaleSkillIcon.webp",
+        "tags":  [
+                     "attack",
+                     "movement"
+                 ]
+    },
+    {
+        "id":  "blood_hunt",
+        "name":  "Blood Hunt",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/HuntressBloodHuntSkillIcon.webp",
+        "tags":  [
+                     "attack",
+                     "melee",
+                     "physical"
+                 ]
+    },
+    {
+        "id":  "whirling_slash",
+        "name":  "Whirling Slash",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/HuntressWhirlingSlash.webp",
+        "tags":  [
+                     "attack",
+                     "melee",
+                     "physical",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "spearfield",
+        "name":  "Spearfield",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/HuntressSpearField.webp",
+        "tags":  [
+                     "attack",
+                     "aoe",
+                     "physical"
+                 ]
+    },
+    {
+        "id":  "lightning_spear",
+        "name":  "Lightning Spear",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/HuntressStormSpear.webp",
+        "tags":  [
+                     "attack",
+                     "projectile",
+                     "lightning"
+                 ]
+    },
+    {
+        "id":  "glacial_lance",
+        "name":  "Glacial Lance",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/HuntressGlacialLance.webp",
+        "tags":  [
+                     "attack",
+                     "projectile",
+                     "cold"
+                 ]
+    },
+    {
+        "id":  "escape_shot",
+        "name":  "Escape Shot",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/RangerFrostEscapeShot.webp",
+        "tags":  [
+                     "attack",
+                     "projectile",
+                     "cold",
+                     "movement"
+                 ]
+    },
+    {
+        "id":  "spiral_volley",
+        "name":  "Spiral Volley",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/RangerSpiralVolleySkill.webp",
+        "tags":  [
+                     "attack",
+                     "projectile",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "detonating_arrow",
+        "name":  "Detonating Arrow",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/RangerDetonatingArrowSkill.webp",
+        "tags":  [
+                     "attack",
+                     "projectile",
+                     "fire",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "poisonburst_arrow",
+        "name":  "Poisonburst Arrow",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/RangerPoisonBurstArrow.webp",
+        "tags":  [
+                     "attack",
+                     "projectile",
+                     "chaos",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "toxic_growth",
+        "name":  "Toxic Growth",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/RangerPoisonBloomSkill.webp",
+        "tags":  [
+                     "chaos",
+                     "duration",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "stormcaller_arrow",
+        "name":  "Stormcaller Arrow",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/RangerShockingArrow.webp",
+        "tags":  [
+                     "attack",
+                     "projectile",
+                     "lightning"
+                 ]
+    },
+    {
+        "id":  "lightning_rod",
+        "name":  "Lightning Rod",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/RangerLightningRodRainSkill.webp",
+        "tags":  [
+                     "attack",
+                     "lightning",
+                     "aoe",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "snipe",
+        "name":  "Snipe",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/RangerSnipeShotArrow.webp",
+        "tags":  [
+                     "attack",
+                     "projectile"
+                 ]
+    },
+    {
+        "id":  "gas_arrow",
+        "name":  "Gas Arrow",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/RangerGasCloudSkill.webp",
+        "tags":  [
+                     "attack",
+                     "projectile",
+                     "chaos",
+                     "aoe",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "electrocuting_arrow",
+        "name":  "Electrocuting Arrow",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/RangerElectrocutingRodSkill.webp",
+        "tags":  [
+                     "attack",
+                     "projectile",
+                     "lightning"
+                 ]
+    },
+    {
+        "id":  "vine_arrow",
+        "name":  "Vine Arrow",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/RangerPoisonVineArrowSkill.webp",
+        "tags":  [
+                     "attack",
+                     "projectile",
+                     "chaos",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "rhoa_mount",
+        "name":  "Rhoa Mount",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/RhoaMountSkillIcon.webp",
+        "tags":  [
+                     "movement"
+                 ]
+    },
+    {
+        "id":  "twister",
+        "name":  "Twister",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/TwisterSkillIcon.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "physical"
+                 ]
+    },
+    {
+        "id":  "explosive_spear",
+        "name":  "Explosive Spear",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/HuntressRemoteMineSpear.webp",
+        "tags":  [
+                     "attack",
+                     "projectile",
+                     "fire",
+                     "aoe",
+                     "mine"
+                 ]
+    },
+    {
+        "id":  "thunderous_leap",
+        "name":  "Thunderous Leap",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/ThunderousLeapSkillIcon.webp",
+        "tags":  [
+                     "attack",
+                     "movement",
+                     "lightning",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "wind_dancer",
+        "name":  "Wind Dancer",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/RangerWindDancerSkill.webp",
+        "tags":  [
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "shockchain_arrow",
+        "name":  "Shockchain Arrow",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/RangerShockchainSkill.webp",
+        "tags":  [
+                     "attack",
+                     "projectile",
+                     "lightning",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "ice_shot",
+        "name":  "Ice Shot",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/RangerIceShot.webp",
+        "tags":  [
+                     "attack",
+                     "projectile",
+                     "cold",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "voltaic_mark",
+        "name":  "Voltaic Mark",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/ShockingMarkSkill.webp",
+        "tags":  [
+                     "curse",
+                     "lightning",
+                     "mark"
+                 ]
+    },
+    {
+        "id":  "tornado_shot",
+        "name":  "Tornado Shot",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/RangerTornadoShotSkill.webp",
+        "tags":  [
+                     "attack",
+                     "projectile",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "alchemist_s_boon",
+        "name":  "Alchemist\u0027s Boon",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/AlchemistsBoonSkill.webp",
+        "tags":  [
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "magnetic_salvo",
+        "name":  "Magnetic Salvo",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/RangerMagneticSalvo.webp",
+        "tags":  [
+                     "attack",
+                     "projectile",
+                     "lightning",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "freezing_salvo",
+        "name":  "Freezing Salvo",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/RangerFreezingSalvoSkill.webp",
+        "tags":  [
+                     "attack",
+                     "projectile",
+                     "cold",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "herald_of_plague",
+        "name":  "Herald of Plague",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/HeraldOfAgonySkill.webp",
+        "tags":  [
+                     "herald",
+                     "chaos",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "mirage_archer",
+        "name":  "Mirage Archer",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/LingeringMirageSkill.webp",
+        "tags":  [
+                     "duration",
+                     "minion"
+                 ]
+    },
+    {
+        "id":  "combat_frenzy",
+        "name":  "Combat Frenzy",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/RangerCombatFrenzySkill.webp",
+        "tags":  [
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "whirlwind_lance",
+        "name":  "Whirlwind Lance",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WindstormLanceSkillIcon.webp",
+        "tags":  [
+                     "attack",
+                     "melee",
+                     "aoe",
+                     "physical"
+                 ]
+    },
+    {
+        "id":  "primal_strikes",
+        "name":  "Primal Strikes",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/PrimalStrikesSkillIcon.webp",
+        "tags":  [
+                     "attack",
+                     "melee"
+                 ]
+    },
+    {
+        "id":  "cull_the_weak",
+        "name":  "Cull The Weak",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/FrenziedLungeSkillIcon.webp",
+        "tags":  [
+                     "attack",
+                     "melee",
+                     "movement"
+                 ]
+    },
+    {
+        "id":  "fangs_of_frost",
+        "name":  "Fangs of Frost",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/FangsofFrostSkillIcon.webp",
+        "tags":  [
+                     "attack",
+                     "melee",
+                     "cold"
+                 ]
+    },
+    {
+        "id":  "wind_serpent_s_fury",
+        "name":  "Wind Serpent\u0027s Fury",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WindSerpentsFurySkillIcon.webp",
+        "tags":  [
+                     "attack",
+                     "melee",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "rake",
+        "name":  "Rake",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/HuntressBloodHunt.webp",
+        "tags":  [
+                     "attack",
+                     "melee",
+                     "physical"
+                 ]
+    },
+    {
+        "id":  "bloodhound_s_mark",
+        "name":  "Bloodhound\u0027s Mark",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/MarkoftheBloodhoundSkillIcon.webp",
+        "tags":  [
+                     "curse",
+                     "mark"
+                 ]
+    },
+    {
+        "id":  "tame_beast",
+        "name":  "Tame Beast",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/HuntressTameBeast.webp",
+        "tags":  [
+                     "minion"
+                 ]
+    },
+    {
+        "id":  "spear_of_solaris",
+        "name":  "Spear of Solaris",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SolarisSpearSkillIcon.webp",
+        "tags":  [
+                     "attack",
+                     "projectile",
+                     "physical"
+                 ]
+    },
+    {
+        "id":  "storm_lance",
+        "name":  "Storm Lance",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/HuntressOverchargedSpear.webp",
+        "tags":  [
+                     "attack",
+                     "projectile",
+                     "lightning"
+                 ]
+    },
+    {
+        "id":  "elemental_sundering",
+        "name":  "Elemental Sundering",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/HuntressExtraElements.webp",
+        "tags":  [
+                     "attack",
+                     "melee",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "trail_of_caltrops",
+        "name":  "Trail of Caltrops",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/CaltropsOnDodgeSkillIcon.webp",
+        "tags":  [
+                     "trap",
+                     "duration",
+                     "physical"
+                 ]
+    },
+    {
+        "id":  "toxic_domain",
+        "name":  "Toxic Domain",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/RangerToxicDomain.webp",
+        "tags":  [
+                     "chaos",
+                     "aoe",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "ice_tipped_arrows",
+        "name":  "Ice-Tipped Arrows",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/RangerShearingBolts.webp",
+        "tags":  [
+                     "attack",
+                     "projectile",
+                     "cold"
+                 ]
+    },
+    {
+        "id":  "firebolt",
+        "name":  "Firebolt",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/FireballSkillStaff.webp",
+        "tags":  [
+                     "spell",
+                     "projectile",
+                     "fire"
+                 ]
+    },
+    {
+        "id":  "ice_nova",
+        "name":  "Ice Nova",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SorceressIceNova.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "cold"
+                 ]
+    },
+    {
+        "id":  "detonate_dead",
+        "name":  "Detonate Dead",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchDetonateDead.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "fire"
+                 ]
+    },
+    {
+        "id":  "volatile_dead",
+        "name":  "Volatile Dead",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/VolatileDeadWeaponSkill.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "fire"
+                 ]
+    },
+    {
+        "id":  "raise_zombie",
+        "name":  "Raise Zombie",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchRaiseZombie.webp",
+        "tags":  [
+                     "minion",
+                     "physical",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "spark",
+        "name":  "Spark",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SorceressSpark.webp",
+        "tags":  [
+                     "spell",
+                     "projectile",
+                     "lightning",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "frost_wall",
+        "name":  "Frost Wall",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SorceressFrostWall.webp",
+        "tags":  [
+                     "spell",
+                     "cold",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "enervating_nova",
+        "name":  "Enervating Nova",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/EnervatingNovaWeaponSkill.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "chaos"
+                 ]
+    },
+    {
+        "id":  "temporal_chains",
+        "name":  "Temporal Chains",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/temporalchains.webp",
+        "tags":  [
+                     "curse",
+                     "duration",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "enfeeble",
+        "name":  "Enfeeble",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/enfeeble.webp",
+        "tags":  [
+                     "curse",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "despair",
+        "name":  "Despair",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/Despair.webp",
+        "tags":  [
+                     "curse",
+                     "chaos",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "lightning_warp",
+        "name":  "Lightning Warp",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SorceressLightningWarp.webp",
+        "tags":  [
+                     "spell",
+                     "movement",
+                     "lightning",
+                     "aoe",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "firestorm",
+        "name":  "Firestorm",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchFirestorm.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "fire",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "power_siphon",
+        "name":  "Power Siphon",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/PowerSiphonWeaponSkill.webp",
+        "tags":  [
+                     "attack",
+                     "projectile"
+                 ]
+    },
+    {
+        "id":  "discipline",
+        "name":  "Discipline",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/DisciplineWeaponSkill.webp",
+        "tags":  [
+                     "aura",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "arc",
+        "name":  "Arc",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SorceressArc.webp",
+        "tags":  [
+                     "spell",
+                     "lightning",
+                     "chaining"
+                 ]
+    },
+    {
+        "id":  "arctic_armour",
+        "name":  "Arctic Armour",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SorceressArcticArmour.webp",
+        "tags":  [
+                     "cold",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "flammability",
+        "name":  "Flammability",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/Flammability.webp",
+        "tags":  [
+                     "curse",
+                     "fire",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "hypothermia",
+        "name":  "Hypothermia",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/Frostbite.webp",
+        "tags":  [
+                     "curse",
+                     "cold",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "conductivity",
+        "name":  "Conductivity",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/Conductivity.webp",
+        "tags":  [
+                     "curse",
+                     "lightning",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "elemental_weakness",
+        "name":  "Elemental Weakness",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/elementalweakness.webp",
+        "tags":  [
+                     "curse",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "incinerate",
+        "name":  "Incinerate",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SorceressIncinerate.webp",
+        "tags":  [
+                     "spell",
+                     "fire",
+                     "channelling"
+                 ]
+    },
+    {
+        "id":  "purity_of_fire",
+        "name":  "Purity of Fire",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/PurityofFireWeaponSkill.webp",
+        "tags":  [
+                     "aura",
+                     "fire",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "purity_of_ice",
+        "name":  "Purity of Ice",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/PurityofColdWeaponSkill.webp",
+        "tags":  [
+                     "aura",
+                     "cold",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "purity_of_lightning",
+        "name":  "Purity of Lightning",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/PurityofLightningWeaponSkill.webp",
+        "tags":  [
+                     "aura",
+                     "lightning",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "impurity",
+        "name":  "Impurity",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/PurityofChaosWeaponSkill.webp",
+        "tags":  [
+                     "aura",
+                     "chaos",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "flameblast",
+        "name":  "Flameblast",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SorceressFlameblast.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "fire",
+                     "channelling"
+                 ]
+    },
+    {
+        "id":  "ball_lightning",
+        "name":  "Ball Lightning",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SorceressBallLightning.webp",
+        "tags":  [
+                     "spell",
+                     "projectile",
+                     "lightning",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "bone_offering",
+        "name":  "Bone Offering",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchBoneOffering.webp",
+        "tags":  [
+                     "minion",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "blasphemy",
+        "name":  "Blasphemy",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchBlasphemy.webp",
+        "tags":  [
+                     "curse",
+                     "aura",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "frost_bomb",
+        "name":  "Frost Bomb",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SorceressFrostBomb.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "cold",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "orb_of_storms",
+        "name":  "Orb of Storms",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SorceressOrbOfStorms.webp",
+        "tags":  [
+                     "spell",
+                     "lightning",
+                     "aoe",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "contagion",
+        "name":  "Contagion",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchContagion.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "chaos",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "wither",
+        "name":  "Wither",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/Wither.webp",
+        "tags":  [
+                     "chaos",
+                     "duration",
+                     "aoe",
+                     "totem"
+                 ]
+    },
+    {
+        "id":  "essence_drain",
+        "name":  "Essence Drain",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchEssenceDrain.webp",
+        "tags":  [
+                     "spell",
+                     "projectile",
+                     "chaos",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "frostbolt",
+        "name":  "Frostbolt",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SorceressFrostbolt.webp",
+        "tags":  [
+                     "spell",
+                     "projectile",
+                     "cold"
+                 ]
+    },
+    {
+        "id":  "dark_pact",
+        "name":  "Dark Pact",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/DeathPactSkill.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "chaos",
+                     "minion"
+                 ]
+    },
+    {
+        "id":  "skeletal_warrior",
+        "name":  "Skeletal Warrior",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchWarriorSkeleton.webp",
+        "tags":  [
+                     "minion",
+                     "physical",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "skeletal_reaver",
+        "name":  "Skeletal Reaver",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchReaverSkeleton.webp",
+        "tags":  [
+                     "minion",
+                     "physical",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "skeletal_brute",
+        "name":  "Skeletal Brute",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchBruteSkeleton.webp",
+        "tags":  [
+                     "minion",
+                     "physical",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "skeletal_sniper",
+        "name":  "Skeletal Sniper",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchArcherSkeleton.webp",
+        "tags":  [
+                     "minion",
+                     "projectile",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "skeletal_frost_mage",
+        "name":  "Skeletal Frost Mage",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchFrostSkeleton.webp",
+        "tags":  [
+                     "minion",
+                     "cold",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "skeletal_storm_mage",
+        "name":  "Skeletal Storm Mage",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchStormSkeleton.webp",
+        "tags":  [
+                     "minion",
+                     "lightning",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "skeletal_arsonist",
+        "name":  "Skeletal Arsonist",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchArsonistSkeleton.webp",
+        "tags":  [
+                     "minion",
+                     "fire",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "skeletal_cleric",
+        "name":  "Skeletal Cleric",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchClericSkeleton.webp",
+        "tags":  [
+                     "minion",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "vulnerability",
+        "name":  "Vulnerability",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/vulnerability.webp",
+        "tags":  [
+                     "curse",
+                     "physical",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "soulrend",
+        "name":  "Soulrend",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/Soulrend.webp",
+        "tags":  [
+                     "spell",
+                     "projectile",
+                     "chaos",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "sigil_of_power",
+        "name":  "Sigil of Power",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SigilofPowerWeaponSkill.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "lightning",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "flame_wall",
+        "name":  "Flame Wall",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SorceressFlameWall.webp",
+        "tags":  [
+                     "spell",
+                     "fire",
+                     "duration",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "hexblast",
+        "name":  "Hexblast",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchHexBlast.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "chaos",
+                     "curse"
+                 ]
+    },
+    {
+        "id":  "exsanguinate",
+        "name":  "Exsanguinate",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/BloodTendrilsSkill.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "physical",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "reap",
+        "name":  "Reap",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/ReapWeaponSkill.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "physical"
+                 ]
+    },
+    {
+        "id":  "eye_of_winter",
+        "name":  "Eye of Winter",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SorceressEyeofWinter.webp",
+        "tags":  [
+                     "spell",
+                     "projectile",
+                     "cold"
+                 ]
+    },
+    {
+        "id":  "lightning_conduit",
+        "name":  "Lightning Conduit",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SorceressLightningConduit.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "lightning"
+                 ]
+    },
+    {
+        "id":  "galvanic_field",
+        "name":  "Galvanic Field",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/GalvanicFieldWeaponSkill.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "lightning",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "comet",
+        "name":  "Comet",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SorceressComet.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "cold",
+                     "projectile"
+                 ]
+    },
+    {
+        "id":  "crushing_earth",
+        "name":  "Crushing Earth",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/AbsolutionBlast.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "physical"
+                 ]
+    },
+    {
+        "id":  "mana_tempest",
+        "name":  "Mana Tempest",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SorceressManaTempest.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "lightning",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "lightning_bolt",
+        "name":  "Lightning Bolt",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/LightningBoltSkillStaff.webp",
+        "tags":  [
+                     "spell",
+                     "projectile",
+                     "lightning"
+                 ]
+    },
+    {
+        "id":  "unleash",
+        "name":  "Unleash",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SorceressTemporalistUnleash.webp",
+        "tags":  [
+                     "spell",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "cast_on_shock",
+        "name":  "Cast on Shock",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/CastOnShockSkill.webp",
+        "tags":  [
+                     "lightning",
+                     "trigger",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "cast_on_freeze",
+        "name":  "Cast on Freeze",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/CastOnFreezeSkill.webp",
+        "tags":  [
+                     "cold",
+                     "trigger",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "cast_on_ignite",
+        "name":  "Cast on Ignite",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/CastOnIgniteSkill.webp",
+        "tags":  [
+                     "fire",
+                     "trigger",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "cast_on_elemental_ailment",
+        "name":  "Cast on Elemental Ailment",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/CastonFreezeShockIgnite.webp",
+        "tags":  [
+                     "fire",
+                     "cold",
+                     "lightning",
+                     "trigger",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "cast_on_critical",
+        "name":  "Cast on Critical",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/CastOnCritSkill.webp",
+        "tags":  [
+                     "trigger",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "bind_spectre",
+        "name":  "Bind Spectre",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchBindSpectre.webp",
+        "tags":  [
+                     "minion",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "pain_offering",
+        "name":  "Pain Offering",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchPainOffering.webp",
+        "tags":  [
+                     "minion",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "chaos_bolt",
+        "name":  "Chaos Bolt",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/ChaosBoltWeaponSkill.webp",
+        "tags":  [
+                     "spell",
+                     "projectile",
+                     "chaos"
+                 ]
+    },
+    {
+        "id":  "bonestorm",
+        "name":  "Bonestorm",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchBoneStorm.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "physical",
+                     "channelling"
+                 ]
+    },
+    {
+        "id":  "bone_cage",
+        "name":  "Bone Cage",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchBoneCage.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "physical",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "unearth",
+        "name":  "Unearth",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchUnearth.webp",
+        "tags":  [
+                     "spell",
+                     "projectile",
+                     "physical"
+                 ]
+    },
+    {
+        "id":  "solar_orb",
+        "name":  "Solar Orb",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SorceressSolarOrb.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "fire",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "fireball",
+        "name":  "Fireball",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SorceressGreaterFireball.webp",
+        "tags":  [
+                     "spell",
+                     "projectile",
+                     "fire",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "snap",
+        "name":  "Snap",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SorceressColdSnap.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "cold",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "mana_remnants",
+        "name":  "Mana Remnants",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SorceressEnergyRemnants.webp",
+        "tags":  [
+                     "spell",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "freezing_shards",
+        "name":  "Freezing Shards",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/FreezingShardsStaff.webp",
+        "tags":  [
+                     "spell",
+                     "projectile",
+                     "cold",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "decompose",
+        "name":  "Decompose",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/DecomposeSkill.webp",
+        "tags":  [
+                     "chaos",
+                     "aoe",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "raging_spirits",
+        "name":  "Raging Spirits",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchReservationRaginSpirits.webp",
+        "tags":  [
+                     "minion",
+                     "fire",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "profane_ritual",
+        "name":  "Profane Ritual",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchProfaneRitual.webp",
+        "tags":  [
+                     "chaos",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "soul_offering",
+        "name":  "Soul Offering",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchPowerOffering.webp",
+        "tags":  [
+                     "minion",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "dark_effigy",
+        "name":  "Dark Effigy",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchDarkEffigy.webp",
+        "tags":  [
+                     "chaos",
+                     "duration",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "grim_feast",
+        "name":  "Grim Feast",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchGrimFeast.webp",
+        "tags":  [
+                     "chaos",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "cast_on_minion_death",
+        "name":  "Cast on Minion Death",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/CastOnMinionDeath.webp",
+        "tags":  [
+                     "minion",
+                     "trigger",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "mana_drain",
+        "name":  "Mana Drain",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/ManaDrainWeaponSkill.webp",
+        "tags":  [
+                     "spell",
+                     "projectile",
+                     "chaos"
+                 ]
+    },
+    {
+        "id":  "bone_blast",
+        "name":  "Bone Blast",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/BoneBlastWeaponSkill.webp",
+        "tags":  [
+                     "spell",
+                     "projectile",
+                     "physical",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "blink",
+        "name":  "Blink",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SorceressBlinkReservation.webp",
+        "tags":  [
+                     "movement",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "malice",
+        "name":  "Malice",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/MaliceWeaponSkill.webp",
+        "tags":  [
+                     "chaos",
+                     "aoe",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "living_bomb",
+        "name":  "Living Bomb",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/LivingBombWeaponSkill.webp",
+        "tags":  [
+                     "spell",
+                     "fire",
+                     "duration",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "ember_fusillade",
+        "name":  "Ember Fusillade",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SorceressBlazingCluster.webp",
+        "tags":  [
+                     "spell",
+                     "projectile",
+                     "fire",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "elemental_conflux",
+        "name":  "Elemental Conflux",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/ElementalConfluxSkill.webp",
+        "tags":  [
+                     "fire",
+                     "cold",
+                     "lightning",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "sacrifice",
+        "name":  "Sacrifice",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/HarvesterSkill.webp",
+        "tags":  [
+                     "chaos",
+                     "minion"
+                 ]
+    },
+    {
+        "id":  "archmage",
+        "name":  "Archmage",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/ArchmageSkill.webp",
+        "tags":  [
+                     "spell",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "withering_presence",
+        "name":  "Withering Presence",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchWitheringPresence.webp",
+        "tags":  [
+                     "chaos",
+                     "aura",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "ravenous_swarm",
+        "name":  "Ravenous Swarm",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WitchRavenousSwarm.webp",
+        "tags":  [
+                     "minion",
+                     "chaos",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "convalescence",
+        "name":  "Convalescence",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/ConvalescenceSkillIcon.webp",
+        "tags":  [
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "heart_of_ice",
+        "name":  "Heart of Ice",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/ChillingAuraSkillStaff.webp",
+        "tags":  [
+                     "aura",
+                     "cold",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "fulmination",
+        "name":  "Fulmination",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WrathAuraWeaponSkill.webp",
+        "tags":  [
+                     "aura",
+                     "lightning",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "feast_of_flesh",
+        "name":  "Feast of Flesh",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/WeaponFeastofFlesh.webp",
+        "tags":  [
+                     "physical",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "spellslinger",
+        "name":  "Spellslinger",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SpellslingerWeaponSkill.webp",
+        "tags":  [
+                     "spell",
+                     "trigger"
+                 ]
+    },
+    {
+        "id":  "siphon_elements",
+        "name":  "Siphon Elements",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SiphonElements.webp",
+        "tags":  [
+                     "spell",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "frost_darts",
+        "name":  "Frost Darts",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/FrostDartsSkillIcon.webp",
+        "tags":  [
+                     "attack",
+                     "projectile",
+                     "cold"
+                 ]
+    },
+    {
+        "id":  "mirror_of_refraction",
+        "name":  "Mirror of Refraction",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/AtzirisRule.webp",
+        "tags":  [
+                     "cold",
+                     "lightning",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "flicker_strike",
+        "name":  "Flicker Strike",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/MonkFlickerStrikeTeleport.webp",
+        "tags":  [
+                     "attack",
+                     "melee",
+                     "movement",
+                     "cold"
+                 ]
+    },
+    {
+        "id":  "falling_thunder",
+        "name":  "Falling Thunder",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/MonkLightningStrike.webp",
+        "tags":  [
+                     "attack",
+                     "melee",
+                     "lightning",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "herald_of_ice",
+        "name":  "Herald of Ice",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/HeraldOfIceSkill.webp",
+        "tags":  [
+                     "herald",
+                     "cold",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "rolling_magma",
+        "name":  "Rolling Magma",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/DruidRollingMagma.webp",
+        "tags":  [
+                     "spell",
+                     "projectile",
+                     "fire",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "siege_ballista",
+        "name":  "Siege Ballista",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/MercArtilleryBallista.webp",
+        "tags":  [
+                     "totem",
+                     "attack",
+                     "projectile",
+                     "physical"
+                 ]
+    },
+    {
+        "id":  "tornado",
+        "name":  "Tornado",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/DruidTornado.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "physical",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "whirling_assault",
+        "name":  "Whirling Assault",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/MonkWhirlingAssault.webp",
+        "tags":  [
+                     "attack",
+                     "melee",
+                     "aoe",
+                     "physical"
+                 ]
+    },
+    {
+        "id":  "wind_blast",
+        "name":  "Wind Blast",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/MonkGaleStrikeSwing.webp",
+        "tags":  [
+                     "attack",
+                     "melee",
+                     "aoe",
+                     "physical"
+                 ]
+    },
+    {
+        "id":  "wave_of_frost",
+        "name":  "Wave of Frost",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/MonkFreezingBackflip.webp",
+        "tags":  [
+                     "attack",
+                     "movement",
+                     "cold",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "ice_strike",
+        "name":  "Ice Strike",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/MonkComboAttack.webp",
+        "tags":  [
+                     "attack",
+                     "melee",
+                     "cold"
+                 ]
+    },
+    {
+        "id":  "glacial_cascade",
+        "name":  "Glacial Cascade",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/MonkGlacialCascade.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "cold"
+                 ]
+    },
+    {
+        "id":  "artillery_ballista",
+        "name":  "Artillery Ballista",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/MercRipwireBallista.webp",
+        "tags":  [
+                     "totem",
+                     "attack",
+                     "projectile",
+                     "fire"
+                 ]
+    },
+    {
+        "id":  "killing_palm",
+        "name":  "Killing Palm",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/MonkKillingPalm.webp",
+        "tags":  [
+                     "attack",
+                     "melee",
+                     "physical"
+                 ]
+    },
+    {
+        "id":  "shattering_palm",
+        "name":  "Shattering Palm",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/MonkShatteringPalm.webp",
+        "tags":  [
+                     "attack",
+                     "melee",
+                     "physical",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "volcano",
+        "name":  "Volcano",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/DruidVolcano.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "fire",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "wolf_pack",
+        "name":  "Wolf Pack",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/DruidSummonWolf.webp",
+        "tags":  [
+                     "minion",
+                     "physical",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "pounce",
+        "name":  "Pounce",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/DruidWolfLeapAttack.webp",
+        "tags":  [
+                     "attack",
+                     "movement",
+                     "physical"
+                 ]
+    },
+    {
+        "id":  "rampage",
+        "name":  "Rampage",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/DruidBearRampage.webp",
+        "tags":  [
+                     "attack",
+                     "melee",
+                     "aoe",
+                     "physical"
+                 ]
+    },
+    {
+        "id":  "thunderstorm",
+        "name":  "Thunderstorm",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/LightningStormSkill.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "lightning",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "furious_slam",
+        "name":  "Furious Slam",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/DruidBearSlam.webp",
+        "tags":  [
+                     "attack",
+                     "melee",
+                     "physical",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "ferocious_roar",
+        "name":  "Ferocious Roar",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/DruidBearWarcry.webp",
+        "tags":  [
+                     "warcry",
+                     "physical",
+                     "aoe"
+                 ]
+    },
+    {
+        "id":  "barrier_invocation",
+        "name":  "Barrier Invocation",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/SorceressBarrierInvocation.webp",
+        "tags":  [
+                     "spell",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "cast_on_dodge",
+        "name":  "Cast on Dodge",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/CastOnDodgeRollSkill.webp",
+        "tags":  [
+                     "trigger",
+                     "duration",
+                     "movement"
+                 ]
+    },
+    {
+        "id":  "lingering_illusion",
+        "name":  "Lingering Illusion",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/MonkLingeringIllusion.webp",
+        "tags":  [
+                     "duration",
+                     "minion"
+                 ]
+    },
+    {
+        "id":  "ghost_dance",
+        "name":  "Ghost Dance",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/MonkGhostDance.webp",
+        "tags":  [
+                     "duration",
+                     "movement"
+                 ]
+    },
+    {
+        "id":  "spell_totem",
+        "name":  "Spell Totem",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/DruidSpellTotem.webp",
+        "tags":  [
+                     "totem",
+                     "spell"
+                 ]
+    },
+    {
+        "id":  "explosive_grenade",
+        "name":  "Explosive Grenade",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/ExplosiveGrenade.webp",
+        "tags":  [
+                     "attack",
+                     "aoe",
+                     "fire",
+                     "projectile"
+                 ]
+    },
+    {
+        "id":  "flash_grenade",
+        "name":  "Flash Grenade",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/FlashbangGrenade.webp",
+        "tags":  [
+                     "attack",
+                     "aoe",
+                     "projectile"
+                 ]
+    },
+    {
+        "id":  "gas_grenade",
+        "name":  "Gas Grenade",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/ToxicGrenade.webp",
+        "tags":  [
+                     "attack",
+                     "aoe",
+                     "chaos",
+                     "projectile",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "oil_grenade",
+        "name":  "Oil Grenade",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/OilGrenade.webp",
+        "tags":  [
+                     "attack",
+                     "aoe",
+                     "fire",
+                     "projectile"
+                 ]
+    },
+    {
+        "id":  "voltaic_grenade",
+        "name":  "Voltaic Grenade",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/ShockGrenade.webp",
+        "tags":  [
+                     "attack",
+                     "aoe",
+                     "lightning",
+                     "projectile"
+                 ]
+    },
+    {
+        "id":  "tempest_flurry",
+        "name":  "Tempest Flurry",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/MonkTempestFlurry.webp",
+        "tags":  [
+                     "attack",
+                     "melee",
+                     "lightning",
+                     "channelling"
+                 ]
+    },
+    {
+        "id":  "staggering_palm",
+        "name":  "Staggering Palm",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/MonkWindPalm.webp",
+        "tags":  [
+                     "attack",
+                     "melee",
+                     "physical"
+                 ]
+    },
+    {
+        "id":  "charged_staff",
+        "name":  "Charged Staff",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/MonkChargedStaff.webp",
+        "tags":  [
+                     "attack",
+                     "melee",
+                     "lightning"
+                 ]
+    },
+    {
+        "id":  "siphoning_strike",
+        "name":  "Siphoning Strike",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/MonkSiphoningStrike.webp",
+        "tags":  [
+                     "attack",
+                     "melee",
+                     "cold"
+                 ]
+    },
+    {
+        "id":  "tempest_bell",
+        "name":  "Tempest Bell",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/MonkTempestBell.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "physical",
+                     "lightning",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "frozen_locus",
+        "name":  "Frozen Locus",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/MonkIceAmbush.webp",
+        "tags":  [
+                     "spell",
+                     "aoe",
+                     "cold",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "raise_shield",
+        "name":  "Raise Shield",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/BruteShieldBlock.webp",
+        "tags":  [
+                     "physical",
+                     "duration"
+                 ]
+    },
+    {
+        "id":  "high_velocity_rounds",
+        "name":  "High Velocity Rounds",
+        "is_support":  false,
+        "icon":  "Art/2DArt/SkillIcons/PowerShotPhysical.webp",
+        "tags":  [
+                     "attack",
+                     "projectile",
+                     "physical"
+                 ]
+    },
+    {
+        "id":  "abiding_hex",
+        "name":  "Abiding Hex",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "acrimony",
+        "name":  "Acrimony",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "adhesive_grenades",
+        "name":  "Adhesive Grenades",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "admixture",
+        "name":  "Admixture",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "aftershock",
+        "name":  "Aftershock",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "alignment",
+        "name":  "Alignment",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "ambrosia",
+        "name":  "Ambrosia",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "ambush",
+        "name":  "Ambush",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "ammo_conservation",
+        "name":  "Ammo Conservation",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "ancestral_call",
+        "name":  "Ancestral Call",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "arcane_surge",
+        "name":  "Arcane Surge",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "armour_break",
+        "name":  "Armour Break",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "armour_demolisher",
+        "name":  "Armour Demolisher",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "armour_explosion",
+        "name":  "Armour Explosion",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "auto_reload",
+        "name":  "Auto Reload",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "battershout",
+        "name":  "Battershout",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "behead",
+        "name":  "Behead",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "bidding",
+        "name":  "Bidding",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "blind",
+        "name":  "Blind",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "blindside",
+        "name":  "Blindside",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "bloodlust",
+        "name":  "Bloodlust",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "bone_shrapnel",
+        "name":  "Bone Shrapnel",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "boundless_energy",
+        "name":  "Boundless Energy",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "bounty",
+        "name":  "Bounty",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "brambleslam",
+        "name":  "Brambleslam",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "brink",
+        "name":  "Brink",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "brutality",
+        "name":  "Brutality",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "burgeon",
+        "name":  "Burgeon",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "bursting_plague",
+        "name":  "Bursting Plague",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "cadence",
+        "name":  "Cadence",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "caltrops",
+        "name":  "Caltrops",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "cannibalism",
+        "name":  "Cannibalism",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "catharsis",
+        "name":  "Catharsis",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "chain",
+        "name":  "Chain",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "charge_profusion",
+        "name":  "Charge Profusion",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "charged_shots",
+        "name":  "Charged Shots",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "clarity",
+        "name":  "Clarity",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "clash",
+        "name":  "Clash",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "close_combat",
+        "name":  "Close Combat",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "cold_attunement",
+        "name":  "Cold Attunement",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "cold_penetration",
+        "name":  "Cold Penetration",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "combo_finisher",
+        "name":  "Combo Finisher",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "commandment",
+        "name":  "Commandment",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "commiserate",
+        "name":  "Commiserate",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "concentrated_area",
+        "name":  "Concentrated Area",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "concoct",
+        "name":  "Concoct",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "considered_casting",
+        "name":  "Considered Casting",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "controlled_destruction",
+        "name":  "Controlled Destruction",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "cool_headed",
+        "name":  "Cool Headed",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "cooldown_recovery",
+        "name":  "Cooldown Recovery",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "corrosion",
+        "name":  "Corrosion",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "corrupting_cry",
+        "name":  "Corrupting Cry",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "crackling_barrier",
+        "name":  "Crackling Barrier",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "crater",
+        "name":  "Crater",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "crescendo",
+        "name":  "Crescendo",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "crystalline_shards",
+        "name":  "Crystalline Shards",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "culling_strike",
+        "name":  "Culling Strike",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "culmination",
+        "name":  "Culmination",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "danse_macabre",
+        "name":  "Danse Macabre",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "dauntless",
+        "name":  "Dauntless",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "dead_pull",
+        "name":  "Dead Pull",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "deadly_herald",
+        "name":  "Deadly Herald",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "deadly_poison",
+        "name":  "Deadly Poison",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "deathmarch",
+        "name":  "Deathmarch",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "deep_cuts",
+        "name":  "Deep Cuts",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "deep_freeze",
+        "name":  "Deep Freeze",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "defy",
+        "name":  "Defy",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "delayed_gratification",
+        "name":  "Delayed Gratification",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "delayed_reaction",
+        "name":  "Delayed Reaction",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "deliberation",
+        "name":  "Deliberation",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "direstrike",
+        "name":  "Direstrike",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "double_barrel",
+        "name":  "Double Barrel",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "durability",
+        "name":  "Durability",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "efficiency",
+        "name":  "Efficiency",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "electrocute",
+        "name":  "Electrocute",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "elemental_armament",
+        "name":  "Elemental Armament",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "elemental_army",
+        "name":  "Elemental Army",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "embitter",
+        "name":  "Embitter",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "encroaching_ground",
+        "name":  "Encroaching Ground",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "enduring_impact",
+        "name":  "Enduring Impact",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "enraged_warcry",
+        "name":  "Enraged Warcry",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "escalating_poison",
+        "name":  "Escalating Poison",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "eternal_flame",
+        "name":  "Eternal Flame",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "excise",
+        "name":  "Excise",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "execute",
+        "name":  "Execute",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "expanse",
+        "name":  "Expanse",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "exploit_weakness",
+        "name":  "Exploit Weakness",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "ferocity",
+        "name":  "Ferocity",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "fire_exposure",
+        "name":  "Fire Exposure",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "fire_penetration",
+        "name":  "Fire Penetration",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "fist_of_war",
+        "name":  "Fist of War",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "flamepierce",
+        "name":  "Flamepierce",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "font_of_blood",
+        "name":  "Font of Blood",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "fork",
+        "name":  "Fork",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "fortress",
+        "name":  "Fortress",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "freezefork",
+        "name":  "Freezefork",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "frenzied_riposte",
+        "name":  "Frenzied Riposte",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "fresh_clip",
+        "name":  "Fresh Clip",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "frost_nexus",
+        "name":  "Frost Nexus",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "frozen_spite",
+        "name":  "Frozen Spite",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "haemocrystals",
+        "name":  "Haemocrystals",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "hardy_totems",
+        "name":  "Hardy Totems",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "heavy_swing",
+        "name":  "Heavy Swing",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "heft",
+        "name":  "Heft",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "heightened_accuracy",
+        "name":  "Heightened Accuracy",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "heightened_charges",
+        "name":  "Heightened Charges",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "heightened_curse",
+        "name":  "Heightened Curse",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "herbalism",
+        "name":  "Herbalism",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "hit_and_run",
+        "name":  "Hit and Run",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "holy_descent",
+        "name":  "Holy Descent",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "hourglass",
+        "name":  "Hourglass",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "ice_bite",
+        "name":  "Ice Bite",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "ignite",
+        "name":  "Ignite",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "immolate",
+        "name":  "Immolate",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "impact_shockwave",
+        "name":  "Impact Shockwave",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "impale",
+        "name":  "Impale",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "impending_doom",
+        "name":  "Impending Doom",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "impetus",
+        "name":  "Impetus",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "incision",
+        "name":  "Incision",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "infernal_legion",
+        "name":  "Infernal Legion",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "inhibitor",
+        "name":  "Inhibitor",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "innervate",
+        "name":  "Innervate",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "jagged_ground",
+        "name":  "Jagged Ground",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "knockback",
+        "name":  "Knockback",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "last_gasp",
+        "name":  "Last Gasp",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "lasting_shock",
+        "name":  "Lasting Shock",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "life_bounty",
+        "name":  "Life Bounty",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "life_drain",
+        "name":  "Life Drain",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "life_leech",
+        "name":  "Life Leech",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "lifetap",
+        "name":  "Lifetap",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "lightning_attunement",
+        "name":  "Lightning Attunement",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "lightning_exposure",
+        "name":  "Lightning Exposure",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "lightning_penetration",
+        "name":  "Lightning Penetration",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "lockdown",
+        "name":  "Lockdown",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "long_fuse",
+        "name":  "Long Fuse",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "longshot",
+        "name":  "Longshot",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "magnified_area",
+        "name":  "Magnified Area",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "maim",
+        "name":  "Maim",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "malady",
+        "name":  "Malady",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "mana_bounty",
+        "name":  "Mana Bounty",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "mark_for_death",
+        "name":  "Mark for Death",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "meat_shield",
+        "name":  "Meat Shield",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "minion_pact",
+        "name":  "Minion Pact",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "mobility",
+        "name":  "Mobility",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "momentum",
+        "name":  "Momentum",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "multishot",
+        "name":  "Multishot",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "murderous_intent",
+        "name":  "Murderous Intent",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "neural_overload",
+        "name":  "Neural Overload",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "nimble_reload",
+        "name":  "Nimble Reload",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "nova_projectiles",
+        "name":  "Nova Projectiles",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "overabundance",
+        "name":  "Overabundance",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "overcharge",
+        "name":  "Overcharge",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "overextend",
+        "name":  "Overextend",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "overreach",
+        "name":  "Overreach",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "payload",
+        "name":  "Payload",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "perfected_endurance",
+        "name":  "Perfected Endurance",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "perfection",
+        "name":  "Perfection",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "perpetual_charge",
+        "name":  "Perpetual Charge",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "persistent_ground",
+        "name":  "Persistent Ground",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "pierce",
+        "name":  "Pierce",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "pin",
+        "name":  "Pin",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "poison",
+        "name":  "Poison",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "practiced_combo",
+        "name":  "Practiced Combo",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "precision",
+        "name":  "Precision",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "profanity",
+        "name":  "Profanity",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "projectile_acceleration",
+        "name":  "Projectile Acceleration",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "projectile_deceleration",
+        "name":  "Projectile Deceleration",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "prolonged_duration",
+        "name":  "Prolonged Duration",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "punch_through",
+        "name":  "Punch Through",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "pursuit",
+        "name":  "Pursuit",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "rage",
+        "name":  "Rage",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "rageforged",
+        "name":  "Rageforged",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "raging_cry",
+        "name":  "Raging Cry",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "rapid_attacks",
+        "name":  "Rapid Attacks",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "rapid_casting",
+        "name":  "Rapid Casting",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "rearm",
+        "name":  "Rearm",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "refraction",
+        "name":  "Refraction",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "reinforced_totems",
+        "name":  "Reinforced Totems",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "remnant_potency",
+        "name":  "Remnant Potency",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "retaliate",
+        "name":  "Retaliate",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "retreat",
+        "name":  "Retreat",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "ricochet",
+        "name":  "Ricochet",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "sacrificial_lamb",
+        "name":  "Sacrificial Lamb",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "salvo",
+        "name":  "Salvo",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "sanctum",
+        "name":  "Sanctum",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "searing_flame",
+        "name":  "Searing Flame",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "second_wind",
+        "name":  "Second Wind",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "selfless_remnants",
+        "name":  "Selfless Remnants",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "shock",
+        "name":  "Shock",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "shock_siphon",
+        "name":  "Shock Siphon",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "shocking_leap",
+        "name":  "Shocking Leap",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "short_fuse",
+        "name":  "Short Fuse",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "slow_potency",
+        "name":  "Slow Potency",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "soul_drain",
+        "name":  "Soul Drain",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "spectral_volley",
+        "name":  "Spectral Volley",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "spell_cascade",
+        "name":  "Spell Cascade",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "steadfast",
+        "name":  "Steadfast",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "stoicism",
+        "name":  "Stoicism",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "stomping_ground",
+        "name":  "Stomping Ground",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "stormchain",
+        "name":  "Stormchain",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "streamlined_rounds",
+        "name":  "Streamlined Rounds",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "stun",
+        "name":  "Stun",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "swift_affliction",
+        "name":  "Swift Affliction",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "syzygy",
+        "name":  "Syzygy",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "tear",
+        "name":  "Tear",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "thornskin",
+        "name":  "Thornskin",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "tireless",
+        "name":  "Tireless",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "unleash",
+        "name":  "Unleash",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "upheaval",
+        "name":  "Upheaval",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "urgent_totems",
+        "name":  "Urgent Totems",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "vanguard",
+        "name":  "Vanguard",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "vitality",
+        "name":  "Vitality",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "volcanic_eruption",
+        "name":  "Volcanic Eruption",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "volt",
+        "name":  "Volt",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "warm_blooded",
+        "name":  "Warm Blooded",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "wild_shards",
+        "name":  "Wild Shards",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "window_of_opportunity",
+        "name":  "Window of Opportunity",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "withering_touch",
+        "name":  "Withering Touch",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    },
+    {
+        "id":  "zenith",
+        "name":  "Zenith",
+        "is_support":  true,
+        "icon":  null,
+        "tags":  [
+
+                 ]
+    }
+]

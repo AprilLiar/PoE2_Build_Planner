@@ -13,6 +13,7 @@ import { useBuildStore } from '../store/useBuildStore';
 import ClassPickerModal from '../components/ClassPickerModal';
 import GraphicalSkillTree from '../components/GraphicalSkillTree';
 import NodeSearchModal from '../components/NodeSearchModal';
+import SearchFilterOverlay from '../components/SearchFilterOverlay';
 import StatsPanel from '../components/StatsPanel';
 import * as fileService from '../services/fileService';
 import { COLORS } from '../constants/colors';
@@ -31,6 +32,7 @@ export default function SkillTreeScreen() {
     setSelectedClass,
     setSelectedAscendancy,
     setAllocatedNodes,
+    searchFilters,
   } = useTreeStore();
 
   const currentBuild = useBuildStore((s) => s.currentBuild);
@@ -187,13 +189,13 @@ export default function SkillTreeScreen() {
           <Text style={[styles.statsBtnText, statsPanelVisible && styles.statsBtnTextActive]}>Σ</Text>
         </TouchableOpacity>
 
-        {/* Search button — always right-aligned */}
+        {/* Filter button — active when any filters are applied */}
         <TouchableOpacity
           onPress={() => setSearchVisible(true)}
-          style={styles.searchBtn}
+          style={[styles.statsBtn, searchFilters.length > 0 && styles.statsBtnActive]}
           hitSlop={8}
         >
-          <Text style={styles.searchIcon}>🔍</Text>
+          <Text style={[styles.statsBtnText, searchFilters.length > 0 && styles.statsBtnTextActive]}>≡</Text>
         </TouchableOpacity>
       </View>
 
@@ -216,7 +218,10 @@ export default function SkillTreeScreen() {
         onSelectAscendancy={setSelectedAscendancy}
       />
 
-      {/* Node search modal — tap a result to fly the camera to that node */}
+      {/* Persistent search filter chips — top-right, below header */}
+      <SearchFilterOverlay />
+
+      {/* Node search modal — adds filter chip on close */}
       <NodeSearchModal
         visible={searchVisible}
         onClose={() => setSearchVisible(false)}
@@ -316,12 +321,6 @@ const styles = StyleSheet.create({
   },
   statsBtnTextActive: {
     color: COLORS.gold,
-  },
-  searchBtn: {
-    padding: 4,
-  },
-  searchIcon: {
-    fontSize: 20,
   },
   selectionChip: {
     flexDirection: 'row',

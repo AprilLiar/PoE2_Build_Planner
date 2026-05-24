@@ -5,7 +5,11 @@ import {
   useSharedValue,
   useDerivedValue,
   withSpring,
+  withRepeat,
+  withTiming,
+  cancelAnimation,
   runOnJS,
+  Easing,
 } from 'react-native-reanimated';
 import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import {
@@ -16,7 +20,7 @@ import {
   Skia,
 } from '@shopify/react-native-skia';
 import type { SkPath } from '@shopify/react-native-skia';
-import { useTreeStore, TreeNode } from '../store/useTreeStore';
+import { useTreeStore, TreeNode, isAnchorNode } from '../store/useTreeStore';
 import { queryVisibleNodes } from '../utils/treeLayout';
 import { COLORS } from '../constants/colors';
 
@@ -200,6 +204,9 @@ export default function GraphicalSkillTree(_props: Props) {
     groupData,
     flyToNodeId,
     setFlyToNodeId,
+    searchFilters,
+    searchConnectives,
+    liveSearchQuery,
   } = useTreeStore();
 
 
@@ -467,6 +474,8 @@ export default function GraphicalSkillTree(_props: Props) {
       let bestId: number | null = null;
       let bestDist = threshSq;
       for (const [idStr, pos] of Object.entries(displayPositions)) {
+        const n = nodes[Number(idStr)];
+        if (!n || isAnchorNode(n)) continue;
         const dx = pos.x - wx;
         const dy = pos.y - wy;
         const d2 = dx * dx + dy * dy;
@@ -595,6 +604,7 @@ export default function GraphicalSkillTree(_props: Props) {
     const { orbitRadii, skillsPerOrbit } = treeConstants;
 
     for (const node of Object.values(nodes)) {
+      if (isAnchorNode(node)) continue;
       const fromPos = displayPositions[node.skill];
       if (!fromPos) continue;
 
@@ -602,9 +612,12 @@ export default function GraphicalSkillTree(_props: Props) {
         // Connections in tree.json are unidirectional — each edge is stored in only
         // one node's connection list, so no deduplication is needed or correct here.
 
+        const toNode = nodes[conn.id];
+        // Skip edges to/from anchor nodes
+        if (!toNode || isAnchorNode(toNode)) continue;
+
         // Skip cross-ascendancy edges — these connect class start nodes to ascendancy
         // sub-tree starts (and vice versa) spanning ~15 000+ world units across the tree.
-        const toNode = nodes[conn.id];
         const fromAsc = node.ascendancyName ?? null;
         const toAsc   = toNode?.ascendancyName ?? null;
         if (fromAsc !== toAsc) continue;
@@ -668,6 +681,7 @@ export default function GraphicalSkillTree(_props: Props) {
     const alloc     = makeCategoryPaths();
     const highlight = Skia.Path.Make();
     for (const node of Object.values(nodes)) {
+      if (isAnchorNode(node)) continue;
       const pos = displayPositions[node.skill];
       if (!pos) continue;
       if (visibleNodeIds && !visibleNodeIds.has(node.skill)) continue;
@@ -695,6 +709,7 @@ export default function GraphicalSkillTree(_props: Props) {
     const unalloc = makeCategoryPaths();
     const alloc   = makeCategoryPaths();
     for (const node of Object.values(nodes)) {
+      if (isAnchorNode(node)) continue;
       const pos = displayPositions[node.skill];
       if (!pos) continue;
       if (visibleNodeIds && !visibleNodeIds.has(node.skill)) continue;
@@ -730,11 +745,110 @@ export default function GraphicalSkillTree(_props: Props) {
   }, [nodes, displayPositions, visuallyAllocated, visibleNodeIds]);
 
   // -------------------------------------------------------------------------
+  // SEARCH HIGHLIGHT — compute matching node IDs from persistent filters
+  // and the live query while the modal is open
+  // -------------------------------------------------------------------------
+
+  // Helper: returns the Set of node IDs whose name contains the given query string
+  const matchNodes = useCallback((q: string): Set<number> => {
+    const lower = q.trim().toLowerCase();
+    if (!lower) return new Set();
+    const ids = new Set<number>();
+    for (const node of Object.values(nodes)) {
+      if (node.name.toLowerCase().includes(lower)) ids.add(node.skill);
+    }
+    return ids;
+  }, [nodes]);
+
+  const searchHighlightIds = useMemo((): Set<number> => {
+    // While the search modal is open, show only the live-query preview
+    if (liveSearchQuery.trim()) return matchNodes(liveSearchQuery);
+
+    // No persistent filters → nothing to highlight
+    if (searchFilters.length === 0) return new Set();
+
+    // Compute per-filter match sets
+    const matchSets = searchFilters.map((f) => matchNodes(f.query));
+
+    // Combine left-to-right with connectives
+    let result = matchSets[0];
+    for (let i = 0; i < searchConnectives.length; i++) {
+      const right = matchSets[i + 1];
+      if (searchConnectives[i] === 'AND') {
+        const intersection = new Set<number>();
+        for (const id of result) { if (right.has(id)) intersection.add(id); }
+        result = intersection;
+      } else {
+        result = new Set([...result, ...right]);
+      }
+    }
+    return result;
+  }, [liveSearchQuery, searchFilters, searchConnectives, matchNodes]);
+
+  // Pulsing gold glow — bloom fill (soft corona) + sharp ring stroke
+  const searchGlowPath = useMemo(() => {
+    const path = Skia.Path.Make();
+    for (const id of searchHighlightIds) {
+      const node = nodes[id];
+      if (!node || isAnchorNode(node)) continue;
+      const pos = displayPositions[id];
+      if (!pos) continue;
+      // Large bloom — 3.5× outerR radiates well beyond the node frame
+      path.addCircle(pos.x, pos.y, CATEGORY_STYLE[getCategory(node)].outerR * 3.5);
+    }
+    return path;
+  }, [searchHighlightIds, displayPositions, nodes]);
+
+  const searchRingPath = useMemo(() => {
+    const path = Skia.Path.Make();
+    for (const id of searchHighlightIds) {
+      const node = nodes[id];
+      if (!node || isAnchorNode(node)) continue;
+      const pos = displayPositions[id];
+      if (!pos) continue;
+      const cat = getCategory(node);
+      const outerR = CATEGORY_STYLE[cat].outerR;
+      if (cat === 'keystone') {
+        addHexagon(path, pos.x, pos.y, outerR * 1.6);
+      } else if (cat === 'jewel') {
+        addDiamond(path, pos.x, pos.y, outerR * 1.6);
+      } else {
+        path.addCircle(pos.x, pos.y, outerR * 1.6);
+      }
+    }
+    return path;
+  }, [searchHighlightIds, displayPositions, nodes]);
+
+  // Pulse animation: 0 → 1 → 0, looping at ~700 ms per half-cycle
+  const pulseAnim = useSharedValue(0);
+  const hasHighlights = searchHighlightIds.size > 0;
+  useEffect(() => {
+    if (hasHighlights) {
+      pulseAnim.value = withRepeat(
+        withTiming(1, { duration: 700, easing: Easing.inOut(Easing.sin) }),
+        -1,
+        true
+      );
+    } else {
+      cancelAnimation(pulseAnim);
+      pulseAnim.value = 0;
+    }
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [hasHighlights]);
+
+  // Opacity derived values for the two glow layers
+  const searchBloomOpacity  = useDerivedValue(() => 0.08 + pulseAnim.value * 0.22);
+  const searchRingOpacity   = useDerivedValue(() => 0.5  + pulseAnim.value * 0.5);
+  // Non-scaling ring stroke so it stays ~5 screen px regardless of zoom
+  const searchRingStroke    = useDerivedValue(() => 5.0  / scale.value);
+
+  // -------------------------------------------------------------------------
   // SKIA PATH BUILDING — minimap (once after tree loads)
   // -------------------------------------------------------------------------
   const minimapPaths = useMemo(() => {
     const paths = makeCategoryPaths();
     for (const node of Object.values(nodes)) {
+      if (isAnchorNode(node)) continue;
       const pos = displayPositions[node.skill];
       if (!pos) continue;
       const cat = getCategory(node);
@@ -841,6 +955,22 @@ export default function GraphicalSkillTree(_props: Props) {
                 color={COLORS.nodeKeystone}
                 style="fill"
                 opacity={0.07}
+              />
+
+              {/* Layer 6.7: Search highlight — bloom fill (soft pulsing corona) */}
+              <SkiaPath
+                path={searchGlowPath}
+                color={COLORS.gold}
+                style="fill"
+                opacity={searchBloomOpacity as any}
+              />
+              {/* Layer 6.8: Search highlight — ring stroke (sharp pulsing ring) */}
+              <SkiaPath
+                path={searchRingPath}
+                color={COLORS.gold}
+                style="stroke"
+                strokeWidth={searchRingStroke as any}
+                opacity={searchRingOpacity as any}
               />
 
               {/* Layer 7: Unallocated node outer rings */}
