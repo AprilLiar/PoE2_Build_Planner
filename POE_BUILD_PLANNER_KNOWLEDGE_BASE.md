@@ -421,7 +421,11 @@ src/
 
 assets/
 ├── data/tree.json               ← DONE (GGG patch 0.4, 4,701 nodes)
-├── data/gems.json               ← NOT CREATED
+├── data/gems.json               ← DONE (444 gems: 226 active + 218 support; fields: id, name, is_support, icon, tags)
+├── poe2/
+│   ├── classes/                 ← DONE — 8 class illustrations (warrior/ranger/etc.baseillustration.webp)
+│   ├── node-icons/              ← DONE — 540 passive node icons preserving art path (Art/2DArt/SkillIcons/passives/…)
+│   └── skill-gems/              ← DONE — 225 active gem icons (flat) + 223 support gem icons (/support/ subfolder)
 ├── fonts/ (Cinzel-Regular, Inter-Regular, Inter-Medium) ← NOT ADDED
 ├── textures/leather_bg.png      ← NOT ADDED
 └── (GGG skill tree images — frame-*.png, background-*.png, group-background-*.png, skills-*.jpg etc.)
@@ -451,6 +455,32 @@ Ascendancies (21 total, verified against tree.json patch 0.4):
 - Witch: Infernalist, Blood Mage, Lich, Abyssal Lich
 - Sorceress: Stormweaver, Chronomancer, Disciple of Varashta
 - Monk: Invoker, Acolyte of Chayula
+
+### Sprint 6.5 — Search overhaul + anchor nodes + web compat + asset library (complete)
+**Shipped:**
+- Node search replaced with pulsing golden glow on matching tree nodes
+- Persistent filter chips (SearchFilterOverlay) with AND/OR connectives between them; each chip removable via X
+- Filter button (≡) replaces search icon; gold/active when filters applied — matches Σ stats button style
+- Anchor nodes (no stats, no special type) now invisible and BFS-transparent — real nodes linked through them
+- `fileService.ts` rewritten with platform branch: localStorage on web, expo-file-system on native
+- PoE2 asset library downloaded from poe2db.tw CDN (requires `Referer: https://poe2db.tw/` header)
+
+**Assets added:**
+- `assets/data/gems.json` — 444 gems (226 active skill gems + 218 support gems); schema: `{id, name, is_support, icon, tags}`
+- `assets/poe2/classes/*.webp` — 8 class illustrations
+- `assets/poe2/node-icons/` — 540 passive node icons (preserving art path structure from tree.json `icon` field)
+- `assets/poe2/skill-gems/*.webp` — 225 active skill gem icons (named by gem name)
+- `assets/poe2/skill-gems/support/*.webp` — 223 support gem icons (named by CDN filename)
+
+**CDN URL patterns (all require `Referer: https://poe2db.tw/`):**
+- Class art: `https://cdn.poe2db.tw/image/art/2dart/baseclassillustrations/{class}baseillustration.webp`
+- Passive icons: `https://cdn.poe2db.tw/image/{icon_path_from_tree_json}.webp` (replace .dds extension)
+- Active skill gems: `https://cdn.poe2db.tw/image/Art/2DArt/SkillIcons/{filename}.webp`
+- Support gems: `https://cdn.poe2db.tw/image/art/2dart/skillicons/support/{filename}.webp`
+
+**Node icon usage:** `node.icon` in tree.json gives the relative art path. To use locally:
+`require('../../assets/poe2/node-icons/' + node.icon.replace('.dds', '.webp'))`
+(Dynamic requires don't work in Metro — pre-build a static map at load time or use a URI-based approach.)
 
 ### Sprint 6 — BuildListScreen (complete)
 **Shipped:** Full build list flow — create, list, open, rename, duplicate, delete. File persistence via `expo-file-system` (Expo Go safe). No MMKV.
@@ -482,11 +512,13 @@ Ascendancies (21 total, verified against tree.json patch 0.4):
 - ✅ Sprint 4: Graphical SVG tree → Skia canvas, treeLayout.ts, adjacency/BFS
 - ✅ Sprint 5: Skia GPU rendering (replaced SVG)
 - ✅ Sprint 5.5: GGG texture integration (tiled bg, group rings, node frames)
-- ✅ **Sprint 6:** `useBuildStore` + `fileService` + `BuildListScreen` (create, list, open, rename, duplicate, delete)
-- ⬜ **Next:** SkillTree → useBuildStore integration (allocated nodes → build file on save)
+- ✅ Sprint 6: `useBuildStore` + `fileService` + `BuildListScreen` (create, list, open, rename, duplicate, delete)
+- ✅ **Sprint 6.5:** Search overhaul (pulsing glow, persistent filter chips), anchor node hiding, web compat, PoE2 asset library
+- ⬜ **Next:** Node icons in tree (show icon inside node at high zoom), or ItemsScreen
+- ⬜ Fix Abyssal Lich ascendancy (no nodes visible in tree — reported but not yet investigated)
 - ⬜ ItemsScreen (slot grid + paste parser)
 - ⬜ GemsScreen (group management)
-- ⬜ SettingsScreen
+- ⬜ SettingsScreen (needs redesign: add "← Build List" nav, remove placeholder, add relevant settings)
 - ⬜ Fonts (Cinzel + Inter)
 - ⬜ Leather texture background
 - ⬜ Ad gate (AdMob interstitial)
@@ -495,4 +527,4 @@ Ascendancies (21 total, verified against tree.json patch 0.4):
 
 ---
 
-*Last updated: May 2026*
+*Last updated: 2026-05-24*
