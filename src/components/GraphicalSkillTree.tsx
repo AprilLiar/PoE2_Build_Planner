@@ -217,8 +217,6 @@ export default function GraphicalSkillTree(_props: Props) {
   const bgTileImg  = useImage(require('../../assets/poe2/tree/background/tree-background.png'));
   const groupBg104 = useImage(require('../../assets/poe2/tree/group-bgs/group-background_104_104.png'));
   const groupBg152 = useImage(require('../../assets/poe2/tree/group-bgs/group-background_152_156.png'));
-  const groupBg160 = useImage(require('../../assets/poe2/tree/group-bgs/group-background_160_164.png'));
-  const groupBg208 = useImage(require('../../assets/poe2/tree/group-bgs/group-background_208_208.png'));
   const groupBg220 = useImage(require('../../assets/poe2/tree/group-bgs/group-background_220_224.png'));
   const groupBg360 = useImage(require('../../assets/poe2/tree/group-bgs/group-background_360_360.png'));
   const groupBg468 = useImage(require('../../assets/poe2/tree/group-bgs/group-background_468_468.png'));
@@ -244,9 +242,11 @@ export default function GraphicalSkillTree(_props: Props) {
   const frameKsAlloc        = useImage(require('../../assets/poe2/tree/node-frames-extracted/keystone-allocated.png'));
   const frameKsUnalloc      = useImage(require('../../assets/poe2/tree/node-frames-extracted/keystone-unallocated.png'));
 
-  // Index by orbit number (0 → null = skip)
+  // Index by tree orbit number (0 → null = skip).
+  // file-N px size ≈ orbit world radius; file-1 is largest (1333px) → orbit-9 (1322wu), file-9 smallest (91px) → orbit-1 (82wu).
+  // Orbit-7 (251wu) breaks numerical order in tree.json; file-7 (263px) is the closest match.
   const orbitNImgs = useMemo(
-    () => [null, orbitN1, orbitN2, orbitN3, orbitN4, orbitN5, orbitN6, orbitN7, orbitN8, orbitN9],
+    () => [null, orbitN9, orbitN8, orbitN6, orbitN5, orbitN4, orbitN3, orbitN7, orbitN2, orbitN1],
     [orbitN1, orbitN2, orbitN3, orbitN4, orbitN5, orbitN6, orbitN7, orbitN8, orbitN9],
   );
 
@@ -255,17 +255,17 @@ export default function GraphicalSkillTree(_props: Props) {
   const groupBgByOrbit = useMemo(
     () => [
       null,       // 0 — class-start single node, no group background
-      groupBg104, // 1 — r=82
-      groupBg152, // 2 — r=162
-      groupBg208, // 3 — r=335
-      groupBg360, // 4 — r=493
+      groupBg104, // 1 — r=82   (104px bg, 1.3× stretch)
+      groupBg152, // 2 — r=162  (152px bg, ~0.94× — closest available)
+      groupBg360, // 3 — r=335  (360px bg, 2.1× — better than 208px at 3.7×)
+      groupBg468, // 4 — r=493  (468px bg, 1.9× stretch)
       groupBg468, // 5 — r=662
       groupBg468, // 6 — r=846
-      groupBg160, // 7 — r=251 (sits between orbit 2 and 3)
+      groupBg220, // 7 — r=251  (220px bg, 2.6× — better than 160px at 3.6×)
       groupBg468, // 8 — r=1080
       groupBg468, // 9 — r=1322
     ],
-    [groupBg104, groupBg152, groupBg160, groupBg208, groupBg360, groupBg468],
+    [groupBg104, groupBg152, groupBg220, groupBg360, groupBg468],
   );
 
   // -------------------------------------------------------------------------
