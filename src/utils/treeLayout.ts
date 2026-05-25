@@ -12,6 +12,23 @@ type RawNode = {
 
 type RawGroup = { x: number; y: number };
 
+type RawGroupFull = {
+  id: number;
+  x: number;
+  y: number;
+  orbits?: number[];
+  isAscendancy?: boolean;
+};
+
+export interface GroupData {
+  id: number;
+  x: number;           // normalized world coordinate (same offset as nodePositions)
+  y: number;
+  orbits: number[];    // orbit indices used by this group
+  maxOrbitRadius: number;
+  isAscendancy: boolean;
+}
+
 type TreeConstants = {
   orbitRadii: number[];
   skillsPerOrbit: number[];
@@ -40,7 +57,7 @@ export function computeNodePositions(
   nodes: Record<string, RawNode>,
   groups: Record<string, RawGroup>,
   constants: TreeConstants
-): Record<number, { x: number; y: number }> {
+): { positions: Record<number, { x: number; y: number }>; normOffsetX: number; normOffsetY: number } {
   const { orbitRadii, skillsPerOrbit } = constants;
 
   // First pass: raw world coordinates
@@ -73,12 +90,41 @@ export function computeNodePositions(
   if (!isFinite(minY)) minY = 0;
 
   // Second pass: normalise so all coordinates are ≥ 0
-  const normalised: Record<number, { x: number; y: number }> = {};
+  const positions: Record<number, { x: number; y: number }> = {};
   for (const [id, pos] of Object.entries(raw)) {
-    normalised[Number(id)] = { x: pos.x - minX, y: pos.y - minY };
+    positions[Number(id)] = { x: pos.x - minX, y: pos.y - minY };
   }
 
-  return normalised;
+  return { positions, normOffsetX: minX, normOffsetY: minY };
+}
+
+/**
+ * Builds the group center + orbit metadata array using the same normalization
+ * offset that was applied to node positions, so group coords are in the same
+ * world space as the node positions returned by computeNodePositions.
+ */
+export function buildGroupData(
+  groups: Record<string, RawGroupFull>,
+  constants: TreeConstants,
+  normOffsetX: number,
+  normOffsetY: number,
+): GroupData[] {
+  const { orbitRadii } = constants;
+  const result: GroupData[] = [];
+  for (const [, g] of Object.entries(groups)) {
+    const orbits = g.orbits ?? [0];
+    const maxOrbitRadius = Math.max(...orbits.map(o => orbitRadii[o] ?? 0));
+    if (maxOrbitRadius <= 0) continue;
+    result.push({
+      id: g.id,
+      x: g.x - normOffsetX,
+      y: g.y - normOffsetY,
+      orbits,
+      maxOrbitRadius,
+      isAscendancy: g.isAscendancy ?? false,
+    });
+  }
+  return result;
 }
 
 /**

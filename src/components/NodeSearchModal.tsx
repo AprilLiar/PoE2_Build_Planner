@@ -1,15 +1,13 @@
-import React, { useState, useMemo, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   Modal,
   View,
   Text,
   TextInput,
-  FlatList,
-  TouchableOpacity,
   TouchableWithoutFeedback,
   StyleSheet,
 } from 'react-native';
-import { useTreeStore, TreeNode, nodeTypeLabel, nodeTypeBadgeColor } from '../store/useTreeStore';
+import { useTreeStore } from '../store/useTreeStore';
 import { COLORS } from '../constants/colors';
 
 interface Props {
@@ -17,65 +15,38 @@ interface Props {
   onClose: () => void;
 }
 
-const MAX_RESULTS = 30;
-
 export default function NodeSearchModal({ visible, onClose }: Props) {
-  const { nodes, setFlyToNodeId } = useTreeStore();
+  const { setLiveSearchQuery, addSearchFilter } = useTreeStore();
   const [query, setQuery] = useState('');
+  const inputRef = useRef<TextInput>(null);
 
-  // Filter and sort results whenever query changes.
-  // Order: Keystone → Notable → Normal → Mastery, then alphabetical within each type.
-  const results = useMemo<TreeNode[]>(() => {
-    const q = query.trim().toLowerCase();
-    if (!q) return [];
-    return Object.values(nodes)
-      .filter((n) => n.name.toLowerCase().includes(q))
-      .sort((a, b) => {
-        const pa = a.isKeystone ? 0 : a.isNotable ? 1 : a.isMastery ? 3 : 2;
-        const pb = b.isKeystone ? 0 : b.isNotable ? 1 : b.isMastery ? 3 : 2;
-        if (pa !== pb) return pa - pb;
-        return a.name.localeCompare(b.name);
-      })
-      .slice(0, MAX_RESULTS);
-  }, [query, nodes]);
-
-  const handleSelect = useCallback(
-    (node: TreeNode) => {
-      setFlyToNodeId(node.skill); // GraphicalSkillTree reacts to this
-      onClose();
-      setQuery('');
+  const handleQueryChange = useCallback(
+    (text: string) => {
+      setQuery(text);
+      setLiveSearchQuery(text);
     },
-    [setFlyToNodeId, onClose]
+    [setLiveSearchQuery]
   );
+
+  // Reset input and clear live preview each time the modal opens
+  useEffect(() => {
+    if (visible) {
+      setQuery('');
+      setLiveSearchQuery('');
+    }
+  }, [visible, setLiveSearchQuery]);
+
+  const commit = useCallback(() => {
+    // Commit non-empty query as a persistent filter chip
+    const q = query.trim();
+    if (q) addSearchFilter(q);
+    setLiveSearchQuery('');
+    onClose();
+  }, [query, addSearchFilter, setLiveSearchQuery, onClose]);
 
   const handleClose = useCallback(() => {
-    onClose();
-    setQuery('');
-  }, [onClose]);
-
-  const renderItem = useCallback(
-    ({ item }: { item: TreeNode }) => {
-      const badgeColor = nodeTypeBadgeColor(item);
-      return (
-        <TouchableOpacity
-          style={styles.row}
-          onPress={() => handleSelect(item)}
-          activeOpacity={0.7}
-        >
-          <Text style={styles.nodeName} numberOfLines={1}>
-            {item.name}
-          </Text>
-          {/* Type badge: small pill with the node type colour */}
-          <View style={[styles.badge, { borderColor: badgeColor }]}>
-            <Text style={[styles.badgeText, { color: badgeColor }]}>
-              {nodeTypeLabel(item)}
-            </Text>
-          </View>
-        </TouchableOpacity>
-      );
-    },
-    [handleSelect]
-  );
+    commit();
+  }, [commit]);
 
   return (
     <Modal
@@ -84,42 +55,30 @@ export default function NodeSearchModal({ visible, onClose }: Props) {
       animationType="fade"
       onRequestClose={handleClose}
     >
-      {/* Tap the backdrop to dismiss */}
+      {/* Semi-transparent backdrop — tree glow is visible behind */}
       <TouchableWithoutFeedback onPress={handleClose}>
         <View style={styles.backdrop}>
-          {/* Inner TWF absorbs taps on the card so they don't close the modal */}
           <TouchableWithoutFeedback>
             <View style={styles.card}>
-              <Text style={styles.title}>Search Nodes</Text>
-
               <TextInput
+                ref={inputRef}
                 style={styles.input}
                 value={query}
-                onChangeText={setQuery}
-                placeholder="Node name…"
+                onChangeText={handleQueryChange}
+                placeholder="Search nodes…"
                 placeholderTextColor={COLORS.textMuted}
                 autoFocus
                 autoCorrect={false}
                 autoCapitalize="none"
-                returnKeyType="search"
+                returnKeyType="done"
+                onSubmitEditing={handleClose}
                 clearButtonMode="while-editing"
               />
-
-              {/* Hint / empty states */}
-              {query.trim().length === 0 ? (
-                <Text style={styles.hint}>Type a node name to search</Text>
-              ) : results.length === 0 ? (
-                <Text style={styles.hint}>No nodes found</Text>
-              ) : (
-                <FlatList
-                  data={results}
-                  keyExtractor={(n) => String(n.skill)}
-                  renderItem={renderItem}
-                  style={styles.list}
-                  keyboardShouldPersistTaps="handled"
-                  showsVerticalScrollIndicator={false}
-                />
-              )}
+              <Text style={styles.hint}>
+                {query.trim().length === 0
+                  ? 'Highlighted nodes appear on the tree'
+                  : 'Dismiss to save as a filter'}
+              </Text>
             </View>
           </TouchableWithoutFeedback>
         </View>
@@ -131,25 +90,17 @@ export default function NodeSearchModal({ visible, onClose }: Props) {
 const styles = StyleSheet.create({
   backdrop: {
     flex: 1,
-    backgroundColor: 'rgba(0, 0, 0, 0.6)',
+    backgroundColor: 'rgba(0, 0, 0, 0.25)',
     justifyContent: 'flex-start',
-    paddingTop: 80, // sit below the header area
+    paddingTop: 80,
     paddingHorizontal: 16,
   },
   card: {
-    backgroundColor: COLORS.bgPanel,
+    backgroundColor: 'rgba(11, 15, 26, 0.95)',
     borderRadius: 10,
     borderWidth: 1,
-    borderColor: COLORS.border,
-    padding: 16,
-    maxHeight: '75%',
-  },
-  title: {
-    color: COLORS.gold,
-    fontSize: 16,
-    fontWeight: '700',
-    marginBottom: 12,
-    letterSpacing: 0.5,
+    borderColor: COLORS.gold,
+    padding: 12,
   },
   input: {
     backgroundColor: COLORS.bgInput,
@@ -160,39 +111,11 @@ const styles = StyleSheet.create({
     paddingHorizontal: 12,
     paddingVertical: 10,
     fontSize: 15,
-    marginBottom: 12,
+    marginBottom: 8,
   },
   hint: {
     color: COLORS.textMuted,
-    fontSize: 14,
+    fontSize: 12,
     textAlign: 'center',
-    paddingVertical: 20,
-  },
-  list: {
-    flexGrow: 0,
-  },
-  row: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    paddingVertical: 10,
-    paddingHorizontal: 4,
-    borderBottomWidth: StyleSheet.hairlineWidth,
-    borderBottomColor: COLORS.border,
-  },
-  nodeName: {
-    flex: 1,
-    color: COLORS.text,
-    fontSize: 14,
-    marginRight: 8,
-  },
-  badge: {
-    borderWidth: 1,
-    borderRadius: 4,
-    paddingHorizontal: 6,
-    paddingVertical: 2,
-  },
-  badgeText: {
-    fontSize: 11,
-    fontWeight: '600',
   },
 });

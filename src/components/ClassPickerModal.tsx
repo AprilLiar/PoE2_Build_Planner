@@ -17,7 +17,7 @@ interface Props {
   classes: TreeClass[];
   selectedClass: string | null;
   selectedAscendancy: string | null;
-  onSelectClass: (name: string | null) => void;
+  onSelectClass: (name: string) => void;
   onSelectAscendancy: (name: string | null) => void;
 }
 
@@ -57,14 +57,6 @@ export default function ClassPickerModal({
                 showsVerticalScrollIndicator={false}
               >
                 <Text style={styles.sectionLabel}>CLASS</Text>
-                <OptionRow
-                  label="None"
-                  selected={!selectedClass}
-                  onPress={() => {
-                    onSelectClass(null);
-                    onSelectAscendancy(null);
-                  }}
-                />
                 {classes.map((cls) => (
                   <OptionRow
                     key={cls.name}

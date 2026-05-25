@@ -8,15 +8,20 @@ import {
   StyleSheet,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { DrawerActions } from '@react-navigation/native';
 import { navigationRef } from '../navigation/navigationRef';
-import { DrawerParamList } from '../navigation/DrawerNavigator';
 import { COLORS } from '../constants/colors';
 
-const SCREENS: { name: keyof DrawerParamList; label: string }[] = [
-  { name: 'Skill Tree', label: 'Skill Tree' },
-  { name: 'Items', label: 'Items' },
-  { name: 'Gems', label: 'Gems' },
-];
+// The drawer screens this button can navigate to.
+const DRAWER_SCREENS = ['Skill Tree', 'Items', 'Gems', 'Settings'] as const;
+type DrawerScreen = typeof DRAWER_SCREENS[number];
+
+const SCREEN_LABELS: Record<DrawerScreen, string> = {
+  'Skill Tree': 'Skill Tree',
+  Items: 'Items',
+  Gems: 'Gems',
+  Settings: 'Settings',
+};
 
 export default function FloatingMenuButton() {
   const [open, setOpen] = useState(false);
@@ -32,12 +37,19 @@ export default function FloatingMenuButton() {
     });
   }, []);
 
-  const navigate = (screen: keyof DrawerParamList) => {
-    navigationRef.navigate(screen);
+  // Only show the button when inside the drawer (not on BuildListScreen).
+  const isInsideDrawer = currentRoute !== null && DRAWER_SCREENS.includes(currentRoute as DrawerScreen);
+  if (!isInsideDrawer) return null;
+
+  const navigate = (screen: DrawerScreen) => {
+    // Navigate within the nested drawer using DrawerActions.
+    // The navigationRef points to the root stack; we dispatch to the focused drawer inside it.
+    navigationRef.dispatch(DrawerActions.jumpTo(screen));
     setOpen(false);
   };
 
-  const btnTop = insets.top + 12;
+  // Position below the top overlay (insets.top + ~46px).
+  const btnTop = insets.top + 58;
   const btnLeft = insets.left + 16;
 
   return (
@@ -59,17 +71,17 @@ export default function FloatingMenuButton() {
       >
         <Pressable style={styles.backdrop} onPress={() => setOpen(false)}>
           <Pressable style={[styles.menu, { top: btnTop + 54, left: btnLeft }]}>
-            {SCREENS.map((screen) => {
-              const active = currentRoute === screen.name;
+            {DRAWER_SCREENS.map((screen) => {
+              const active = currentRoute === screen;
               return (
                 <TouchableOpacity
-                  key={screen.name}
+                  key={screen}
                   style={[styles.menuItem, active && styles.menuItemActive]}
-                  onPress={() => navigate(screen.name)}
+                  onPress={() => navigate(screen)}
                   activeOpacity={0.7}
                 >
                   <Text style={[styles.menuLabel, active && styles.menuLabelActive]}>
-                    {screen.label}
+                    {SCREEN_LABELS[screen]}
                   </Text>
                 </TouchableOpacity>
               );
@@ -106,7 +118,6 @@ const styles = StyleSheet.create({
     borderRadius: 1,
     backgroundColor: COLORS.text,
   },
-
   backdrop: {
     flex: 1,
     backgroundColor: 'rgba(0,0,0,0.45)',
