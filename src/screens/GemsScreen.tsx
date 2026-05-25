@@ -9,12 +9,10 @@ import {
   Alert,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
-import { useNavigation, DrawerActions } from '@react-navigation/native';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import {
   GemCatalogEntry,
   useGemStore,
-  getLevelReq,
   getAttrRequirement,
   gemColorHex,
   gemColorBg,
@@ -135,23 +133,15 @@ function GemCircle({ gem, size, onPress, onLongPress }: GemCircleProps) {
 
 interface Requirements { level: number; str: number; dex: number; int: number }
 
-interface ReqBarProps { active: Requirements; support: Requirements }
-
-function ReqBar({ active, support }: ReqBarProps) {
-  // Show the max of active vs support for each stat
-  const level = Math.max(active.level, support.level);
-  const str   = Math.max(active.str,   support.str);
-  const dex   = Math.max(active.dex,   support.dex);
-  const int   = Math.max(active.int,   support.int);
-
+function ReqBar({ req }: { req: Requirements }) {
   return (
     <View style={styles.reqBar}>
       <Text style={styles.reqLabel}>REQUIREMENTS</Text>
       <View style={styles.reqStats}>
-        <ReqStat label="Lvl" value={level} color={COLORS.gold} />
-        <ReqStat label="STR" value={str}   color="#DC2626" />
-        <ReqStat label="DEX" value={dex}   color="#16A34A" />
-        <ReqStat label="INT" value={int}   color="#2563EB" />
+        <ReqStat label="Lvl" value={req.level} color={COLORS.gold} />
+        <ReqStat label="STR" value={req.str}   color="#DC2626" />
+        <ReqStat label="DEX" value={req.dex}   color="#16A34A" />
+        <ReqStat label="INT" value={req.int}   color="#2563EB" />
       </View>
     </View>
   );
@@ -173,7 +163,6 @@ function ReqStat({ label, value, color }: { label: string; value: number; color:
 export default function GemsScreen() {
   const { gems, isLoaded, isLoading, error, loadGems } = useGemStore();
   const insets = useSafeAreaInsets();
-  const navigation = useNavigation();
 
   const [groups, setGroups] = useState<GemGroup[]>([makeEmptyGroup(newId())]);
   const [searchTarget, setSearchTarget] = useState<SlotTarget | null>(null);
@@ -282,41 +271,43 @@ export default function GemsScreen() {
   }, [detailGroupId, detailSlot]);
 
   // ---- Requirements calculation ----
-
-  const requirements = useMemo(() => {
-    let activeLvl = 0, activeStr = 0, activeDex = 0, activeInt = 0;
-    let supLvl = 0, supStr = 0, supDex = 0, supInt = 0;
+  // Active gem level req: PoE2 uniform 0→90 curve across L1–L20.
+  // Support gems: each adds a flat +5 to the stat matching its color.
+  // Display per-stat: max(active skill's stat req, total support contribution for that stat).
+  const requirements = useMemo((): Requirements => {
+    let maxLvlReq = 0;
+    let activeMaxStr = 0, activeMaxDex = 0, activeMaxInt = 0;
+    let supStr = 0, supDex = 0, supInt = 0;
 
     for (const group of groups) {
       if (group.activeGem) {
         const g = gemById(group.activeGem.gemId);
         if (g) {
-          const lr = getLevelReq(g, group.activeGem.gemLevel);
-          const ar = getAttrRequirement(g.color, lr);
-          activeLvl = Math.max(activeLvl, lr);
-          activeStr += ar.str;
-          activeDex += ar.dex;
-          activeInt += ar.int;
+          const lvlReq = Math.round((Math.min(group.activeGem.gemLevel, 20) - 1) * 90 / 19);
+          const ar = getAttrRequirement(g.color, lvlReq);
+          maxLvlReq      = Math.max(maxLvlReq, lvlReq);
+          activeMaxStr   = Math.max(activeMaxStr, ar.str);
+          activeMaxDex   = Math.max(activeMaxDex, ar.dex);
+          activeMaxInt   = Math.max(activeMaxInt, ar.int);
         }
       }
       for (const sup of group.supportGems) {
         if (sup) {
           const g = gemById(sup.gemId);
           if (g) {
-            const lr = getLevelReq(g, 1);
-            const ar = getAttrRequirement(g.color, lr);
-            supLvl = Math.max(supLvl, lr);
-            supStr += ar.str;
-            supDex += ar.dex;
-            supInt += ar.int;
+            if (g.color === 1) supStr += 5;
+            else if (g.color === 2) supDex += 5;
+            else supInt += 5;
           }
         }
       }
     }
 
     return {
-      active: { level: activeLvl, str: activeStr, dex: activeDex, int: activeInt },
-      support: { level: supLvl, str: supStr, dex: supDex, int: supInt },
+      level: maxLvlReq,
+      str:   Math.max(activeMaxStr, supStr),
+      dex:   Math.max(activeMaxDex, supDex),
+      int:   Math.max(activeMaxInt, supInt),
     };
   }, [groups, gemById]);
 
@@ -347,21 +338,8 @@ export default function GemsScreen() {
 
   return (
     <View style={[styles.container, { paddingTop: insets.top }]}>
-      {/* Screen header */}
-      <View style={styles.header}>
-        <TouchableOpacity
-          onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
-          style={styles.hamburger}
-          hitSlop={8}
-        >
-          <Text style={styles.hamburgerText}>☰</Text>
-        </TouchableOpacity>
-        <Text style={styles.headerTitle}>Skills</Text>
-        <View style={styles.hamburger} />
-      </View>
-
-      {/* Sticky requirements bar */}
-      <ReqBar active={requirements.active} support={requirements.support} />
+      {/* Sticky requirements bar — paddingLeft clears the FloatingMenuButton */}
+      <ReqBar req={requirements} />
 
       <ScrollView
         style={styles.scroll}
@@ -528,40 +506,13 @@ const styles = StyleSheet.create({
     fontWeight: '600',
   },
 
-  // --- Screen header ---
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 12,
-    paddingVertical: 10,
-    backgroundColor: COLORS.bgPanel,
-    borderBottomWidth: 1,
-    borderBottomColor: COLORS.border,
-  },
-  hamburger: {
-    width: 36,
-    height: 36,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  hamburgerText: {
-    color: COLORS.text,
-    fontSize: 20,
-    lineHeight: 24,
-  },
-  headerTitle: {
-    color: COLORS.gold,
-    fontSize: 17,
-    fontWeight: '700',
-    letterSpacing: 0.5,
-  },
-
   // --- Requirements bar ---
+  // paddingLeft: button is 44px wide at left=16 → right edge ~60; add 8px gap → 68
   reqBar: {
     flexDirection: 'row',
     alignItems: 'center',
-    paddingHorizontal: 14,
+    paddingLeft: 68,
+    paddingRight: 14,
     paddingVertical: 10,
     backgroundColor: COLORS.bgPanel,
     borderBottomWidth: 1,
