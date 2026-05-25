@@ -15,9 +15,12 @@ import { Gesture, GestureDetector } from 'react-native-gesture-handler';
 import {
   Canvas,
   Group,
+  Image as SkiaImage,
+  ImageShader,
   Path as SkiaPath,
   Rect,
   Skia,
+  useImage,
 } from '@shopify/react-native-skia';
 import type { SkPath } from '@shopify/react-native-skia';
 import { useTreeStore, TreeNode, isAnchorNode } from '../store/useTreeStore';
@@ -209,6 +212,50 @@ export default function GraphicalSkillTree(_props: Props) {
     liveSearchQuery,
   } = useTreeStore();
 
+  // ── Texture images (all static requires — Metro resolves at bundle time) ──
+  const bgTileImg  = useImage(require('../../assets/poe2/tree/background/tree-background.png'));
+  const groupBg104 = useImage(require('../../assets/poe2/tree/group-bgs/group-background_104_104.png'));
+  const groupBg152 = useImage(require('../../assets/poe2/tree/group-bgs/group-background_152_156.png'));
+  const groupBg160 = useImage(require('../../assets/poe2/tree/group-bgs/group-background_160_164.png'));
+  const groupBg208 = useImage(require('../../assets/poe2/tree/group-bgs/group-background_208_208.png'));
+  const groupBg220 = useImage(require('../../assets/poe2/tree/group-bgs/group-background_220_224.png'));
+  const groupBg360 = useImage(require('../../assets/poe2/tree/group-bgs/group-background_360_360.png'));
+  const groupBg468 = useImage(require('../../assets/poe2/tree/group-bgs/group-background_468_468.png'));
+
+  // Character orbit ring images — orbit 0 is a 1435×29 connection-line strip, not a ring; skip it
+  const orbitN1 = useImage(require('../../assets/poe2/tree/orbits/character-orbit-normal-1.png'));
+  const orbitN2 = useImage(require('../../assets/poe2/tree/orbits/character-orbit-normal-2.png'));
+  const orbitN3 = useImage(require('../../assets/poe2/tree/orbits/character-orbit-normal-3.png'));
+  const orbitN4 = useImage(require('../../assets/poe2/tree/orbits/character-orbit-normal-4.png'));
+  const orbitN5 = useImage(require('../../assets/poe2/tree/orbits/character-orbit-normal-5.png'));
+  const orbitN6 = useImage(require('../../assets/poe2/tree/orbits/character-orbit-normal-6.png'));
+  const orbitN7 = useImage(require('../../assets/poe2/tree/orbits/character-orbit-normal-7.png'));
+  const orbitN8 = useImage(require('../../assets/poe2/tree/orbits/character-orbit-normal-8.png'));
+  const orbitN9 = useImage(require('../../assets/poe2/tree/orbits/character-orbit-normal-9.png'));
+
+  // Index by orbit number (0 → null = skip)
+  const orbitNImgs = useMemo(
+    () => [null, orbitN1, orbitN2, orbitN3, orbitN4, orbitN5, orbitN6, orbitN7, orbitN8, orbitN9],
+    [orbitN1, orbitN2, orbitN3, orbitN4, orbitN5, orbitN6, orbitN7, orbitN8, orbitN9],
+  );
+
+  // Index by max orbit in group → closest-fitting circular background texture.
+  // Orbit radii (world units): 1=82, 2=162, 7=251, 3=335, 4=493, 5=662, 6=846, 8=1080, 9=1322
+  const groupBgByOrbit = useMemo(
+    () => [
+      null,       // 0 — class-start single node, no group background
+      groupBg104, // 1 — r=82
+      groupBg152, // 2 — r=162
+      groupBg208, // 3 — r=335
+      groupBg360, // 4 — r=493
+      groupBg468, // 5 — r=662
+      groupBg468, // 6 — r=846
+      groupBg160, // 7 — r=251 (sits between orbit 2 and 3)
+      groupBg468, // 8 — r=1080
+      groupBg468, // 9 — r=1322
+    ],
+    [groupBg104, groupBg152, groupBg160, groupBg208, groupBg360, groupBg468],
+  );
 
   // -------------------------------------------------------------------------
   // Fit scale: maps world coords → screen pixels at "view whole tree" zoom
@@ -405,7 +452,6 @@ export default function GraphicalSkillTree(_props: Props) {
   const edgeStrokeAlloc      = useDerivedValue(() => 2.5  / scale.value);
   const highlightStroke      = useDerivedValue(() => 3.0  / scale.value);
   const edgeGlowStroke       = useDerivedValue(() => 10.0 / scale.value);
-  const orbitRingStroke      = useDerivedValue(() => 1.5  / scale.value);
   const nodeRingStroke       = useDerivedValue(() => 2.0  / scale.value); // normal / mastery / asc
   const keystoneRingStroke   = useDerivedValue(() => 5.0  / scale.value); // heavy hex frame
   const notableRingStroke    = useDerivedValue(() => 3.5  / scale.value);
@@ -578,22 +624,6 @@ export default function GraphicalSkillTree(_props: Props) {
       );
     });
   }, [groupData, viewport]);
-
-  // -------------------------------------------------------------------------
-  // Orbit ring path — one circle per orbit per visible non-ascendancy group
-  // -------------------------------------------------------------------------
-  const orbitRingPath = useMemo(() => {
-    const path = Skia.Path.Make();
-    const { orbitRadii } = treeConstants;
-    for (const g of visibleGroups) {
-      if (g.isAscendancy) continue;
-      for (const o of g.orbits) {
-        const r = orbitRadii[o] ?? 0;
-        if (r > 0) path.addCircle(g.x, g.y, r);
-      }
-    }
-    return path;
-  }, [visibleGroups, treeConstants]);
 
   // -------------------------------------------------------------------------
   // SKIA PATH BUILDING — edges
@@ -902,18 +932,62 @@ export default function GraphicalSkillTree(_props: Props) {
       <GestureDetector gesture={gesture}>
         <View style={StyleSheet.absoluteFill}>
           <Canvas style={StyleSheet.absoluteFill}>
-            {/* Layer 0: Solid dark background */}
+            {/* Layer 0: Dark base — shows while background tile loads */}
             <Rect x={0} y={0} width={screenWidth} height={screenHeight} color={COLORS.bgDeep} />
 
             <Group transform={transform as any}>
-              {/* Layer 1: Orbit ring grid — hidden */}
-              <SkiaPath
-                path={orbitRingPath}
-                color="#1E3A5F"
-                style="stroke"
-                strokeWidth={orbitRingStroke as any}
-                opacity={0}
-              />
+              {/* Layer 0.5: World-space tiling background texture */}
+              {bgTileImg && treeBounds.width > 0 && (
+                <Rect x={-2000} y={-2000} width={treeBounds.width + 4000} height={treeBounds.height + 4000}>
+                  <ImageShader image={bgTileImg} tx="repeat" ty="repeat" fit="none" />
+                </Rect>
+              )}
+
+              {/* Layer 1: Group decorative backgrounds */}
+              {visibleGroups.map(g => {
+                if (g.isAscendancy) return null;
+                const maxOrbit = g.orbits.length > 0 ? Math.max(...g.orbits) : 0;
+                const bgImg = groupBgByOrbit[Math.min(maxOrbit, 9)];
+                if (!bgImg) return null;
+                const bgR = Math.max(g.maxOrbitRadius, 50) * 1.15;
+                return (
+                  <SkiaImage
+                    key={`gbg-${g.id}`}
+                    image={bgImg}
+                    x={g.x - bgR}
+                    y={g.y - bgR}
+                    width={bgR * 2}
+                    height={bgR * 2}
+                    opacity={0.35}
+                  />
+                );
+              })}
+
+              {/* Layer 2: Orbit ring textures — one image per orbit per group */}
+              {visibleGroups.map(g => {
+                if (g.isAscendancy) return null;
+                return (
+                  <Group key={`orbits-${g.id}`}>
+                    {g.orbits.filter(o => o > 0).map(orbit => {
+                      const radius = treeConstants.orbitRadii[orbit] ?? 0;
+                      if (radius <= 0) return null;
+                      const img = orbitNImgs[orbit];
+                      if (!img) return null;
+                      return (
+                        <SkiaImage
+                          key={orbit}
+                          image={img}
+                          x={g.x - radius}
+                          y={g.y - radius}
+                          width={radius * 2}
+                          height={radius * 2}
+                          opacity={0.55}
+                        />
+                      );
+                    })}
+                  </Group>
+                );
+              })}
 
               {/* Layer 3: Unallocated edges */}
               <SkiaPath

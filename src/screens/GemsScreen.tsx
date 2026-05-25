@@ -8,6 +8,8 @@ import {
   ActivityIndicator,
   Alert,
 } from 'react-native';
+import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { useNavigation, DrawerActions } from '@react-navigation/native';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import {
   GemCatalogEntry,
@@ -170,6 +172,8 @@ function ReqStat({ label, value, color }: { label: string; value: number; color:
 
 export default function GemsScreen() {
   const { gems, isLoaded, isLoading, error, loadGems } = useGemStore();
+  const insets = useSafeAreaInsets();
+  const navigation = useNavigation();
 
   const [groups, setGroups] = useState<GemGroup[]>([makeEmptyGroup(newId())]);
   const [searchTarget, setSearchTarget] = useState<SlotTarget | null>(null);
@@ -320,7 +324,7 @@ export default function GemsScreen() {
 
   if (isLoading && !isLoaded) {
     return (
-      <View style={styles.centered}>
+      <View style={[styles.centered, { paddingTop: insets.top }]}>
         <ActivityIndicator size="large" color={COLORS.gold} />
         <Text style={styles.loadingText}>Loading gems…</Text>
       </View>
@@ -329,7 +333,7 @@ export default function GemsScreen() {
 
   if (error) {
     return (
-      <View style={styles.centered}>
+      <View style={[styles.centered, { paddingTop: insets.top }]}>
         <Text style={styles.errorText}>Failed to load gems</Text>
         <Text style={styles.errorDetail}>{error}</Text>
         <TouchableOpacity onPress={loadGems} style={styles.retryBtn}>
@@ -342,7 +346,20 @@ export default function GemsScreen() {
   // ---- Render ----
 
   return (
-    <View style={styles.container}>
+    <View style={[styles.container, { paddingTop: insets.top }]}>
+      {/* Screen header */}
+      <View style={styles.header}>
+        <TouchableOpacity
+          onPress={() => navigation.dispatch(DrawerActions.openDrawer())}
+          style={styles.hamburger}
+          hitSlop={8}
+        >
+          <Text style={styles.hamburgerText}>☰</Text>
+        </TouchableOpacity>
+        <Text style={styles.headerTitle}>Skills</Text>
+        <View style={styles.hamburger} />
+      </View>
+
       {/* Sticky requirements bar */}
       <ReqBar active={requirements.active} support={requirements.support} />
 
@@ -509,6 +526,35 @@ const styles = StyleSheet.create({
   retryText: {
     color: COLORS.text,
     fontWeight: '600',
+  },
+
+  // --- Screen header ---
+  header: {
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    backgroundColor: COLORS.bgPanel,
+    borderBottomWidth: 1,
+    borderBottomColor: COLORS.border,
+  },
+  hamburger: {
+    width: 36,
+    height: 36,
+    alignItems: 'center',
+    justifyContent: 'center',
+  },
+  hamburgerText: {
+    color: COLORS.text,
+    fontSize: 20,
+    lineHeight: 24,
+  },
+  headerTitle: {
+    color: COLORS.gold,
+    fontSize: 17,
+    fontWeight: '700',
+    letterSpacing: 0.5,
   },
 
   // --- Requirements bar ---

@@ -19,6 +19,25 @@ interface GemStoreState {
   loadGems: () => Promise<void>;
 }
 
+// Flat-array schema from gems.json (Sprint 6.5 format)
+interface RawGem {
+  id: string;
+  name: string;
+  is_support: boolean;
+  icon?: string | null;
+  tags?: string[];
+}
+
+// Derive gem color from tags. Approximate: melee/slam/war → STR (1),
+// projectile/bow/evasion → DEX (2), spell/cold/fire/lightning/curse → INT (3).
+function deriveColor(tags: string[] = []): 1 | 2 | 3 {
+  const t = tags.join(' ').toLowerCase();
+  if (/strength|melee|slam|warrior|armou?r|bleed|warbringer/.test(t)) return 1;
+  if (/dexterity|projectile|bow|trap|mine|evasion|agility|ranger/.test(t)) return 2;
+  if (/intelligence|spell|cast|arcane|cold|fire|lightning|chaos|curse|minion|witch|sorc/.test(t)) return 3;
+  return 3;
+}
+
 export const useGemStore = create<GemStoreState>((set, get) => ({
   gems: [],
   isLoaded: false,
@@ -32,8 +51,17 @@ export const useGemStore = create<GemStoreState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const data = require('../../assets/data/gems.json') as { gems: GemCatalogEntry[] };
-      set({ gems: data.gems ?? [], isLoaded: true, isLoading: false });
+      const raw = require('../../assets/data/gems.json') as RawGem[] | { gems: RawGem[] };
+      const items: RawGem[] = Array.isArray(raw) ? raw : (raw.gems ?? []);
+      const gems: GemCatalogEntry[] = items.map((r) => ({
+        id: r.id,
+        name: r.name,
+        is_support: r.is_support,
+        color: deriveColor(r.tags),
+        description: '',
+        levelRequirements: [],
+      }));
+      set({ gems, isLoaded: true, isLoading: false });
     } catch (err) {
       set({ error: (err as Error).message, isLoading: false });
     }
