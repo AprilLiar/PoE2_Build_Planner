@@ -337,15 +337,12 @@ y = group.y - Math.cos(angle) * radius;
 - `Skia.Path.Make()` + `addCircle` for nodes; `moveTo/lineTo` for edges
 - Nodes: `style="fill"`, 40% opacity unallocated, 100% allocated
 
-**GGG textures — files in `assets/` root:**
-- `background-2.png` (76×76) — tiling canvas bg via `ImageShader tx="repeat" ty="repeat"`
-- `group-background-*.png` — **DO NOT USE** — packed sprite atlas; no coordinate data published for PoE2
-- `frame-1.png` (209×183, ratio 1.14) — per keystone/notable/normal/ascendancy node when `scale > fitScale × 20`
-- `jewel-1.png` — per jewel socket node when zoomed in, sized `outerR × 3.0` square
-- `mastery-1.png` — per mastery node when zoomed in, sized `outerR × 3.5` square
-- `skills-*.jpg` — node icon sprite atlases; no coordinate data published — cannot crop individual icons
-- `isMastery` is always undefined in patch 0.4 data, so mastery-1.png renders for 0 nodes currently
-- Single-image assets also available: `jewel-*.png`, `mastery-*.png` (5 zoom levels), `ascendancy-*.webp`, `bloodline-*.webp`, `line-*.png`, `tattoo-active-effect-*.png`
+**PoE2 tree textures — `assets/poe2/tree/`** (from PoB's `dev/src/TreeData/0_4`, patch 0.4):
+- `orbits/` — 90 orbit ring + connection-line textures, 3 themes × 3 states × 10 sizes. `character-orbit-{state}-{0..9}.png` where size `0` is a horizontal connection-line strip (1435×29) and `1..9` are orbit rings from largest (1333×1333) to smallest (91×90)
+- `group-bgs/` — 7 decorative circular backgrounds for notable/keystone clusters: `group-background_{W}_{H}.png` for sizes 104, 152, 160, 208, 220, 360, 468 px
+- `ascendancy-bgs/` — `ascendancy-background_1500_1500.png` (and 4000×4000 high-res variant) — circular class artwork
+- `background/tree-background.png` — 1024×1024 dark noise canvas bg, tile via `ImageShader tx="repeat" ty="repeat"`
+- Node-icon library: `assets/poe2/node-icons/Art/2DArt/SkillIcons/passives/{Ascendancy}/...webp` — 540 individual webp icons, addressable by `node.icon` field
 
 **Skia v2.2.12 API:**
 - `useImage(require('...'))` → `SkImage | null`
