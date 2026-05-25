@@ -246,12 +246,14 @@ Drawer header shows current build name, class, and level (rendered once in `Draw
 - Tap filled slot → read-only bottom sheet; "Edit" + "Clear Slot" actions
 - Rarity colours: Normal `#C8C8C8`, Magic `#8888FF`, Rare `#FFFF77`, Unique `#AF6025`
 
-### GemsScreen — NOT YET BUILT
-- List of `GemLink` groups; each has label, gems, "Add Gem" button
-- Add gem: search modal filtering `gems.json`; set level (1–20) + quality (0–20)
-- Tap existing gem → edit sheet (change level/quality, swap, remove)
-- Active gems first, supports below; group reorder via `react-native-draggable-flatlist`
-- "New Skill Group" button; delete group with confirmation
+### GemsScreen — IMPLEMENTED (Sprint 7)
+- 1 active gem circle (large) + 5 support slots (smaller) per group; up to 12 groups
+- Tap circle → `GemSearchModal` (filtered by active/support); long-press → `GemDetailSheet` (description + Remove)
+- Level stepper (−/Lv N/+) per group header, clamps 1–40; only visible when active gem is set
+- Sticky requirements bar at top: max(active, support) per stat for Lvl/STR/DEX/INT across all groups
+- 845-gem catalog in `assets/data/gems.json` (288 active + 557 support; compiled from PoB Lua files)
+- `useGemStore` (`src/store/useGemStore.ts`): `GemCatalogEntry` with `color:1|2|3`, `description`, `levelRequirements`
+- Group state in local `useState` — migrate to `useBuildStore` in a future sprint
 
 ### SettingsScreen — NOT YET BUILT
 - Ads: "Remove Ads" IAP button + "Restore Purchases"
@@ -504,6 +506,55 @@ Ascendancies (21 total, verified against tree.json patch 0.4):
 - Auto-reopen last build deferred (needs MMKV)
 - Onboarding deferred (design decision needed from developer)
 
+#### Sprint 5 — Graphical Tree Phase 2 (complete)
+**Shipped:** Viewport culling with spatial index, minimap overlay, and search → pan-to-node.
+
+**Files created/modified:**
+| File | Change | Purpose |
+|---|---|---|
+| `src/utils/treeLayout.ts` | Modified | Added `SpatialGrid` type, `buildSpatialGrid(positions, cellSize=500)`, `queryVisibleNodes(grid, minX, minY, maxX, maxY)` |
+| `src/store/useTreeStore.ts` | Modified | Added `spatialGrid: SpatialGrid | null` (built in `loadTree()`); added `flyToNodeId: number | null` + `setFlyToNodeId` action for search-triggered camera animation |
+| `src/components/GraphicalSkillTree.tsx` | Modified | Viewport state tracked on gesture end + initial load (25% padding); `visibleNodeIds` filters edges + nodes via spatial grid; minimap panel with `AnimatedRect` viewport indicator (UI-thread); `useEffect` watches `flyToNodeId` and spring-animates camera |
+| `src/components/NodeSearchModal.tsx` | Created | Modal with text input + FlatList of results (keystones first, capped at 30); tap → `setFlyToNodeId` + close |
+| `src/screens/SkillTreeScreen.tsx` | Modified | Added 🔍 button (right side of top overlay); selection chip moved into `topMiddle` flex container; renders `NodeSearchModal` |
+
+**Key technical decisions:**
+- **Spatial grid**: 500 world-unit cells over the ~33,000×33,000 world → 66×66 = 4,356 cells, avg ~1.1 nodes/cell. Viewport query is O(cells_in_viewport). At ×10 zoom, ~96% of nodes are skipped.
+- **Viewport update frequency**: Only on gesture end (`onEnd` callbacks) + initial load. 25% world-unit padding pre-renders nodes just off-screen to hide pop-in during short pans.
+- **Fly-to**: Pre-sets culling viewport to the target camera position before spring starts, so the target node is in the render set immediately.
+- **Minimap**: `AnimatedRect` created via `Animated.createAnimatedComponent(Rect)` from react-native-svg. `useAnimatedProps` worklet reads `panX/Y/scale` shared values → world-coordinate rect `{x, y, width, height}`; SVG `viewBox` set to tree bounds so coordinates are in world units, SVG handles the pixel scaling. `strokeWidth={500}` world units ≈ 1.5–2 px at minimap scale.
+- **Minimap dots**: Static memoized circles (no allocation state) — keystones r=180wu, notables r=130wu, normal r=80wu — re-render only when `nodes`/`nodePositions` change (i.e., never after load).
+- **Search modal**: Follows the established `TouchableWithoutFeedback` backdrop-dismiss pattern from `ClassPickerModal`.
+- **Top overlay layout restructure**: `[⚙] [topMiddle flex:1] [🔍]` — selection chip sits inside `topMiddle` so it doesn't push the search button off-screen.
+
+#### Sprint 6 — Gems Screen (complete)
+**Shipped:** Full gems screen with PoBstyle layout: active gem (large circle) + 5 support slots (smaller circles) per group, up to 12 groups, per-group level stepper, sticky requirements bar, gem search modal, gem detail bottom sheet.
+
+**Files created/modified:**
+| File | Change | Purpose |
+|---|---|---|
+| `assets/data/gems.json` | Created | 845 gem entries (288 active + 557 support) compiled from 6 PoB Lua files; 397 KB |
+| `src/store/useGemStore.ts` | Created | `GemCatalogEntry` interface, Zustand store, `getLevelReq`, `getAttrRequirement`, `gemColorHex`, `gemColorBg`, `gemColorLabel`, `gemAbbrev` helpers |
+| `src/components/GemSearchModal.tsx` | Created | Modal with text input; filters by `is_support`, name query; max 40 results; color dot + STR/DEX/INT badge per row |
+| `src/components/GemDetailSheet.tsx` | Created | `BottomSheetModal` snap `['55%', '85%']`; colored left bar, gem name, type/attr badge, level req, description, "Remove Gem" button |
+| `src/screens/GemsScreen.tsx` | Rewritten | Full layout: `GemCircle` sub-component, `ReqBar`, `GemGroup` state, active/support search flow, detail sheet, group add/remove |
+
+**Gems data facts (from PoB Lua files, patch May 2026):**
+- 845 total entries: 288 active gems (98 STR, 134 INT, 56 DEX) + 557 support gems (210 STR, 185 INT, 162 DEX)
+- All active gems: `levelReq: 0` at L1, `levelReq: 90` at L20 — uniform 0→90 curve
+- All support gems: single `{gemLevel: 1, levelReq: 0}` entry (PoB stores support level reqs separately)
+- 9 support gems lack the `Support` ID prefix but are correctly tagged `is_support: true`
+- `gems.json` schema: `{ "gems": GemCatalogEntry[] }` — loaded via `require()` in `loadGems()`
+
+**Key design decisions:**
+- Tap gem circle → opens `GemSearchModal` (fills that slot)
+- Long-press gem circle → opens `GemDetailSheet` (view + remove)
+- Level stepper (`−` / `Lv N` / `+`) in group header row; only visible when active gem is set; clamps 1–40
+- Requirements bar: accumulates `max(levelReq)` for level, sums attr requirements across all groups; shows `max(active, support)` per stat
+- Attribute requirements derived at runtime: `Math.floor(levelReq * 0.6)` for the gem's matching color
+- Group state lives locally in `GemsScreen` with `useState` — to migrate to `useBuildStore` in a future sprint
+- Empty circles show "+" with muted styling; filled circles show 4-char abbrev in gem's color
+
 ### Sprint Backlog
 - ✅ Sprint 1: Drawer nav + node FlatList
 - ✅ Sprint 2: Zustand store, search, allocate/deallocate, NodeDetailSheet, point counter
@@ -517,7 +568,7 @@ Ascendancies (21 total, verified against tree.json patch 0.4):
 - ⬜ **Next:** Node icons in tree (show icon inside node at high zoom), or ItemsScreen
 - ⬜ Fix Abyssal Lich ascendancy (no nodes visible in tree — reported but not yet investigated)
 - ⬜ ItemsScreen (slot grid + paste parser)
-- ⬜ GemsScreen (group management)
+- ✅ GemsScreen — IMPLEMENTED (Sprint 7): PoB-style circles, search modal, level stepper, requirements bar, 845-gem catalog
 - ⬜ SettingsScreen (needs redesign: add "← Build List" nav, remove placeholder, add relevant settings)
 - ⬜ Fonts (Cinzel + Inter)
 - ⬜ Leather texture background
