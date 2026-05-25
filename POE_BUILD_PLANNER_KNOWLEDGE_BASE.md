@@ -1399,6 +1399,34 @@ const y = group.y - Math.cos(angle) * radius;
 - **Search modal**: Follows the established `TouchableWithoutFeedback` backdrop-dismiss pattern from `ClassPickerModal`.
 - **Top overlay layout restructure**: `[⚙] [topMiddle flex:1] [🔍]` — selection chip sits inside `topMiddle` so it doesn't push the search button off-screen.
 
+#### Sprint 6 — Gems Screen (complete)
+**Shipped:** Full gems screen with PoBstyle layout: active gem (large circle) + 5 support slots (smaller circles) per group, up to 12 groups, per-group level stepper, sticky requirements bar, gem search modal, gem detail bottom sheet.
+
+**Files created/modified:**
+| File | Change | Purpose |
+|---|---|---|
+| `assets/data/gems.json` | Created | 845 gem entries (288 active + 557 support) compiled from 6 PoB Lua files; 397 KB |
+| `src/store/useGemStore.ts` | Created | `GemCatalogEntry` interface, Zustand store, `getLevelReq`, `getAttrRequirement`, `gemColorHex`, `gemColorBg`, `gemColorLabel`, `gemAbbrev` helpers |
+| `src/components/GemSearchModal.tsx` | Created | Modal with text input; filters by `is_support`, name query; max 40 results; color dot + STR/DEX/INT badge per row |
+| `src/components/GemDetailSheet.tsx` | Created | `BottomSheetModal` snap `['55%', '85%']`; colored left bar, gem name, type/attr badge, level req, description, "Remove Gem" button |
+| `src/screens/GemsScreen.tsx` | Rewritten | Full layout: `GemCircle` sub-component, `ReqBar`, `GemGroup` state, active/support search flow, detail sheet, group add/remove |
+
+**Gems data facts (from PoB Lua files, patch May 2026):**
+- 845 total entries: 288 active gems (98 STR, 134 INT, 56 DEX) + 557 support gems (210 STR, 185 INT, 162 DEX)
+- All active gems: `levelReq: 0` at L1, `levelReq: 90` at L20 — uniform 0→90 curve
+- All support gems: single `{gemLevel: 1, levelReq: 0}` entry (PoB stores support level reqs separately)
+- 9 support gems lack the `Support` ID prefix but are correctly tagged `is_support: true`
+- `gems.json` schema: `{ "gems": GemCatalogEntry[] }` — loaded via `require()` in `loadGems()`
+
+**Key design decisions:**
+- Tap gem circle → opens `GemSearchModal` (fills that slot)
+- Long-press gem circle → opens `GemDetailSheet` (view + remove)
+- Level stepper (`−` / `Lv N` / `+`) in group header row; only visible when active gem is set; clamps 1–40
+- Requirements bar: accumulates `max(levelReq)` for level, sums attr requirements across all groups; shows `max(active, support)` per stat
+- Attribute requirements derived at runtime: `Math.floor(levelReq * 0.6)` for the gem's matching color
+- Group state lives locally in `GemsScreen` with `useState` — to migrate to `useBuildStore` in a future sprint
+- Empty circles show "+" with muted styling; filled circles show 4-char abbrev in gem's color
+
 ### Sprint Backlog
 (Ordered by approximate priority — developer decides what to pick next)
 1. ~~Search bar + filter on Skill Tree list~~ ✅ Sprint 2
@@ -1407,10 +1435,10 @@ const y = group.y - Math.cos(angle) * radius;
 4. ~~Class & ascendancy picker (cog button)~~ ✅ Sprint 3
 5. ~~Graphical SVG skill tree (pan/zoom canvas, adjacency enforcement)~~ ✅ Sprint 4
 6. ~~Viewport culling, minimap, search → pan-to-node~~ ✅ Sprint 5
-7. Zustand `useBuildStore` + MMKV persistence (migrate `allocatedNodes` from `useTreeStore`)
-8. BuildListScreen (create, list, open builds)
-9. Items screen (slot grid + paste parser)
-10. Gems screen (group management)
+7. ~~Gems screen (group management, search, level stepper, requirements bar)~~ ✅ Sprint 6
+8. Zustand `useBuildStore` + MMKV persistence (migrate `allocatedNodes` from `useTreeStore`, `groups` from `GemsScreen`)
+9. BuildListScreen (create, list, open builds)
+10. Items screen (slot grid + paste parser)
 11. Settings screen
 12. Fonts (Cinzel + Inter)
 13. Leather texture background
@@ -1418,3 +1446,45 @@ const y = group.y - Math.cos(angle) * radius;
 15. IAP ("Remove Ads")
 16. Onboarding slides
 17. NativeWind migration
+
+#### Gem Data Extraction Session (complete)
+**Shipped:** `assets/data/gems.json` — 845 gems extracted from 6 PathOfBuilding-PoE2 Lua skill files.
+
+**Source files processed:**
+| File | Color | Type | Gems extracted |
+|---|---|---|---|
+| `act_str.lua` | 1 (STR/red) | Active | 98 |
+| `act_int.lua` | 3 (INT/blue) | Active | 134 |
+| `act_dex.lua` | 2 (DEX/green) | Active | 56 |
+| `sup_str.lua` | 1 (STR/red) | Support | 210 |
+| `sup_int.lua` | 3 (INT/blue) | Support | 185 |
+| `sup_dex.lua` | 2 (DEX/green) | Support | 162 |
+
+**Total: 288 active + 557 support = 845 gems — written to `assets/data/gems.json` (397 KB)**
+
+**Schema per entry:**
+```json
+{
+  "id": "ArcPlayer",
+  "name": "Arc",
+  "color": 3,
+  "is_support": false,
+  "description": "An arc of Lightning...",
+  "levelRequirements": [
+    {"gemLevel": 1, "levelReq": 0},
+    {"gemLevel": 5, "levelReq": 14},
+    {"gemLevel": 10, "levelReq": 36},
+    {"gemLevel": 15, "levelReq": 64},
+    {"gemLevel": 20, "levelReq": 90}
+  ]
+}
+```
+
+**Notes on the data:**
+- All active gems have 5 key-level entries (L1/5/10/15/20); all active gems start at levelReq 0 and cap at 90
+- All support gems have a single L1 entry with levelReq 0 (PoB stores support gem level reqs separately)
+- Hidden/internal sub-skills and triggered helper entries were excluded (hidden=true or name==id)
+- `Companion: {0}` template name normalised to `"Companion"` (id: `SummonBeastPlayer`)
+- `Spectre: {0}` normalised to `"Spectre"` (id: `SummonSpectrePlayer`)
+- Support gems not prefixed `Support` but correctly tagged: `FistOfWarSupportPlayer`, `ImpactShockwaveSupportPlayer`, `ViciousHexSupportPlayer`, `ProlongedDurationSupportPlayer`/Two, `RuthlessSupportPlayer`, `UnbreakableSupportPlayer`, `CompressedDurationSupportPlayer`/Two
+- Extraction scripts saved at `/home/user/poe2_gem_extract/parse_gems.py` and `build_gems_json.py`
