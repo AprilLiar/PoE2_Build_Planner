@@ -50466,7 +50466,7 @@
           "levelReq": 0
         }
       ],
-      "icon": null
+      "icon": "corruptingcrysupport.webp"
     },
     {
       "id": "persistent_ground_i",
@@ -52720,7 +52720,7 @@
           "levelReq": 0
         }
       ],
-      "icon": null
+      "icon": "farcombatsupport.webp"
     },
     {
       "id": "maim",
@@ -52930,7 +52930,7 @@
           "levelReq": 0
         }
       ],
-      "icon": null
+      "icon": "increaselimitsupport.webp"
     },
     {
       "id": "overcharge",
@@ -53490,7 +53490,7 @@
           "levelReq": 0
         }
       ],
-      "icon": null
+      "icon": "terrainchainsupport.webp"
     },
     {
       "id": "rigwald_s_ferocity",
@@ -56066,7 +56066,7 @@
           "levelReq": 0
         }
       ],
-      "icon": null
+      "icon": "wildshardssupport.webp"
     },
     {
       "id": "spell_cascade",
