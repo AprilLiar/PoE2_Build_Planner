@@ -5,7 +5,7 @@ import BottomSheet, {
   BottomSheetBackdrop,
   BottomSheetModal,
 } from '@gorhom/bottom-sheet';
-import { GemCatalogEntry, gemColorHex, gemColorLabel, gemColorBg, getLevelReq } from '../store/useGemStore';
+import { GemCatalogEntry, gemColorHex, gemColorLabel } from '../store/useGemStore';
 import { COLORS } from '../constants/colors';
 
 interface Props {
@@ -25,7 +25,8 @@ export default function GemDetailSheet({ sheetRef, gem, gemLevel = 1, onRemove }
   if (!gem) return null;
 
   const colorHex = gemColorHex(gem.color);
-  const levelReq = getLevelReq(gem, gemLevel);
+  // PoE2 uniform curve: 0 at L1 → 90 at L20
+  const levelReq = Math.round((Math.min(gemLevel, 20) - 1) * 90 / 19);
   const attrLabel = gemColorLabel(gem.color);
 
   return (
@@ -62,9 +63,26 @@ export default function GemDetailSheet({ sheetRef, gem, gemLevel = 1, onRemove }
         {/* Divider */}
         <View style={styles.divider} />
 
-        {/* Description */}
-        <Text style={styles.sectionLabel}>Description</Text>
-        <Text style={styles.description}>{gem.description}</Text>
+        {/* Tags / Description */}
+        {gem.tags.length > 0 ? (
+          <>
+            <Text style={styles.sectionLabel}>Tags</Text>
+            <View style={styles.tagRow}>
+              {gem.tags.map((tag) => (
+                <View key={tag} style={[styles.tagChip, { borderColor: colorHex }]}>
+                  <Text style={[styles.tagText, { color: colorHex }]}>
+                    {tag.charAt(0).toUpperCase() + tag.slice(1)}
+                  </Text>
+                </View>
+              ))}
+            </View>
+          </>
+        ) : (
+          <>
+            <Text style={styles.sectionLabel}>Description</Text>
+            <Text style={styles.descriptionMuted}>No description available.</Text>
+          </>
+        )}
 
         {/* Remove button */}
         {onRemove && (
@@ -158,10 +176,25 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     marginBottom: 8,
   },
-  description: {
-    color: COLORS.text,
+  tagRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+  },
+  tagChip: {
+    borderWidth: 1,
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  tagText: {
+    fontSize: 12,
+    fontWeight: '500',
+  },
+  descriptionMuted: {
+    color: COLORS.textMuted,
     fontSize: 14,
-    lineHeight: 21,
+    fontStyle: 'italic',
   },
   removeBtn: {
     backgroundColor: COLORS.danger,

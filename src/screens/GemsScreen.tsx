@@ -294,7 +294,9 @@ export default function GemsScreen() {
       for (const sup of group.supportGems) {
         if (sup) {
           const g = gemById(sup.gemId);
-          if (g) {
+          // Only count supports whose color is reliably known (non-empty tags).
+          // Current gems.json has no tags for supports — they'd all add to INT incorrectly.
+          if (g && g.tags.length > 0) {
             if (g.color === 1) supStr += 5;
             else if (g.color === 2) supDex += 5;
             else supInt += 5;

@@ -6,6 +6,7 @@ export interface GemCatalogEntry {
   name: string;
   color: 1 | 2 | 3; // 1 = STR / red, 2 = DEX / green, 3 = INT / blue
   is_support: boolean;
+  tags: string[];           // raw tags from gems.json; empty for most supports
   description: string;
   // Level requirement at each gem level — only a subset of levels is stored
   levelRequirements: Array<{ gemLevel: number; levelReq: number }>;
@@ -28,13 +29,16 @@ interface RawGem {
   tags?: string[];
 }
 
-// Derive gem color from tags. Approximate: melee/slam/war → STR (1),
-// projectile/bow/evasion → DEX (2), spell/cold/fire/lightning/curse → INT (3).
+// Derive gem color from tags.
+// Priority order: DEX (most specific ranged tags) → STR (melee/physical/warcry) → INT (elemental/spell) → STR fallback for attacks → INT default.
+// Support gems in the current gems.json have no tags, so their color cannot be determined; they keep the INT default for display only.
 function deriveColor(tags: string[] = []): 1 | 2 | 3 {
-  const t = tags.join(' ').toLowerCase();
-  if (/strength|melee|slam|warrior|armou?r|bleed|warbringer/.test(t)) return 1;
-  if (/dexterity|projectile|bow|trap|mine|evasion|agility|ranger/.test(t)) return 2;
-  if (/intelligence|spell|cast|arcane|cold|fire|lightning|chaos|curse|minion|witch|sorc/.test(t)) return 3;
+  const t = new Set(tags.map(x => x.toLowerCase()));
+  if (t.has('trap') || t.has('mine') || t.has('projectile')) return 2;           // DEX
+  if (t.has('melee') || t.has('warcry') || t.has('physical')) return 1;          // STR
+  if (t.has('spell') || t.has('cold') || t.has('fire') || t.has('lightning')     // INT
+      || t.has('chaos') || t.has('curse') || t.has('minion')) return 3;
+  if (t.has('attack')) return 1;                                                  // STR fallback for generic attacks
   return 3;
 }
 
@@ -57,8 +61,11 @@ export const useGemStore = create<GemStoreState>((set, get) => ({
         id: r.id,
         name: r.name,
         is_support: r.is_support,
+        tags: r.tags ?? [],
         color: deriveColor(r.tags),
-        description: '',
+        description: (r.tags ?? []).length > 0
+          ? (r.tags!).map(t => t.charAt(0).toUpperCase() + t.slice(1)).join(' · ')
+          : '',
         levelRequirements: [],
       }));
       set({ gems, isLoaded: true, isLoading: false });

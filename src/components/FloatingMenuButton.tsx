@@ -48,8 +48,7 @@ export default function FloatingMenuButton() {
     setOpen(false);
   };
 
-  // Position below the top overlay (insets.top + ~46px).
-  const btnTop = insets.top + 58;
+  const btnTop = insets.top + 8;
   const btnLeft = insets.left + 16;
 
   return (

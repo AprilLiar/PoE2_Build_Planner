@@ -125,8 +125,7 @@ function NodeTooltip({ node, screenX, screenY, screenWidth, screenHeight }: Node
   const cat = getCategory(node);
   const color = CATEGORY_STYLE[cat].color;
   const typeLabel = CATEGORY_LABELS[cat];
-  // Show up to 3 stat lines
-  const stats = node.stats?.slice(0, 3) ?? [];
+  const stats = node.stats ?? [];
 
   // Centre the card horizontally over the tap, clamped within screen edges
   let left = screenX - TOOLTIP_WIDTH / 2;
@@ -159,10 +158,12 @@ const tooltipStyles = StyleSheet.create({
   card: {
     position: 'absolute',
     width: TOOLTIP_WIDTH,
+    maxHeight: 320,
     backgroundColor: 'rgba(11, 15, 26, 0.97)',
     borderRadius: 8,
     borderWidth: 1,
     padding: 10,
+    overflow: 'hidden',
     // borderColor supplied inline (category colour)
   },
   name: {
