@@ -22,7 +22,7 @@ import {
   Skia,
   useImage,
 } from '@shopify/react-native-skia';
-import type { SkPath } from '@shopify/react-native-skia';
+import type { SkPath, SkImage } from '@shopify/react-native-skia';
 import { useTreeStore, TreeNode, isAnchorNode } from '../store/useTreeStore';
 import { queryVisibleNodes } from '../utils/treeLayout';
 import { COLORS } from '../constants/colors';
@@ -232,6 +232,16 @@ export default function GraphicalSkillTree(_props: Props) {
   const orbitN7 = useImage(require('../../assets/poe2/tree/orbits/character-orbit-normal-7.png'));
   const orbitN8 = useImage(require('../../assets/poe2/tree/orbits/character-orbit-normal-8.png'));
   const orbitN9 = useImage(require('../../assets/poe2/tree/orbits/character-orbit-normal-9.png'));
+
+  // Node frame textures — extracted via scripts/extract_node_frames.py
+  const frameNormalAlloc    = useImage(require('../../assets/poe2/tree/node-frames-extracted/normal-allocated.png'));
+  const frameNormalUnalloc  = useImage(require('../../assets/poe2/tree/node-frames-extracted/normal-unallocated.png'));
+  const frameNotableAlloc   = useImage(require('../../assets/poe2/tree/node-frames-extracted/notable-allocated.png'));
+  const frameNotableUnalloc = useImage(require('../../assets/poe2/tree/node-frames-extracted/notable-unallocated.png'));
+  const frameJewelAlloc     = useImage(require('../../assets/poe2/tree/node-frames-extracted/jewel-allocated.png'));
+  const frameJewelUnalloc   = useImage(require('../../assets/poe2/tree/node-frames-extracted/jewel-unallocated.png'));
+  const frameKsAlloc        = useImage(require('../../assets/poe2/tree/node-frames-extracted/keystone-allocated.png'));
+  const frameKsUnalloc      = useImage(require('../../assets/poe2/tree/node-frames-extracted/keystone-unallocated.png'));
 
   // Index by orbit number (0 → null = skip)
   const orbitNImgs = useMemo(
@@ -757,6 +767,37 @@ export default function GraphicalSkillTree(_props: Props) {
     return { unalloc, alloc };
   }, [nodes, displayPositions, visuallyAllocated, visibleNodeIds]);
 
+  // Per-node frame texture data — resolved on JS thread after each viewport update.
+  // mastery and ascNormal nodes use the normal frame (no dedicated textures extracted).
+  const nodeFrameData = useMemo(() => {
+    const entries: Array<{ nodeId: number; x: number; y: number; size: number; img: SkImage }> = [];
+    for (const node of Object.values(nodes)) {
+      if (isAnchorNode(node)) continue;
+      const pos = displayPositions[node.skill];
+      if (!pos) continue;
+      if (visibleNodeIds && !visibleNodeIds.has(node.skill)) continue;
+      const cat     = getCategory(node);
+      const isAlloc = visuallyAllocated.has(node.skill);
+      const outerR  = CATEGORY_STYLE[cat].outerR;
+      let img: SkImage | null;
+      switch (cat) {
+        case 'keystone': img = isAlloc ? frameKsAlloc      : frameKsUnalloc;      break;
+        case 'notable':  img = isAlloc ? frameNotableAlloc : frameNotableUnalloc; break;
+        case 'jewel':    img = isAlloc ? frameJewelAlloc   : frameJewelUnalloc;   break;
+        default:         img = isAlloc ? frameNormalAlloc  : frameNormalUnalloc;  break;
+      }
+      if (!img) continue;
+      entries.push({ nodeId: node.skill, x: pos.x - outerR, y: pos.y - outerR, size: outerR * 2, img });
+    }
+    return entries;
+  }, [
+    nodes, displayPositions, visibleNodeIds, visuallyAllocated,
+    frameNormalAlloc, frameNormalUnalloc,
+    frameNotableAlloc, frameNotableUnalloc,
+    frameJewelAlloc, frameJewelUnalloc,
+    frameKsAlloc, frameKsUnalloc,
+  ]);
+
   // -------------------------------------------------------------------------
   // SKIA PATH BUILDING — keystone soft glow (large transparent circle behind
   // each allocated keystone to give it a halo / aura effect)
@@ -1098,6 +1139,11 @@ export default function GraphicalSkillTree(_props: Props) {
                   color={CATEGORY_STYLE[cat].color}
                   style="fill"
                 />
+              ))}
+
+              {/* Layer 10.5: Node frame textures — PoE2 metallic ring art over fills */}
+              {nodeFrameData.map(({ nodeId, x, y, size, img }) => (
+                <SkiaImage key={nodeId} image={img} x={x} y={y} width={size} height={size} />
               ))}
 
             </Group>
