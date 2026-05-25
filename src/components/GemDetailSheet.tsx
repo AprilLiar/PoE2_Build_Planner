@@ -1,11 +1,12 @@
 import React, { useRef } from 'react';
-import { View, Text, StyleSheet, TouchableOpacity } from 'react-native';
+import { View, Text, StyleSheet, TouchableOpacity, Image } from 'react-native';
 import BottomSheet, {
   BottomSheetScrollView,
   BottomSheetBackdrop,
   BottomSheetModal,
 } from '@gorhom/bottom-sheet';
 import { GemCatalogEntry, gemColorHex, gemColorLabel, gemColorBg, getLevelReq } from '../store/useGemStore';
+import { GEM_ICON_MAP } from '../assets/gemIconMap.generated';
 import { COLORS } from '../constants/colors';
 
 interface Props {
@@ -27,6 +28,7 @@ export default function GemDetailSheet({ sheetRef, gem, gemLevel = 1, onRemove }
   const colorHex = gemColorHex(gem.color);
   const levelReq = getLevelReq(gem, gemLevel);
   const attrLabel = gemColorLabel(gem.color);
+  const iconSource = gem.icon ? GEM_ICON_MAP[gem.icon] : undefined;
 
   return (
     <BottomSheetModal
@@ -38,10 +40,16 @@ export default function GemDetailSheet({ sheetRef, gem, gemLevel = 1, onRemove }
       handleIndicatorStyle={styles.handle}
     >
       <BottomSheetScrollView contentContainerStyle={styles.content}>
-        {/* Header: gem name + type badge */}
+        {/* Header: icon + gem name + type badge */}
         <View style={styles.header}>
           {/* Colour indicator */}
           <View style={[styles.colorBar, { backgroundColor: colorHex }]} />
+          {iconSource && (
+            <Image
+              source={iconSource}
+              style={[styles.headerIcon, { backgroundColor: gemColorBg(gem.color) }]}
+            />
+          )}
           <View style={styles.headerText}>
             <Text style={styles.gemName}>{gem.name}</Text>
             <View style={styles.headerRow}>
@@ -115,6 +123,12 @@ const styles = StyleSheet.create({
     alignSelf: 'stretch',
     marginRight: 12,
     marginTop: 2,
+  },
+  headerIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    marginRight: 12,
   },
   headerText: {
     flex: 1,
