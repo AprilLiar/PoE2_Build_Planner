@@ -26,6 +26,7 @@ import type { SkPath, SkImage } from '@shopify/react-native-skia';
 import { useTreeStore, TreeNode, isAnchorNode } from '../store/useTreeStore';
 import { queryVisibleNodes } from '../utils/treeLayout';
 import { COLORS } from '../constants/colors';
+import { getNodeIconSource } from '../assets/nodeIconMap';
 
 const MINIMAP_SIZE = 130;
 const MINIMAP_INNER = MINIMAP_SIZE - 20;
@@ -187,6 +188,21 @@ const tooltipStyles = StyleSheet.create({
   },
 });
 
+// Show node icons once a normal node (r=15wu) renders ≥ 12 px on screen.
+const NODE_ICON_MIN_SCALE = 0.8;
+
+// One Skia sub-component per visible icon so each gets its own useImage hook.
+function NodeIconSprite({
+  source, x, y, size,
+}: {
+  source: number;
+  x: number; y: number; size: number;
+}) {
+  const img = useImage(source);
+  if (!img) return null;
+  return <SkiaImage image={img} x={x} y={y} width={size} height={size} />;
+}
+
 // ─── Main component ───────────────────────────────────────────────────────────
 
 export default function GraphicalSkillTree(_props: Props) {
@@ -319,6 +335,7 @@ export default function GraphicalSkillTree(_props: Props) {
   // Viewport culling — updated on gesture end (JS thread)
   // -------------------------------------------------------------------------
   const [viewport, setViewport] = useState<Viewport | null>(null);
+  const [scaleJS, setScaleJS] = useState(0);
 
   const computeViewport = useCallback(
     (sc: number, tx: number, ty: number): Viewport => {
@@ -346,6 +363,7 @@ export default function GraphicalSkillTree(_props: Props) {
 
   const updateViewportJS = useCallback(() => {
     setViewport(computeViewport(scale.value, panX.value, panY.value));
+    setScaleJS(scale.value);
   }, [computeViewport, scale, panX, panY]);
 
   // -------------------------------------------------------------------------
@@ -799,6 +817,25 @@ export default function GraphicalSkillTree(_props: Props) {
     frameKsAlloc, frameKsUnalloc,
   ]);
 
+  // Node icon sprites — only computed when zoomed in enough to be meaningful.
+  // Icons are shown at outerR*1.6 diameter, centred on the node.
+  const nodeIconData = useMemo(() => {
+    if (scaleJS < NODE_ICON_MIN_SCALE) return [];
+    const out: Array<{ nodeId: number; source: number; x: number; y: number; size: number }> = [];
+    for (const node of Object.values(nodes)) {
+      if (isAnchorNode(node) || !node.icon) continue;
+      const pos = displayPositions[node.skill];
+      if (!pos) continue;
+      if (visibleNodeIds && !visibleNodeIds.has(node.skill)) continue;
+      const source = getNodeIconSource(node.icon);
+      if (!source) continue;
+      const outerR = CATEGORY_STYLE[getCategory(node)].outerR;
+      const size = outerR * 1.6;
+      out.push({ nodeId: node.skill, source, x: pos.x - size / 2, y: pos.y - size / 2, size });
+    }
+    return out;
+  }, [scaleJS, nodes, displayPositions, visibleNodeIds]);
+
   // -------------------------------------------------------------------------
   // SKIA PATH BUILDING — keystone soft glow (large transparent circle behind
   // each allocated keystone to give it a halo / aura effect)
@@ -1145,6 +1182,11 @@ export default function GraphicalSkillTree(_props: Props) {
               {/* Layer 10.5: Node frame textures — PoE2 metallic ring art over fills */}
               {nodeFrameData.map(({ nodeId, x, y, size, img }) => (
                 <SkiaImage key={nodeId} image={img} x={x} y={y} width={size} height={size} />
+              ))}
+
+              {/* Layer 11: Node icons — shown when zoomed in (scale ≥ NODE_ICON_MIN_SCALE) */}
+              {nodeIconData.map(({ nodeId, source, x, y, size }) => (
+                <NodeIconSprite key={nodeId} source={source} x={x} y={y} size={size} />
               ))}
 
             </Group>
