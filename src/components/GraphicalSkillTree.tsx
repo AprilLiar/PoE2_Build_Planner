@@ -28,6 +28,34 @@ import { queryVisibleNodes } from '../utils/treeLayout';
 import { COLORS } from '../constants/colors';
 import { getNodeIconSource } from '../assets/nodeIconMap';
 
+// ─── Sprite sheet lookups (skills.json / skills-disabled.json) ────────────────
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const SKILLS_ACTIVE_FRAMES: Record<string, { frame: { x: number; y: number; w: number; h: number } }> =
+  require('../../assets/poe2/official-tree/skills.json').frames;
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const SKILLS_INACTIVE_FRAMES: Record<string, { frame: { x: number; y: number; w: number; h: number } }> =
+  require('../../assets/poe2/official-tree/skills-disabled.json').frames;
+
+const SPRITE_SHEET_W = 1029;
+const SPRITE_SHEET_H = 1459;
+const SPRITE_SIZE    = 34;   // all icon frames are 34×34 in the sheet
+const ICON_SCALE     = 2;    // render at 2× world pixels (68 wu) for clarity
+
+// Cached frame lookup — avoids repeated prefix concatenation in hot useMemo
+const activeCoordCache   = new Map<string, { x: number; y: number }>();
+const inactiveCoordCache = new Map<string, { x: number; y: number }>();
+
+function getIconCoord(iconPath: string, allocated: boolean): { x: number; y: number } | null {
+  const cache = allocated ? activeCoordCache : inactiveCoordCache;
+  if (cache.has(iconPath)) return cache.get(iconPath)!;
+  const prefix = allocated ? 'normalActive:' : 'normalInactive:';
+  const entry  = (allocated ? SKILLS_ACTIVE_FRAMES : SKILLS_INACTIVE_FRAMES)[prefix + iconPath];
+  if (!entry) { cache.set(iconPath, null as any); return null; }
+  const coord = { x: entry.frame.x, y: entry.frame.y };
+  cache.set(iconPath, coord);
+  return coord;
+}
+
 const MINIMAP_SIZE = 130;
 const MINIMAP_INNER = MINIMAP_SIZE - 20;
 const VIEWPORT_PADDING = 0.25;
@@ -214,6 +242,7 @@ export default function GraphicalSkillTree(_props: Props) {
     nodePositions,
     treeBounds,
     classStartNodes,
+    adjacency,
     allocatedNodes,
     selectedClass,
     selectedAscendancy,
@@ -361,10 +390,19 @@ export default function GraphicalSkillTree(_props: Props) {
     setViewport(computeViewport(startScale, startTX, startTY));
   }, [fitScale, treeBounds.width, treeBounds.height, screenWidth, screenHeight, computeViewport]);
 
+  const [currentScale, setCurrentScale] = useState(0);
+
   const updateViewportJS = useCallback(() => {
     setViewport(computeViewport(scale.value, panX.value, panY.value));
     setScaleJS(scale.value);
+    setCurrentScale(scale.value);
   }, [computeViewport, scale, panX, panY]);
+
+  // Sprite sheet images for node icons
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const skillsActiveImage  = useImage(require('../../assets/poe2/official-tree/skills.webp'));
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const skillsInactiveImage = useImage(require('../../assets/poe2/official-tree/skills-disabled.webp'));
 
   // -------------------------------------------------------------------------
   // Ascendancy repositioning — selected ascendancy cluster is translated to
@@ -667,11 +705,11 @@ export default function GraphicalSkillTree(_props: Props) {
       const fromPos = displayPositions[node.skill];
       if (!fromPos) continue;
 
-      for (const conn of node.connections ?? []) {
-        // Connections in tree.json are unidirectional — each edge is stored in only
-        // one node's connection list, so no deduplication is needed or correct here.
+      for (const connId of adjacency[node.skill] ?? []) {
+        // adjacency is undirected — skip duplicates by only drawing edge when fromId < toId
+        if (node.skill >= connId) continue;
 
-        const toNode = nodes[conn.id];
+        const toNode = nodes[connId];
         // Skip edges to/from anchor nodes
         if (!toNode || isAnchorNode(toNode)) continue;
 
@@ -681,14 +719,14 @@ export default function GraphicalSkillTree(_props: Props) {
         const toAsc   = toNode?.ascendancyName ?? null;
         if (fromAsc !== toAsc) continue;
 
-        const toPos = displayPositions[conn.id];
+        const toPos = displayPositions[connId];
         if (!toPos) continue;
 
         if (visibleNodeIds &&
             !visibleNodeIds.has(node.skill) &&
-            !visibleNodeIds.has(conn.id)) continue;
+            !visibleNodeIds.has(connId)) continue;
 
-        const path = (visuallyAllocated.has(node.skill) && visuallyAllocated.has(conn.id))
+        const path = (visuallyAllocated.has(node.skill) && visuallyAllocated.has(connId))
           ? alloc : unalloc;
 
         // Same-group, same-orbit connections are arcs along the orbit ring.
@@ -730,7 +768,7 @@ export default function GraphicalSkillTree(_props: Props) {
       }
     }
     return { unallocEdgePath: unalloc, allocEdgePath: alloc };
-  }, [nodes, displayPositions, visuallyAllocated, visibleNodeIds, treeConstants]);
+  }, [nodes, adjacency, displayPositions, visuallyAllocated, visibleNodeIds, treeConstants]);
 
   // -------------------------------------------------------------------------
   // SKIA PATH BUILDING — nodes
@@ -835,6 +873,42 @@ export default function GraphicalSkillTree(_props: Props) {
     }
     return out;
   }, [scaleJS, nodes, displayPositions, visibleNodeIds]);
+
+  // -------------------------------------------------------------------------
+  // NODE ICONS — sprite-based rendering at sufficient zoom
+  // Each entry: world position + sprite sheet UV coords + allocated flag
+  // Minimum screen size check: only show icons when node renders >= 8px on screen
+  // -------------------------------------------------------------------------
+  interface IconDraw {
+    wx: number; wy: number;   // world-space top-left of icon dest rect
+    sx: number; sy: number;   // sprite sheet source top-left
+    allocated: boolean;
+  }
+  const ICON_MIN_SCREEN_PX = 8; // don't bother drawing icons below this screen size
+
+  const iconDraws = useMemo((): IconDraw[] => {
+    const nodeScreenSize = CATEGORY_STYLE.normal.r * 2 * currentScale;
+    if (nodeScreenSize < ICON_MIN_SCREEN_PX) return [];
+
+    const result: IconDraw[] = [];
+    for (const node of Object.values(nodes)) {
+      if (!node.icon || isAnchorNode(node)) continue;
+      const pos = displayPositions[node.skill];
+      if (!pos) continue;
+      if (visibleNodeIds && !visibleNodeIds.has(node.skill)) continue;
+      const alloc = visuallyAllocated.has(node.skill);
+      const coord = getIconCoord(node.icon, alloc);
+      if (!coord) continue;
+      result.push({
+        wx: pos.x - SPRITE_SIZE * ICON_SCALE / 2,
+        wy: pos.y - SPRITE_SIZE * ICON_SCALE / 2,
+        sx: coord.x,
+        sy: coord.y,
+        allocated: alloc,
+      });
+    }
+    return result;
+  }, [nodes, displayPositions, visuallyAllocated, visibleNodeIds, currentScale]);
 
   // -------------------------------------------------------------------------
   // SKIA PATH BUILDING — keystone soft glow (large transparent circle behind
@@ -1179,15 +1253,31 @@ export default function GraphicalSkillTree(_props: Props) {
                 />
               ))}
 
-              {/* Layer 10.5: Node frame textures — PoE2 metallic ring art over fills */}
-              {nodeFrameData.map(({ nodeId, x, y, size, img }) => (
-                <SkiaImage key={nodeId} image={img} x={x} y={y} width={size} height={size} />
-              ))}
-
-              {/* Layer 11: Node icons — shown when zoomed in (scale ≥ NODE_ICON_MIN_SCALE) */}
-              {nodeIconData.map(({ nodeId, source, x, y, size }) => (
-                <NodeIconSprite key={nodeId} source={source} x={x} y={y} size={size} />
-              ))}
+              {/* Layer 11: Node icons from GGG sprite sheet — only at sufficient zoom */}
+              {iconDraws.map((ic, idx) => {
+                const img = ic.allocated ? skillsActiveImage : skillsInactiveImage;
+                if (!img) return null;
+                const dstW = SPRITE_SIZE * ICON_SCALE;
+                const dstH = SPRITE_SIZE * ICON_SCALE;
+                // Position the full sheet so the desired sprite is centred on the node.
+                // The clip rect isolates just that sprite.
+                const imgX = ic.wx - ic.sx * (dstW / SPRITE_SIZE);
+                const imgY = ic.wy - ic.sy * (dstH / SPRITE_SIZE);
+                return (
+                  <Group
+                    key={idx}
+                    clip={Skia.XYWHRect(ic.wx, ic.wy, dstW, dstH)}
+                  >
+                    <SkiaImage
+                      image={img}
+                      x={imgX}
+                      y={imgY}
+                      width={SPRITE_SHEET_W * (dstW / SPRITE_SIZE)}
+                      height={SPRITE_SHEET_H * (dstH / SPRITE_SIZE)}
+                    />
+                  </Group>
+                );
+              })}
 
             </Group>
           </Canvas>

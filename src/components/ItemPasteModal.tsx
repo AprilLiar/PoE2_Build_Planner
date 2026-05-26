@@ -138,12 +138,34 @@ export default function ItemPasteModal({ visible, onClose, slot, initialRawText 
                   {preview.base_type !== preview.name && (
                     <Text style={styles.previewBase}>{preview.base_type}</Text>
                   )}
-                  <View style={styles.divider} />
-                  {preview.mods.map((mod, i) => (
-                    <Text key={i} style={styles.modLine}>{mod}</Text>
-                  ))}
-                  {preview.mods.length === 0 && (
-                    <Text style={styles.noMods}>No modifiers found</Text>
+                  {preview.sections.length > 0 ? (
+                    preview.sections.map((section, si) => (
+                      <View key={si}>
+                        <View style={[styles.divider, si === 0 && styles.dividerFirst]} />
+                        {section.lines.map((line, li) => (
+                          <Text
+                            key={li}
+                            style={[
+                              styles.modLine,
+                              section.type === 'properties' && styles.propLine,
+                              section.type === 'flag' && line === 'Corrupted' && styles.corruptedLine,
+                            ]}
+                          >
+                            {line}
+                          </Text>
+                        ))}
+                      </View>
+                    ))
+                  ) : (
+                    <>
+                      <View style={styles.divider} />
+                      {preview.mods.map((mod, i) => (
+                        <Text key={i} style={styles.modLine}>{mod}</Text>
+                      ))}
+                      {preview.mods.length === 0 && (
+                        <Text style={styles.noMods}>No modifiers found</Text>
+                      )}
+                    </>
                   )}
                 </ScrollView>
               )}
@@ -254,6 +276,19 @@ const styles = StyleSheet.create({
     color: COLORS.text,
     fontSize: 13,
     lineHeight: 20,
+  },
+  propLine: {
+    color: '#7A7A7A',
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  corruptedLine: {
+    color: '#DC2626',
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  dividerFirst: {
+    marginTop: 4,
   },
   noMods: {
     color: COLORS.textMuted,
