@@ -616,6 +616,23 @@ Ascendancies (23 total, verified against new official GGG export):
 - `mastery-effect-active.webp` / `mastery-effect-disabled.webp` — mastery node effects
 - `background-{class}.webp` (×8) — per-class ascendancy artwork backgrounds
 
+### Sprint 9 — Tree edge fix + node icon sprites (complete)
+**Shipped:**
+- Fixed critical edge rendering bug: `GraphicalSkillTree.tsx` was iterating `node.connections ?? []` (old format, always `undefined` in the new GGG tree.json) → zero edges drawn. Now uses `adjacency[node.skill] ?? []` with dedup guard `if (node.skill >= connId) continue` for the undirected adjacency map.
+- Added `adjacency` to store destructure in the component.
+- Added module-level sprite lookups (`SKILLS_ACTIVE_FRAMES` / `SKILLS_INACTIVE_FRAMES`) from `skills.json` / `skills-disabled.json` with a `getIconCoord()` helper and module-level `Map` caches.
+- Added `useImage()` calls for `skills.webp` / `skills-disabled.webp`.
+- Added `currentScale` JS state (updated in `updateViewportJS` alongside viewport) to gate icon rendering.
+- Added `iconDraws` useMemo: collects `{wx, wy, sx, sy, allocated}` entries for all visible nodes with icons; returns `[]` when `normal.r * 2 * currentScale < 8px`.
+- Added Layer 11 in Canvas JSX: for each `iconDraw`, renders `<Group clip={Skia.XYWHRect(...)}>` containing `<SkiaImage>` positioned so the correct 34×34 sprite shows through the clip.
+
+**Key technical facts:**
+- Sprite coords: `normalActive:{iconPath}` / `normalInactive:{iconPath}` keys in the JSON `frames` object
+- Icon scale: `ICON_SCALE = 2` → 68×68 world units per icon (SPRITE_SIZE=34 × 2)
+- Sheet rendered at `(SPRITE_SHEET_W × (dstW/SPRITE_SIZE), SPRITE_SHEET_H × (dstH/SPRITE_SIZE))` = 2058×2918 world units; clip rect snaps correct sprite
+- Image position formula: `imgX = wx - sx * (dstW/SPRITE_SIZE)`, `imgY = wy - sy * (dstH/SPRITE_SIZE)` — offsets the sheet so sprite UV top-left aligns with clip rect top-left
+- Coverage: 4088/4841 non-anchor nodes have icons (84%); remaining 16% show fill-only circles
+
 ### Sprint Backlog
 - ✅ Sprint 1: Drawer nav + node FlatList
 - ✅ Sprint 2: Zustand store, search, allocate/deallocate, NodeDetailSheet, point counter
@@ -630,9 +647,10 @@ Ascendancies (23 total, verified against new official GGG export):
 - ✅ **Sprint 7.5:** Gem schema rebuild (PoB Lua, rich schema), icon rendering in GemCircle/SearchModal/DetailSheet, static require map
 - ✅ **Sprint 8:** ItemsScreen (slot grid, ItemPasteModal, ItemDetailSheet, item-icons.json CDN map) + item-icons.json from Exiled-Exchange-2
 - ✅ **Sprint 8.5:** Official GGG tree migration (poe2-skilltree-export) — new data.json (5102 nodes), official sprite sheet assets, updated treeLayout.ts + useTreeStore.ts
+- ✅ **Sprint 9:** Tree edge rendering fix (adjacency-based, replaces broken `node.connections`), node icon sprites from skills.webp/skills-disabled.webp (zoom-gated, clip-group technique)
 - ⬜ Fix Abyssal Lich ascendancy (no nodes visible in tree — reported but not yet investigated)
 - ⬜ Download remaining 380 gem icons (run `scripts/downloadMissingGemIcons.py` + `scripts/buildGemIconMap.js` locally)
-- ⬜ Node icons in tree (show passive icon sprite inside node at high zoom, using skills.webp sprite sheet)
+- ⬜ Item rendering improvements (PoE tooltip style, section classification, rarity header) — partially done in Sprint 8.5; detail sheet implemented
 - ⬜ SettingsScreen (needs redesign: add "← Build List" nav, remove placeholder, add relevant settings)
 - ⬜ Fonts (Cinzel + Inter)
 - ⬜ Leather texture background
@@ -642,4 +660,4 @@ Ascendancies (23 total, verified against new official GGG export):
 
 ---
 
-*Last updated: 2026-05-26 (Sprint 8.5)*
+*Last updated: 2026-05-26 (Sprint 9)*
