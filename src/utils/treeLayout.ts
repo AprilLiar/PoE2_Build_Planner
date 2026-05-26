@@ -2,10 +2,19 @@
 // All functions are called once during loadTree() and results stored in Zustand.
 
 type RawNode = {
-  id: number;
+  id?: number | string | null;
+  skill?: number;
   group: number;
   orbit: number;
   orbitIndex: number;
+  // New GGG export format (pre-computed coords, out/in adjacency)
+  x?: number;
+  y?: number;
+  out?: string[];
+  in?: string[];
+  ascendancyId?: string;
+  isAscendancyStart?: boolean;
+  // Old PoB-derived format (computed coords from groups + constants)
   connections?: { id: number }[];
   classesStart?: string[];
 };
@@ -13,11 +22,12 @@ type RawNode = {
 type RawGroup = { x: number; y: number };
 
 type RawGroupFull = {
-  id: number;
+  id?: number;
   x: number;
   y: number;
   orbits?: number[];
   isAscendancy?: boolean;
+  nodes?: string[];
 };
 
 export interface GroupData {
@@ -43,15 +53,24 @@ export type TreeBounds = {
   height: number;
 };
 
+// PoE2 class start node IDs — stable across tree updates.
+// Each pair of PoE2/legacy names shares the same start node.
+export const POE2_CLASS_START_NODES: Record<string, number> = {
+  Ranger: 50459,    Huntress: 50459,
+  Marauder: 47175,  Warrior: 47175,
+  Duelist: 50986,   Mercenary: 50986,
+  Templar: 61525,   Druid: 61525,
+  Witch: 54447,     Sorceress: 54447,
+  Shadow: 44683,    Monk: 44683,
+};
+
 /**
- * Computes (x, y) screen position for every node using the PoB / GGG convention:
- *   angle starts at 12 o'clock and increases clockwise.
- *   x = group.x + sin(angle) * radius
- *   y = group.y - cos(angle) * radius
+ * Computes (x, y) screen position for every node.
  *
- * Positions are then normalised so that the minimum coordinate in each axis is 0.
- * The normalisation offset is baked in so callers never need to know about minX/minY.
- * Call computeTreeBounds() first to obtain the offsets.
+ * New GGG export format: nodes carry pre-computed x/y → use them directly.
+ * Old PoB format: derive position from group center + orbit formula.
+ *
+ * Positions are normalised so the minimum coordinate in each axis is 0.
  */
 export function computeNodePositions(
   nodes: Record<string, RawNode>,
@@ -60,23 +79,32 @@ export function computeNodePositions(
 ): { positions: Record<number, { x: number; y: number }>; normOffsetX: number; normOffsetY: number } {
   const { orbitRadii, skillsPerOrbit } = constants;
 
-  // First pass: raw world coordinates
   const raw: Record<number, { x: number; y: number }> = {};
-  for (const [, node] of Object.entries(nodes)) {
-    const group = groups[String(node.group)];
-    if (!group) continue;
+  for (const [key, node] of Object.entries(nodes)) {
+    // Use explicit skill field when available (new format); fall back to numeric key (old format)
+    const skillId = node.skill ?? Number(key);
+    if (!isFinite(skillId) || skillId <= 0) continue; // skip root node and invalid entries
 
-    const orbit = node.orbit ?? 0;
-    const orbitIndex = node.orbitIndex ?? 0;
-    const radius = orbitRadii[orbit] ?? 0;
-    const n = skillsPerOrbit[orbit] ?? 1;
-    // angle = 0 puts the node at the top (12 o'clock), increases clockwise
-    const angle = n <= 1 ? 0 : (2 * Math.PI * orbitIndex) / n;
+    if (node.x !== undefined && node.y !== undefined) {
+      // New format: GGG pre-computed world coordinates
+      raw[skillId] = { x: node.x, y: node.y };
+    } else {
+      // Old format: derive from group center + orbit geometry
+      const group = groups[String(node.group)];
+      if (!group) continue;
 
-    raw[node.id] = {
-      x: group.x + Math.sin(angle) * radius,
-      y: group.y - Math.cos(angle) * radius,
-    };
+      const orbit = node.orbit ?? 0;
+      const orbitIndex = node.orbitIndex ?? 0;
+      const radius = orbitRadii[orbit] ?? 0;
+      const n = skillsPerOrbit[orbit] ?? 1;
+      // angle = 0 puts node at 12 o'clock, increases clockwise
+      const angle = n <= 1 ? 0 : (2 * Math.PI * orbitIndex) / n;
+
+      raw[skillId] = {
+        x: group.x + Math.sin(angle) * radius,
+        y: group.y - Math.cos(angle) * radius,
+      };
+    }
   }
 
   // Find bounds for normalisation
@@ -86,10 +114,9 @@ export function computeNodePositions(
     if (pos.x < minX) minX = pos.x;
     if (pos.y < minY) minY = pos.y;
   }
-  if (!isFinite(minX)) minX = 0;
-  if (!isFinite(minY)) minY = 0;
+  if (!isFinite(minX)) { minX = 0; minY = 0; }
 
-  // Second pass: normalise so all coordinates are ≥ 0
+  // Normalise so all coordinates are ≥ 0
   const positions: Record<number, { x: number; y: number }> = {};
   for (const [id, pos] of Object.entries(raw)) {
     positions[Number(id)] = { x: pos.x - minX, y: pos.y - minY };
@@ -100,28 +127,42 @@ export function computeNodePositions(
 
 /**
  * Builds the group center + orbit metadata array using the same normalization
- * offset that was applied to node positions, so group coords are in the same
- * world space as the node positions returned by computeNodePositions.
+ * offset that was applied to node positions.
+ *
+ * Accepts an optional `nodes` map (new GGG format) to derive `isAscendancy`
+ * from whether any of the group's nodes carry an `ascendancyId`.
  */
 export function buildGroupData(
   groups: Record<string, RawGroupFull>,
   constants: TreeConstants,
   normOffsetX: number,
   normOffsetY: number,
+  nodes?: Record<string, RawNode>,
 ): GroupData[] {
   const { orbitRadii } = constants;
+
+  // Pre-build a group → isAscendancy map from node ascendancyId fields (new format)
+  const groupHasAscendancy: Record<string, boolean> = {};
+  if (nodes) {
+    for (const node of Object.values(nodes)) {
+      if (node.ascendancyId) {
+        groupHasAscendancy[String(node.group)] = true;
+      }
+    }
+  }
+
   const result: GroupData[] = [];
-  for (const [, g] of Object.entries(groups)) {
+  for (const [gid, g] of Object.entries(groups)) {
     const orbits = g.orbits ?? [0];
     const maxOrbitRadius = Math.max(...orbits.map(o => orbitRadii[o] ?? 0));
     if (maxOrbitRadius <= 0) continue;
     result.push({
-      id: g.id,
+      id: g.id ?? Number(gid),
       x: g.x - normOffsetX,
       y: g.y - normOffsetY,
       orbits,
       maxOrbitRadius,
-      isAscendancy: g.isAscendancy ?? false,
+      isAscendancy: g.isAscendancy ?? groupHasAscendancy[gid] ?? false,
     });
   }
   return result;
@@ -152,9 +193,10 @@ export function computeTreeBounds(
 }
 
 /**
- * Builds an undirected adjacency list: nodeId → list of all connected node IDs.
- * tree.json stores connections from each node's perspective, so we mirror them
- * to ensure both directions are present.
+ * Builds an undirected adjacency list: nodeId → connected node IDs.
+ *
+ * New GGG format: connections are in `out` string arrays (numeric skill IDs).
+ * Old PoB format: connections are in `connections: [{id}]` arrays.
  */
 export function computeAdjacency(
   nodes: Record<string, RawNode>
@@ -165,16 +207,30 @@ export function computeAdjacency(
     if (!adj[id]) adj[id] = new Set();
   };
 
-  for (const [, node] of Object.entries(nodes)) {
-    ensure(node.id);
-    for (const conn of node.connections ?? []) {
-      ensure(conn.id);
-      adj[node.id].add(conn.id);
-      adj[conn.id].add(node.id); // mirror so both directions are available
+  for (const [key, node] of Object.entries(nodes)) {
+    const skillId = node.skill ?? Number(key);
+    if (!isFinite(skillId) || skillId <= 0) continue; // skip root node
+    ensure(skillId);
+
+    if (node.out !== undefined) {
+      // New GGG format: out[] contains numeric skill ID strings
+      for (const connStr of node.out) {
+        const connId = Number(connStr);
+        if (!isFinite(connId) || connId <= 0) continue; // skip 'root' and invalid
+        ensure(connId);
+        adj[skillId].add(connId);
+        adj[connId].add(skillId); // mirror for undirected traversal
+      }
+    } else {
+      // Old PoB format: connections array
+      for (const conn of node.connections ?? []) {
+        ensure(conn.id);
+        adj[skillId].add(conn.id);
+        adj[conn.id].add(skillId);
+      }
     }
   }
 
-  // Convert Sets to plain arrays
   const result: Record<number, number[]> = {};
   for (const [id, set] of Object.entries(adj)) {
     result[Number(id)] = Array.from(set);
@@ -184,20 +240,29 @@ export function computeAdjacency(
 
 /**
  * Builds a map from PoE2 class name to class-start node ID.
- * Uses the `classesStart` array present on the 6 hub nodes in tree.json.
- * e.g. { Ranger: 50459, Huntress: 50459, Warrior: 47175, ... }
+ *
+ * Old format: reads `classesStart` arrays from hub nodes.
+ * New format (no classesStart): falls back to the hardcoded POE2_CLASS_START_NODES map.
  */
 export function buildClassStartMap(
   nodes: Record<string, RawNode>
 ): Record<string, number> {
   const map: Record<string, number> = {};
-  for (const [, node] of Object.entries(nodes)) {
-    if (node.classesStart) {
+
+  for (const [key, node] of Object.entries(nodes)) {
+    if (node.classesStart?.length) {
+      const skillId = node.skill ?? Number(key);
       for (const className of node.classesStart) {
-        map[className] = node.id;
+        map[className] = skillId;
       }
     }
   }
+
+  // If nothing found (new format), return the stable hardcoded map
+  if (Object.keys(map).length === 0) {
+    return { ...POE2_CLASS_START_NODES };
+  }
+
   return map;
 }
 
@@ -230,8 +295,6 @@ export type SpatialGrid = {
 /**
  * Builds a uniform-grid spatial index from node world positions.
  * Each cell covers cellSize × cellSize world units (~500 is a good default).
- * Lets the renderer skip the ~96% of nodes outside the visible viewport
- * by querying only the grid cells that overlap the viewport rect.
  */
 export function buildSpatialGrid(
   positions: Record<number, { x: number; y: number }>,
@@ -250,7 +313,6 @@ export function buildSpatialGrid(
 
 /**
  * Returns the set of node IDs whose grid cells overlap the given viewport rect.
- * Nodes in boundary cells are included (conservative: may include a few off-screen).
  */
 export function queryVisibleNodes(
   grid: SpatialGrid,
@@ -288,12 +350,10 @@ export function canDeallocate(
   adjacency: Record<number, number[]>,
   startNodeId: number
 ): boolean {
-  // Build the set that would remain after removal
   const remaining = new Set(allocatedNodes);
   remaining.delete(nodeId);
-  if (remaining.size === 0) return true; // nothing left to protect
+  if (remaining.size === 0) return true;
 
-  // BFS from class start through remaining allocated nodes only
   const reachable = new Set<number>();
   const queue: number[] = [startNodeId];
 
@@ -307,6 +367,5 @@ export function canDeallocate(
     }
   }
 
-  // Safe only if every remaining node is still reachable from start
   return reachable.size === remaining.size;
 }

@@ -321,15 +321,15 @@ y = group.y - Math.cos(angle) * radius;
 - Edges: rendered only where `node.skill < conn.id` (deduplication)
 - `visuallyAllocated` set includes class start node for rendering only (doesn't affect BFS/counter)
 
-**Class start node IDs:**
-| Class(es) | Node ID | `classesStart` key |
-|---|---|---|
-| Ranger, Huntress | 50459 | RANGER |
-| Warrior | 47175 | MARAUDER |
-| Mercenary | 50986 | DUELIST |
-| Witch, Sorceress | 54447 | WITCH |
-| Druid | 61525 | TEMPLAR |
-| Monk | 44683 | SIX |
+**Class start node IDs (stable across tree updates; hardcoded in `treeLayout.ts` as `POE2_CLASS_START_NODES`):**
+| Class(es) | Node ID |
+|---|---|
+| Ranger, Huntress | 50459 |
+| Warrior (+ legacy Marauder) | 47175 |
+| Mercenary (+ legacy Duelist) | 50986 |
+| Witch, Sorceress | 54447 |
+| Druid (+ legacy Templar) | 61525 |
+| Monk (+ legacy Shadow "SIX") | 44683 |
 
 **Skia rendering (Sprint 5):**
 - `@shopify/react-native-skia` v2.2.12 bundled in Expo Go SDK 54 — no native rebuild
@@ -442,18 +442,18 @@ assets/
 
 ## 17. Implementation State (updated each session)
 
-### PoE2 Classes (from tree.json patch 0.4)
+### PoE2 Classes (from official GGG poe2-skilltree-export)
 8 classes: Ranger, Huntress, Warrior, Mercenary, Druid, Witch, Sorceress, Monk
 Load from `tree.json classes` array — do NOT hardcode in a separate file.
-Ascendancies (21 total, verified against tree.json patch 0.4):
+Ascendancies (23 total, verified against new official GGG export):
 - Ranger: Deadeye, Pathfinder
-- Huntress: Amazon, Ritualist
+- Huntress: Amazon, Spirit Walker, Ritualist
 - Warrior: Titan, Warbringer, Smith of Kitava
 - Mercenary: Tactician, Witchhunter, Gemling Legionnaire
 - Druid: Oracle, Shaman
 - Witch: Infernalist, Blood Mage, Lich, Abyssal Lich
 - Sorceress: Stormweaver, Chronomancer, Disciple of Varashta
-- Monk: Invoker, Acolyte of Chayula
+- Monk: Martial Artist, Invoker, Acolyte of Chayula
 
 ### Sprint 6.5 — Search overhaul + anchor nodes + web compat + asset library (complete)
 **Shipped:**
@@ -571,6 +571,51 @@ Ascendancies (21 total, verified against tree.json patch 0.4):
 - `GEM_ICON_MAP` key = webp filename as stored on disk (e.g. `"Leap Slam.webp"`, `"acrimonysupport.webp"`)
 - `GemCatalogEntry.icon` stores this filename; `GEM_ICON_MAP[gem.icon]` → `ImageSourcePropType`
 
+### Sprint 8 — ItemsScreen + item icon CDN map (complete, PR #16)
+**Shipped:**
+- `src/utils/itemParser.ts` — pure TS parser for PoE2 item paste text; `--------` section splitting; rarity extraction; name/base_type/mods output; `ParseOutcome` discriminated union
+- `src/components/ItemPasteModal.tsx` — RN Modal with multiline TextInput, Parse button, inline error display, rarity-coloured preview, "Add to Slot" confirm
+- `src/components/ItemDetailSheet.tsx` — BottomSheetModal (60%/90% snap), rarity color bar, item icon, mods list, Edit + Clear Slot buttons
+- `src/screens/ItemsScreen.tsx` — full rewrite: slot grid grouped into Armour/Weapons/Jewellery/Flasks/Charms, SlotCard sub-component with rarity-colored top border + 32×32 icon
+- `src/types/build.ts` — added `icon?: string` to `Item` interface
+- `assets/data/item-icons.json` — 1788 name→CDN-URL entries built from Exiled-Exchange-2 items.ndjson (ITEM + UNIQUE namespaces)
+- `scripts/buildItemIconMap.js` — Node.js script that regenerates item-icons.json
+
+### Sprint 8.5 — Official GGG tree data migration (complete)
+**Shipped:**
+- `assets/data/tree.json` — replaced with official GGG poe2-skilltree-export `data.json` (5102 nodes, up from 4701)
+- `assets/poe2/official-tree/` — 36 official GGG assets (18 webp + 18 json): background, per-class backgrounds (8), frame, group-background, jewel, jewel-radius, line, mastery-effect-active/disabled, skills, skills-disabled
+- `src/utils/treeLayout.ts` — updated for new format:
+  - `computeNodePositions()`: uses pre-computed `node.x`/`node.y` when present; falls back to orbit formula for old format
+  - `computeAdjacency()`: handles `out` string arrays (new) and `connections` array (old)
+  - `buildGroupData()`: accepts optional `nodes` param to derive `isAscendancy` from `ascendancyId` presence
+  - `buildClassStartMap()`: returns hardcoded `POE2_CLASS_START_NODES` when no `classesStart` nodes found
+  - New export: `POE2_CLASS_START_NODES` constant map
+- `src/store/useTreeStore.ts` — updated for new format:
+  - `TreeNode` interface: added `x?, y?, ascendancyId?, flavourText?, out?, in?, isClassStart?`
+  - `TreeClass` interface: `displayName` optional, `id?` on ascendancy entries
+  - State: added `jewelSlots: Set<number>`
+  - `loadTree()`: hardcoded `ORBIT_RADII`/`SKILLS_PER_ORBIT` fallback constants; derives `ascendancyName` from `ascendancyId` + classes map; filters classes to PoE2-only (8 with ascendancies); sets `isJewelSocket` from `jewelSlots` array; marks class hub nodes as `isClassStart`
+  - `isAnchorNode()`: checks `isClassStart` and `isAscendancyStart` (class hub nodes have empty stats in new format and must not be treated as anchors)
+
+**New data facts (official GGG export):**
+- 5102 total nodes (4844 named, 33 keystones, 1165 notables, 667 ascendancy)
+- 31 jewel socket positions
+- New ascendancies: Huntress gains Spirit Walker (was 2, now 3); Monk gains Martial Artist (was 2, now 3)
+- `constants` absent from export — orbit radii hardcoded: `[0, 82, 162, 335, 493, 662, 846, 251, 1080, 1322]`
+- Node coordinates are pre-computed world coords (range ~-22597 to 21814 X, ~-18720 to 20053 Y)
+- GGG official sprite sheets (`skills.webp` + coordinate JSON) available for node icon rendering at high zoom
+
+**Official asset files (in `assets/poe2/official-tree/`):**
+- `skills.webp` / `skills.json` — sprite sheet for all normal-state node icons + coordinate data
+- `skills-disabled.webp` / `skills-disabled.json` — disabled/unallocated state variant
+- `frame.webp` / `frame.json` — node frame overlays
+- `group-background.webp` / `group-background.json` — group ring backgrounds
+- `jewel.webp` / `jewel.json` — jewel socket appearances
+- `line.webp` / `line.json` — connection line segments
+- `mastery-effect-active.webp` / `mastery-effect-disabled.webp` — mastery node effects
+- `background-{class}.webp` (×8) — per-class ascendancy artwork backgrounds
+
 ### Sprint Backlog
 - ✅ Sprint 1: Drawer nav + node FlatList
 - ✅ Sprint 2: Zustand store, search, allocate/deallocate, NodeDetailSheet, point counter
@@ -583,10 +628,11 @@ Ascendancies (21 total, verified against tree.json patch 0.4):
 - ✅ **Sprint 6.5:** Search overhaul (pulsing glow, persistent filter chips), anchor node hiding, web compat, PoE2 asset library
 - ✅ **Sprint 7:** GemsScreen — PoB-style circles, search modal, level stepper, requirements bar, 845-gem catalog
 - ✅ **Sprint 7.5:** Gem schema rebuild (PoB Lua, rich schema), icon rendering in GemCircle/SearchModal/DetailSheet, static require map
-- ⬜ **Next options:** Node icons in tree (show passive icon inside node at high zoom), ItemsScreen, or download remaining gem icons
+- ✅ **Sprint 8:** ItemsScreen (slot grid, ItemPasteModal, ItemDetailSheet, item-icons.json CDN map) + item-icons.json from Exiled-Exchange-2
+- ✅ **Sprint 8.5:** Official GGG tree migration (poe2-skilltree-export) — new data.json (5102 nodes), official sprite sheet assets, updated treeLayout.ts + useTreeStore.ts
 - ⬜ Fix Abyssal Lich ascendancy (no nodes visible in tree — reported but not yet investigated)
 - ⬜ Download remaining 380 gem icons (run `scripts/downloadMissingGemIcons.py` + `scripts/buildGemIconMap.js` locally)
-- ⬜ ItemsScreen (slot grid + paste parser)
+- ⬜ Node icons in tree (show passive icon sprite inside node at high zoom, using skills.webp sprite sheet)
 - ⬜ SettingsScreen (needs redesign: add "← Build List" nav, remove placeholder, add relevant settings)
 - ⬜ Fonts (Cinzel + Inter)
 - ⬜ Leather texture background
@@ -596,4 +642,4 @@ Ascendancies (21 total, verified against tree.json patch 0.4):
 
 ---
 
-*Last updated: 2026-05-26*
+*Last updated: 2026-05-26 (Sprint 8.5)*
