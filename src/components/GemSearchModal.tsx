@@ -8,12 +8,14 @@ import {
   TouchableOpacity,
   TouchableWithoutFeedback,
   StyleSheet,
+  Image,
 } from 'react-native';
 import {
   GemCatalogEntry,
   gemColorHex,
   gemColorLabel,
 } from '../store/useGemStore';
+import { GEM_ICON_MAP } from '../assets/gemIconMap.generated';
 import { COLORS } from '../constants/colors';
 
 interface Props {
@@ -62,14 +64,19 @@ export default function GemSearchModal({
     ({ item }: { item: GemCatalogEntry }) => {
       const hex = gemColorHex(item.color);
       const label = gemColorLabel(item.color);
+      const iconSource = item.icon ? GEM_ICON_MAP[item.icon] : undefined;
       return (
         <TouchableOpacity
           style={styles.row}
           onPress={() => handleSelect(item)}
           activeOpacity={0.7}
         >
-          {/* Colour indicator dot */}
-          <View style={[styles.colorDot, { backgroundColor: hex }]} />
+          {/* Gem icon or colour dot */}
+          {iconSource ? (
+            <Image source={iconSource} style={styles.gemIcon} />
+          ) : (
+            <View style={[styles.colorDot, { backgroundColor: hex }]} />
+          )}
           <Text style={styles.gemName} numberOfLines={1}>
             {item.name}
           </Text>
@@ -182,6 +189,13 @@ const styles = StyleSheet.create({
     paddingHorizontal: 2,
     borderBottomWidth: StyleSheet.hairlineWidth,
     borderBottomColor: COLORS.border,
+  },
+  gemIcon: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    marginRight: 10,
+    backgroundColor: COLORS.bgDeep,
   },
   colorDot: {
     width: 10,

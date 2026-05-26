@@ -10,6 +10,8 @@ export interface GemCatalogEntry {
   description: string;
   // Level requirement at each gem level — only a subset of levels is stored
   levelRequirements: Array<{ gemLevel: number; levelReq: number }>;
+  // Webp filename for GEM_ICON_MAP lookup (e.g. "Leap Slam.webp" or "acrimonysupport.webp")
+  icon: string | null;
 }
 
 interface GemStoreState {

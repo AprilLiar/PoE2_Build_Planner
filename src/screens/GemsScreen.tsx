@@ -7,8 +7,10 @@ import {
   StyleSheet,
   ActivityIndicator,
   Alert,
+  Image,
 } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
+import { GEM_ICON_MAP } from '../assets/gemIconMap.generated';
 import { BottomSheetModal } from '@gorhom/bottom-sheet';
 import {
   GemCatalogEntry,
@@ -94,9 +96,11 @@ interface GemCircleProps {
 function GemCircle({ gem, size, onPress, onLongPress }: GemCircleProps) {
   const borderColor = gem ? gemColorHex(gem.color) : COLORS.border;
   const bgColor = gem ? gemColorBg(gem.color) : COLORS.bgDeep;
-  const abbrev = gem ? gemAbbrev(gem.name) : '+';
   const textColor = gem ? gemColorHex(gem.color) : COLORS.textMuted;
   const fontSize = size <= 44 ? 9 : 11;
+  const innerSize = size - GEM_BORDER * 2 - 4;
+
+  const iconSource = gem?.icon ? GEM_ICON_MAP[gem.icon] : undefined;
 
   return (
     <TouchableOpacity
@@ -112,16 +116,24 @@ function GemCircle({ gem, size, onPress, onLongPress }: GemCircleProps) {
         style={[
           styles.gemCircleInner,
           {
-            width: size - GEM_BORDER * 2 - 4,
-            height: size - GEM_BORDER * 2 - 4,
-            borderRadius: (size - GEM_BORDER * 2 - 4) / 2,
+            width: innerSize,
+            height: innerSize,
+            borderRadius: innerSize / 2,
             backgroundColor: bgColor,
           },
         ]}
       >
-        <Text style={[styles.gemAbbrev, { color: textColor, fontSize }]} numberOfLines={1}>
-          {abbrev}
-        </Text>
+        {iconSource ? (
+          <Image
+            source={iconSource}
+            style={{ width: innerSize, height: innerSize, borderRadius: innerSize / 2 }}
+            resizeMode="cover"
+          />
+        ) : (
+          <Text style={[styles.gemAbbrev, { color: textColor, fontSize }]} numberOfLines={1}>
+            {gem ? gemAbbrev(gem.name) : '+'}
+          </Text>
+        )}
       </View>
     </TouchableOpacity>
   );
