@@ -28,6 +28,7 @@ export interface Item {
   rarity: 'Normal' | 'Magic' | 'Rare' | 'Unique';
   raw_text: string;            // original Ctrl+C paste from in-game
   mods: string[];              // parsed mod lines
+  icon?: string;               // GGG CDN URL resolved at parse time
 }
 
 export type ItemSlot =
