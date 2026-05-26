@@ -403,11 +403,11 @@ src/
 │   └── LoadingOverlay.tsx
 ├── store/
 │   ├── useTreeStore.ts          ← IMPLEMENTED
-│   ├── useBuildStore.ts         ← NOT BUILT
+│   ├── useBuildStore.ts         ← IMPLEMENTED (Sprint 6)
 │   ├── useAppStore.ts           ← NOT BUILT
-│   └── useGemStore.ts           ← NOT BUILT
+│   └── useGemStore.ts           ← IMPLEMENTED (Sprint 7)
 ├── services/
-│   ├── fileService.ts           ← NOT BUILT (saveBuild, exportBuild, importBuild, listBuilds, deleteBuild)
+│   ├── fileService.ts           ← IMPLEMENTED (Sprint 6): listBuilds, saveBuild, deleteBuild, renameBuild, duplicateBuild
 │   ├── adService.ts             ← NOT BUILT (requireAdUnlock)
 │   └── iapService.ts            ← NOT BUILT
 ├── types/build.ts
@@ -420,14 +420,14 @@ src/
 
 assets/
 ├── data/tree.json               ← DONE (GGG patch 0.4, 4,701 nodes)
-├── data/gems.json               ← DONE (444 gems: 226 active + 218 support; fields: id, name, is_support, icon, tags)
+├── data/gems.json               ← DONE (846 gems: 289 active + 557 support; rich schema: id, name, color, is_support, description, levelRequirements, icon)
 ├── poe2/
 │   ├── classes/                 ← DONE — 8 class illustrations (warrior/ranger/etc.baseillustration.webp)
 │   ├── node-icons/              ← DONE — 540 passive node icons preserving art path (Art/2DArt/SkillIcons/passives/…)
-│   └── skill-gems/              ← DONE — 225 active gem icons (flat) + 223 support gem icons (/support/ subfolder)
+│   ├── skill-gems/              ← DONE — 225 active gem icons (flat) + 223 support gem icons (/support/ subfolder); 380 still missing (run downloadMissingGemIcons.py locally)
+│   └── tree/                    ← DONE — orbits (90), group-bgs (7), ascendancy-bgs (2), background (1), node-frames (4+4 disabled), jewel-sockets (1), mastery (1), legion (4), oils (10)
 ├── fonts/ (Cinzel-Regular, Inter-Regular, Inter-Medium) ← NOT ADDED
 ├── textures/leather_bg.png      ← NOT ADDED
-└── (GGG skill tree images — frame-*.png, background-*.png, group-background-*.png, skills-*.jpg etc.)
 ```
 
 ---
@@ -552,6 +552,25 @@ Ascendancies (21 total, verified against tree.json patch 0.4):
 - Group state lives locally in `GemsScreen` with `useState` — to migrate to `useBuildStore` in a future sprint
 - Empty circles show "+" with muted styling; filled circles show 4-char abbrev in gem's color
 
+### Sprint 7.5 — Gem schema rebuild + icon rendering (complete, PR #14)
+**Shipped:**
+- Rebuilt `assets/data/gems.json` from PoB Lua source files (6 skill files + `Gems.lua` for variantIds)
+- New count: 846 gems (289 active + 557 support) — was 444 with shallow schema
+- New schema: `{ id, name, color: 1|2|3, is_support, description, levelRequirements: [{gemLevel, levelReq}], icon: string|null }`
+- Fixed critical runtime bug: `useGemStore.loadGems()` was reading `data.gems` from a flat array → 0 gems shown at runtime. File now has `{ "gems": [...] }` wrapper to match.
+- Added `src/assets/gemIconMap.generated.ts` — 448 static `require()` entries (225 active + 223 support) for Metro bundler
+- Wired `<Image>` rendering into `GemCircle`, `GemSearchModal`, `GemDetailSheet` — gems with icons show their icon; others fall back to 4-char text abbreviation
+- Added `scripts/buildGemIconMap.js` — regenerates the static require map; re-run after adding new webp files
+- Added `scripts/downloadMissingGemIcons.py` — downloads 380 missing icons from poe2db CDN; **must run locally** (CDN Cloudflare-blocks server IPs)
+
+**Icon coverage after PR #14:** 209/289 active (72%), 230/557 support (41%). Run the download script + `buildGemIconMap.js` to fill the gap.
+
+**Key technical facts:**
+- Metro bundler requires static `require()` — no dynamic requires. The generated map is the only correct approach.
+- CDN icon filename is the gem's `variantId` from `Gems.lua` (not the display name). e.g. "Fire Attunement" → `addedfiredamagesupport.webp`
+- `GEM_ICON_MAP` key = webp filename as stored on disk (e.g. `"Leap Slam.webp"`, `"acrimonysupport.webp"`)
+- `GemCatalogEntry.icon` stores this filename; `GEM_ICON_MAP[gem.icon]` → `ImageSourcePropType`
+
 ### Sprint Backlog
 - ✅ Sprint 1: Drawer nav + node FlatList
 - ✅ Sprint 2: Zustand store, search, allocate/deallocate, NodeDetailSheet, point counter
@@ -562,10 +581,12 @@ Ascendancies (21 total, verified against tree.json patch 0.4):
 - ✅ Sprint 5.5: GGG texture integration (tiled bg, group rings, node frames)
 - ✅ Sprint 6: `useBuildStore` + `fileService` + `BuildListScreen` (create, list, open, rename, duplicate, delete)
 - ✅ **Sprint 6.5:** Search overhaul (pulsing glow, persistent filter chips), anchor node hiding, web compat, PoE2 asset library
-- ⬜ **Next:** Node icons in tree (show icon inside node at high zoom), or ItemsScreen
+- ✅ **Sprint 7:** GemsScreen — PoB-style circles, search modal, level stepper, requirements bar, 845-gem catalog
+- ✅ **Sprint 7.5:** Gem schema rebuild (PoB Lua, rich schema), icon rendering in GemCircle/SearchModal/DetailSheet, static require map
+- ⬜ **Next options:** Node icons in tree (show passive icon inside node at high zoom), ItemsScreen, or download remaining gem icons
 - ⬜ Fix Abyssal Lich ascendancy (no nodes visible in tree — reported but not yet investigated)
+- ⬜ Download remaining 380 gem icons (run `scripts/downloadMissingGemIcons.py` + `scripts/buildGemIconMap.js` locally)
 - ⬜ ItemsScreen (slot grid + paste parser)
-- ✅ GemsScreen — IMPLEMENTED (Sprint 7): PoB-style circles, search modal, level stepper, requirements bar, 845-gem catalog
 - ⬜ SettingsScreen (needs redesign: add "← Build List" nav, remove placeholder, add relevant settings)
 - ⬜ Fonts (Cinzel + Inter)
 - ⬜ Leather texture background
@@ -575,4 +596,4 @@ Ascendancies (21 total, verified against tree.json patch 0.4):
 
 ---
 
-*Last updated: 2026-05-24*
+*Last updated: 2026-05-26*
