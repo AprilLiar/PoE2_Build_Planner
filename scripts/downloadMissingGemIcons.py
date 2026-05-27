@@ -15,10 +15,23 @@ After running, regenerate the icon map:
 Note: poe2db.tw CDN is Cloudflare-protected and blocks server/CI IPs.
 Run this locally on your machine.
 """
-import requests, os, time
+import os, time
+from urllib.request import urlopen, Request
+from urllib.error import URLError, HTTPError
 
 HEADERS = {'Referer': 'https://poe2db.tw/'}
 DELAY = 0.1  # seconds between requests (be polite to CDN)
+
+
+def _fetch(url: str) -> tuple[int, bytes]:
+    req = Request(url, headers=HEADERS)
+    try:
+        with urlopen(req, timeout=15) as resp:
+            return resp.status, resp.read()
+    except HTTPError as e:
+        return e.code, b''
+    except URLError as e:
+        raise RuntimeError(str(e.reason)) from e
 
 downloads = [
     ("Arctic Howl", "https://cdn.poe2db.tw/image/Art/2DArt/SkillIcons/WolfArcticHowl.webp", "assets/poe2/skill-gems/WolfArcticHowl.webp"),
@@ -430,15 +443,15 @@ for name, url, dest in downloads:
         continue
     os.makedirs(os.path.dirname(dest), exist_ok=True)
     try:
-        r = requests.get(url, headers=HEADERS, timeout=15)
-        if r.status_code == 200 and len(r.content) > 200:
+        status, content = _fetch(url)
+        if status == 200 and len(content) > 200:
             with open(dest, 'wb') as f:
-                f.write(r.content)
+                f.write(content)
             downloaded += 1
             print(f'OK  {name}')
         else:
             failed += 1
-            print(f'ERR {name} — HTTP {r.status_code}')
+            print(f'ERR {name} — HTTP {status}')
     except Exception as e:
         failed += 1
         print(f'ERR {name} — {e}')
