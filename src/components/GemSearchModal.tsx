@@ -41,7 +41,14 @@ export default function GemSearchModal({
   const filtered = useMemo<GemCatalogEntry[]>(() => {
     const q = query.trim().toLowerCase();
     return gems
-      .filter((g) => g.is_support === supportOnly && (q === '' || g.name.toLowerCase().includes(q)))
+      .filter((g) => {
+        if (g.is_support !== supportOnly) return false;
+        if (q === '') return true;
+        if (g.name.toLowerCase().includes(q)) return true;
+        // Also match against tags (e.g. "fire", "aoe", "strike")
+        if (g.tags?.some(t => t.toLowerCase().includes(q))) return true;
+        return false;
+      })
       .sort((a, b) => a.name.localeCompare(b.name))
       .slice(0, MAX_RESULTS);
   }, [gems, supportOnly, query]);

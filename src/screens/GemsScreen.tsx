@@ -90,7 +90,7 @@ interface GemCircleProps {
   gem: GemCatalogEntry | undefined;
   size: number;
   onPress: () => void;
-  onLongPress: () => void;
+  onLongPress?: () => void;
 }
 
 function GemCircle({ gem, size, onPress, onLongPress }: GemCircleProps) {
@@ -418,11 +418,20 @@ export default function GemsScreen() {
               {/* Gem circles row */}
               <View style={styles.gemRow}>
                 {/* Active gem — larger circle */}
+                {/* Tap filled → view detail; tap empty → search */}
                 <GemCircle
                   gem={activeGem}
                   size={ACTIVE_SIZE}
-                  onPress={() => openSearch({ kind: 'active', groupId: group.id })}
-                  onLongPress={() => openDetail(group, 'active')}
+                  onPress={
+                    activeGem
+                      ? () => openDetail(group, 'active')
+                      : () => openSearch({ kind: 'active', groupId: group.id })
+                  }
+                  onLongPress={
+                    activeGem
+                      ? () => openSearch({ kind: 'active', groupId: group.id })
+                      : undefined
+                  }
                 />
 
                 <View style={styles.gemRowSpacer} />
@@ -435,10 +444,16 @@ export default function GemsScreen() {
                       key={idx}
                       gem={supGem}
                       size={SUPPORT_SIZE}
-                      onPress={() =>
-                        openSearch({ kind: 'support', groupId: group.id, index: idx })
+                      onPress={
+                        supGem
+                          ? () => openDetail(group, idx)
+                          : () => openSearch({ kind: 'support', groupId: group.id, index: idx })
                       }
-                      onLongPress={() => openDetail(group, idx)}
+                      onLongPress={
+                        supGem
+                          ? () => openSearch({ kind: 'support', groupId: group.id, index: idx })
+                          : undefined
+                      }
                     />
                   );
                 })}

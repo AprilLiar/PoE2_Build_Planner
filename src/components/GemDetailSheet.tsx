@@ -5,7 +5,7 @@ import BottomSheet, {
   BottomSheetBackdrop,
   BottomSheetModal,
 } from '@gorhom/bottom-sheet';
-import { GemCatalogEntry, gemColorHex, gemColorLabel, gemColorBg, getLevelReq } from '../store/useGemStore';
+import { GemCatalogEntry, gemColorHex, gemColorLabel, gemColorBg, getLevelReq, getAttrRequirement } from '../store/useGemStore';
 import { GEM_ICON_MAP } from '../assets/gemIconMap.generated';
 import { COLORS } from '../constants/colors';
 
@@ -26,8 +26,8 @@ export default function GemDetailSheet({ sheetRef, gem, gemLevel = 1, onRemove }
   if (!gem) return null;
 
   const colorHex = gemColorHex(gem.color);
-  // PoE2 uniform curve: 0 at L1 → 90 at L20
-  const levelReq = Math.round((Math.min(gemLevel, 20) - 1) * 90 / 19);
+  const levelReq = getLevelReq(gem, gemLevel);
+  const attrReq  = getAttrRequirement(gem.color, levelReq);
   const attrLabel = gemColorLabel(gem.color);
   const iconSource = gem.icon ? GEM_ICON_MAP[gem.icon] : undefined;
 
@@ -65,32 +65,34 @@ export default function GemDetailSheet({ sheetRef, gem, gemLevel = 1, onRemove }
                 </Text>
               )}
             </View>
+            {/* Stat requirements */}
+            {levelReq > 0 && (
+              <View style={styles.statReqRow}>
+                {attrReq.str > 0 && <Text style={[styles.statReqText, { color: '#DC2626' }]}>STR {attrReq.str}</Text>}
+                {attrReq.dex > 0 && <Text style={[styles.statReqText, { color: '#16A34A' }]}>DEX {attrReq.dex}</Text>}
+                {attrReq.int > 0 && <Text style={[styles.statReqText, { color: '#2563EB' }]}>INT {attrReq.int}</Text>}
+              </View>
+            )}
           </View>
         </View>
 
         {/* Divider */}
         <View style={styles.divider} />
 
-        {/* Tags / Description */}
-        {gem.tags.length > 0 ? (
-          <>
-            <Text style={styles.sectionLabel}>Tags</Text>
-            <View style={styles.tagRow}>
-              {gem.tags.map((tag) => (
-                <View key={tag} style={[styles.tagChip, { borderColor: colorHex }]}>
-                  <Text style={[styles.tagText, { color: colorHex }]}>
-                    {tag.charAt(0).toUpperCase() + tag.slice(1)}
-                  </Text>
-                </View>
-              ))}
-            </View>
-          </>
-        ) : (
-          <>
-            <Text style={styles.sectionLabel}>Description</Text>
-            <Text style={styles.descriptionMuted}>No description available.</Text>
-          </>
+        {/* Tags */}
+        {gem.tags && gem.tags.length > 0 && (
+          <View style={styles.tagsRow}>
+            {gem.tags.map((tag) => (
+              <View key={tag} style={styles.tagChip}>
+                <Text style={styles.tagText}>{tag}</Text>
+              </View>
+            ))}
+          </View>
         )}
+
+        {/* Description */}
+        <Text style={styles.sectionLabel}>Description</Text>
+        <Text style={styles.description}>{gem.description}</Text>
 
         {/* Remove button */}
         {onRemove && (
@@ -177,6 +179,34 @@ const styles = StyleSheet.create({
     color: COLORS.textMuted,
     fontSize: 12,
   },
+  statReqRow: {
+    flexDirection: 'row',
+    gap: 10,
+    marginTop: 5,
+  },
+  statReqText: {
+    fontSize: 12,
+    fontWeight: '700',
+  },
+  tagsRow: {
+    flexDirection: 'row',
+    flexWrap: 'wrap',
+    gap: 6,
+    marginBottom: 14,
+  },
+  tagChip: {
+    backgroundColor: COLORS.bgDeep,
+    borderWidth: 1,
+    borderColor: COLORS.border,
+    borderRadius: 4,
+    paddingHorizontal: 8,
+    paddingVertical: 3,
+  },
+  tagText: {
+    color: COLORS.textMuted,
+    fontSize: 11,
+    fontWeight: '600',
+  },
   divider: {
     height: 1,
     backgroundColor: COLORS.border,
@@ -190,25 +220,10 @@ const styles = StyleSheet.create({
     letterSpacing: 0.8,
     marginBottom: 8,
   },
-  tagRow: {
-    flexDirection: 'row',
-    flexWrap: 'wrap',
-    gap: 6,
-  },
-  tagChip: {
-    borderWidth: 1,
-    borderRadius: 4,
-    paddingHorizontal: 8,
-    paddingVertical: 3,
-  },
-  tagText: {
-    fontSize: 12,
-    fontWeight: '500',
-  },
-  descriptionMuted: {
-    color: COLORS.textMuted,
+  description: {
+    color: COLORS.text,
     fontSize: 14,
-    fontStyle: 'italic',
+    lineHeight: 21,
   },
   removeBtn: {
     backgroundColor: COLORS.danger,
