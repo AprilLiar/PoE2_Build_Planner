@@ -22,11 +22,10 @@ import {
   Skia,
   useImage,
 } from '@shopify/react-native-skia';
-import type { SkPath, SkImage } from '@shopify/react-native-skia';
+import type { SkPath } from '@shopify/react-native-skia';
 import { useTreeStore, TreeNode, isAnchorNode } from '../store/useTreeStore';
 import { queryVisibleNodes } from '../utils/treeLayout';
 import { COLORS } from '../constants/colors';
-import { getNodeIconSource } from '../assets/nodeIconMap';
 
 // ─── Sprite sheet lookups (skills.json / skills-disabled.json) ────────────────
 // eslint-disable-next-line @typescript-eslint/no-require-imports
@@ -40,6 +39,26 @@ const SPRITE_SHEET_W = 1029;
 const SPRITE_SHEET_H = 1459;
 const SPRITE_SIZE    = 34;   // all icon frames are 34×34 in the sheet
 const ICON_SCALE     = 2;    // render at 2× world pixels (68 wu) for clarity
+
+// Frame sprite sheet (official-tree/frame.webp) — JSON scale:0.5 → display = sprite px × 2
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const FRAME_FRAMES: Record<string, { frame: { x: number; y: number; w: number; h: number } }> =
+  require('../../assets/poe2/official-tree/frame.json').frames;
+const FRAME_SHEET_W = 583;
+const FRAME_SHEET_H = 542;
+const FRAME_SCALE   = 2;
+
+// Line + orbit ring sprite sheet (official-tree/line.webp / line.json)
+// eslint-disable-next-line @typescript-eslint/no-require-imports
+const LINE_FRAMES: Record<string, { frame: { x: number; y: number; w: number; h: number } }> =
+  require('../../assets/poe2/official-tree/line.json').frames;
+const LINE_SHEET_W = 717;
+const LINE_SHEET_H = 2215;
+
+function getOrbitLineFrame(orbit: number, active: boolean) {
+  const key = `line:Orbit${orbit}${active ? 'Active' : 'Normal'}`;
+  return LINE_FRAMES[key]?.frame ?? null;
+}
 
 // Cached frame lookup — avoids repeated prefix concatenation in hot useMemo
 const activeCoordCache   = new Map<string, { x: number; y: number }>();
@@ -216,19 +235,21 @@ const tooltipStyles = StyleSheet.create({
   },
 });
 
-// Show node icons once a normal node (r=15wu) renders ≥ 12 px on screen.
-const NODE_ICON_MIN_SCALE = 0.8;
+const frameCoordCache = new Map<string, { x: number; y: number; w: number; h: number } | null>();
 
-// One Skia sub-component per visible icon so each gets its own useImage hook.
-function NodeIconSprite({
-  source, x, y, size,
-}: {
-  source: number;
-  x: number; y: number; size: number;
-}) {
-  const img = useImage(source);
-  if (!img) return null;
-  return <SkiaImage image={img} x={x} y={y} width={size} height={size} />;
+function getFrameCoord(cat: NodeCategory, allocated: boolean) {
+  let key: string;
+  if (cat === 'keystone')       key = allocated ? 'frame:KeystoneFrameAllocated'        : 'frame:KeystoneFrameUnallocated';
+  else if (cat === 'notable')   key = allocated ? 'frame:NotableFrameAllocated'          : 'frame:NotableFrameUnallocated';
+  else if (cat === 'jewel')     key = allocated ? 'frame:JewelFrameAllocated'            : 'frame:JewelFrameUnallocated';
+  else if (cat === 'ascNormal') key = allocated ? 'frame:AscendancyFrameNormalAllocated' : 'frame:AscendancyFrameNormalUnallocated';
+  else                          key = allocated ? 'frame:PSSkillFrameActive'             : 'frame:PSSkillFrame';
+  if (frameCoordCache.has(key)) return frameCoordCache.get(key)!;
+  const entry = FRAME_FRAMES[key];
+  if (!entry) { frameCoordCache.set(key, null); return null; }
+  const { x, y, w, h } = entry.frame;
+  frameCoordCache.set(key, { x, y, w, h });
+  return frameCoordCache.get(key)!;
 }
 
 // ─── Main component ───────────────────────────────────────────────────────────
@@ -259,59 +280,27 @@ export default function GraphicalSkillTree(_props: Props) {
   } = useTreeStore();
 
   // ── Texture images (all static requires — Metro resolves at bundle time) ──
-  const bgTileImg  = useImage(require('../../assets/poe2/tree/background/tree-background.png'));
-  const groupBg104 = useImage(require('../../assets/poe2/tree/group-bgs/group-background_104_104.png'));
-  const groupBg152 = useImage(require('../../assets/poe2/tree/group-bgs/group-background_152_156.png'));
-  const groupBg220 = useImage(require('../../assets/poe2/tree/group-bgs/group-background_220_224.png'));
-  const groupBg360 = useImage(require('../../assets/poe2/tree/group-bgs/group-background_360_360.png'));
-  const groupBg468 = useImage(require('../../assets/poe2/tree/group-bgs/group-background_468_468.png'));
-
-  // Character orbit ring images — orbit 0 is a 1435×29 connection-line strip, not a ring; skip it
-  const orbitN1 = useImage(require('../../assets/poe2/tree/orbits/character-orbit-normal-1.png'));
-  const orbitN2 = useImage(require('../../assets/poe2/tree/orbits/character-orbit-normal-2.png'));
-  const orbitN3 = useImage(require('../../assets/poe2/tree/orbits/character-orbit-normal-3.png'));
-  const orbitN4 = useImage(require('../../assets/poe2/tree/orbits/character-orbit-normal-4.png'));
-  const orbitN5 = useImage(require('../../assets/poe2/tree/orbits/character-orbit-normal-5.png'));
-  const orbitN6 = useImage(require('../../assets/poe2/tree/orbits/character-orbit-normal-6.png'));
-  const orbitN7 = useImage(require('../../assets/poe2/tree/orbits/character-orbit-normal-7.png'));
-  const orbitN8 = useImage(require('../../assets/poe2/tree/orbits/character-orbit-normal-8.png'));
-  const orbitN9 = useImage(require('../../assets/poe2/tree/orbits/character-orbit-normal-9.png'));
-
-  // Node frame textures — extracted via scripts/extract_node_frames.py
-  const frameNormalAlloc    = useImage(require('../../assets/poe2/tree/node-frames-extracted/normal-allocated.png'));
-  const frameNormalUnalloc  = useImage(require('../../assets/poe2/tree/node-frames-extracted/normal-unallocated.png'));
-  const frameNotableAlloc   = useImage(require('../../assets/poe2/tree/node-frames-extracted/notable-allocated.png'));
-  const frameNotableUnalloc = useImage(require('../../assets/poe2/tree/node-frames-extracted/notable-unallocated.png'));
-  const frameJewelAlloc     = useImage(require('../../assets/poe2/tree/node-frames-extracted/jewel-allocated.png'));
-  const frameJewelUnalloc   = useImage(require('../../assets/poe2/tree/node-frames-extracted/jewel-unallocated.png'));
-  const frameKsAlloc        = useImage(require('../../assets/poe2/tree/node-frames-extracted/keystone-allocated.png'));
-  const frameKsUnalloc      = useImage(require('../../assets/poe2/tree/node-frames-extracted/keystone-unallocated.png'));
-
-  // Index by tree orbit number (0 → null = skip).
-  // file-N px size ≈ orbit world radius; file-1 is largest (1333px) → orbit-9 (1322wu), file-9 smallest (91px) → orbit-1 (82wu).
-  // Orbit-7 (251wu) breaks numerical order in tree.json; file-7 (263px) is the closest match.
-  const orbitNImgs = useMemo(
-    () => [null, orbitN9, orbitN8, orbitN6, orbitN5, orbitN4, orbitN3, orbitN7, orbitN2, orbitN1],
-    [orbitN1, orbitN2, orbitN3, orbitN4, orbitN5, orbitN6, orbitN7, orbitN8, orbitN9],
-  );
-
-  // Index by max orbit in group → closest-fitting circular background texture.
-  // Orbit radii (world units): 1=82, 2=162, 7=251, 3=335, 4=493, 5=662, 6=846, 8=1080, 9=1322
-  const groupBgByOrbit = useMemo(
-    () => [
-      null,       // 0 — class-start single node, no group background
-      groupBg104, // 1 — r=82   (104px bg, 1.3× stretch)
-      groupBg152, // 2 — r=162  (152px bg, ~0.94× — closest available)
-      groupBg360, // 3 — r=335  (360px bg, 2.1× — better than 208px at 3.7×)
-      groupBg468, // 4 — r=493  (468px bg, 1.9× stretch)
-      groupBg468, // 5 — r=662
-      groupBg468, // 6 — r=846
-      groupBg220, // 7 — r=251  (220px bg, 2.6× — better than 160px at 3.6×)
-      groupBg468, // 8 — r=1080
-      groupBg468, // 9 — r=1322
-    ],
-    [groupBg104, groupBg152, groupBg220, groupBg360, groupBg468],
-  );
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const bgTileImg      = useImage(require('../../assets/poe2/official-tree/background.webp'));
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const lineImage      = useImage(require('../../assets/poe2/official-tree/line.webp'));
+  const frameImage     = useImage(require('../../assets/poe2/official-tree/frame.webp'));
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const bgWarriorImg   = useImage(require('../../assets/poe2/official-tree/background-warrior.webp'));
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const bgRangerImg    = useImage(require('../../assets/poe2/official-tree/background-ranger.webp'));
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const bgHuntressImg  = useImage(require('../../assets/poe2/official-tree/background-huntress.webp'));
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const bgMercenaryImg = useImage(require('../../assets/poe2/official-tree/background-mercenary.webp'));
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const bgDruidImg     = useImage(require('../../assets/poe2/official-tree/background-druid.webp'));
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const bgWitchImg     = useImage(require('../../assets/poe2/official-tree/background-witch.webp'));
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const bgSorceressImg = useImage(require('../../assets/poe2/official-tree/background-sorceress.webp'));
+  // eslint-disable-next-line @typescript-eslint/no-require-imports
+  const bgMonkImg      = useImage(require('../../assets/poe2/official-tree/background-monk.webp'));
 
   // -------------------------------------------------------------------------
   // Fit scale: maps world coords → screen pixels at "view whole tree" zoom
@@ -364,7 +353,6 @@ export default function GraphicalSkillTree(_props: Props) {
   // Viewport culling — updated on gesture end (JS thread)
   // -------------------------------------------------------------------------
   const [viewport, setViewport] = useState<Viewport | null>(null);
-  const [scaleJS, setScaleJS] = useState(0);
 
   const computeViewport = useCallback(
     (sc: number, tx: number, ty: number): Viewport => {
@@ -390,12 +378,8 @@ export default function GraphicalSkillTree(_props: Props) {
     setViewport(computeViewport(startScale, startTX, startTY));
   }, [fitScale, treeBounds.width, treeBounds.height, screenWidth, screenHeight, computeViewport]);
 
-  const [currentScale, setCurrentScale] = useState(0);
-
   const updateViewportJS = useCallback(() => {
     setViewport(computeViewport(scale.value, panX.value, panY.value));
-    setScaleJS(scale.value);
-    setCurrentScale(scale.value);
   }, [computeViewport, scale, panX, panY]);
 
   // Sprite sheet images for node icons
@@ -448,6 +432,39 @@ export default function GraphicalSkillTree(_props: Props) {
     }
     return out;
   }, [ascendancyOffset, selectedAscendancy, nodes, nodePositions]);
+
+  // Map class name → its loaded background image (for the ascendancy artwork layer)
+  const classBgImages = useMemo(() => ({
+    Warrior:   bgWarriorImg,
+    Ranger:    bgRangerImg,
+    Huntress:  bgHuntressImg,
+    Mercenary: bgMercenaryImg,
+    Druid:     bgDruidImg,
+    Witch:     bgWitchImg,
+    Sorceress: bgSorceressImg,
+    Monk:      bgMonkImg,
+  } as Record<string, ReturnType<typeof useImage>>), [
+    bgWarriorImg, bgRangerImg, bgHuntressImg, bgMercenaryImg,
+    bgDruidImg, bgWitchImg, bgSorceressImg, bgMonkImg,
+  ]);
+
+  // Which sprite within the 2×2 class atlas to show for the selected ascendancy.
+  // Each atlas is 3000×3000px (scale:0.5 → display 6000×6000wu); each sprite 1500×1500px → 3000wu.
+  const ascBgSprite = useMemo(() => {
+    if (!selectedAscendancy || !selectedClass) return null;
+    const cls = classes.find(c => c.name === selectedClass);
+    if (!cls) return null;
+    const ascIdx = cls.ascendancies.findIndex(a => a.name === selectedAscendancy);
+    if (ascIdx < 0) return null;
+    const SPRITE_PX = 1500;
+    const dstSize = SPRITE_PX * FRAME_SCALE; // 3000wu — centred at mainTreeCenter
+    return {
+      sx: (ascIdx % 2) * SPRITE_PX,
+      sy: Math.floor(ascIdx / 2) * SPRITE_PX,
+      sheetPx: 3000, // full atlas side (px)
+      dstSize,
+    };
+  }, [selectedAscendancy, selectedClass, classes]);
 
   // -------------------------------------------------------------------------
   // Fly-to: search result → spring camera to that node (uses display positions
@@ -519,11 +536,6 @@ export default function GraphicalSkillTree(_props: Props) {
   const edgeStrokeAlloc      = useDerivedValue(() => 2.5  / scale.value);
   const highlightStroke      = useDerivedValue(() => 3.0  / scale.value);
   const edgeGlowStroke       = useDerivedValue(() => 10.0 / scale.value);
-  const nodeRingStroke       = useDerivedValue(() => 2.0  / scale.value); // normal / mastery / asc
-  const keystoneRingStroke   = useDerivedValue(() => 5.0  / scale.value); // heavy hex frame
-  const notableRingStroke    = useDerivedValue(() => 3.5  / scale.value);
-  const jewelRingStroke      = useDerivedValue(() => 3.0  / scale.value);
-
   // -------------------------------------------------------------------------
   // Minimap viewport rect — world-coordinate positions animated on UI thread
   // -------------------------------------------------------------------------
@@ -773,142 +785,81 @@ export default function GraphicalSkillTree(_props: Props) {
   // -------------------------------------------------------------------------
   // SKIA PATH BUILDING — nodes
   // -------------------------------------------------------------------------
-  const nodePaths = useMemo(() => {
-    const unalloc   = makeCategoryPaths();
-    const alloc     = makeCategoryPaths();
-    const highlight = Skia.Path.Make();
+  const ascendancyHighlightPath = useMemo(() => {
+    const path = Skia.Path.Make();
     for (const node of Object.values(nodes)) {
-      if (isAnchorNode(node)) continue;
+      if (isAnchorNode(node) || !node.ascendancyName) continue;
+      if (!highlightedAscendancies.has(node.ascendancyName)) continue;
       const pos = displayPositions[node.skill];
       if (!pos) continue;
       if (visibleNodeIds && !visibleNodeIds.has(node.skill)) continue;
-      const cat    = getCategory(node);
-      const r      = CATEGORY_STYLE[cat].r;
-      const target = visuallyAllocated.has(node.skill) ? alloc : unalloc;
-      if (cat === 'keystone') {
-        addHexagon(target[cat], pos.x, pos.y, r);
-      } else if (cat === 'jewel') {
-        addDiamond(target[cat], pos.x, pos.y, r);
-      } else {
-        target[cat].addCircle(pos.x, pos.y, r);
-      }
-      if (node.ascendancyName && highlightedAscendancies.has(node.ascendancyName)) {
-        highlight.addCircle(pos.x, pos.y, r + 10);
-      }
+      path.addCircle(pos.x, pos.y, CATEGORY_STYLE[getCategory(node)].r + 10);
     }
-    return { unalloc, alloc, highlight };
-  }, [nodes, displayPositions, visuallyAllocated, highlightedAscendancies, visibleNodeIds]);
+    return path;
+  }, [nodes, displayPositions, highlightedAscendancies, visibleNodeIds]);
 
   // -------------------------------------------------------------------------
-  // SKIA PATH BUILDING — node outer rings (frame effect per node type)
-  // -------------------------------------------------------------------------
-  const nodeRingPaths = useMemo(() => {
-    const unalloc = makeCategoryPaths();
-    const alloc   = makeCategoryPaths();
-    for (const node of Object.values(nodes)) {
-      if (isAnchorNode(node)) continue;
-      const pos = displayPositions[node.skill];
-      if (!pos) continue;
-      if (visibleNodeIds && !visibleNodeIds.has(node.skill)) continue;
-      const cat    = getCategory(node);
-      const outerR = CATEGORY_STYLE[cat].outerR;
-      const target = visuallyAllocated.has(node.skill) ? alloc : unalloc;
-      if (cat === 'keystone') {
-        addHexagon(target[cat], pos.x, pos.y, outerR);
-      } else if (cat === 'jewel') {
-        addDiamond(target[cat], pos.x, pos.y, outerR);
-      } else {
-        target[cat].addCircle(pos.x, pos.y, outerR);
-      }
-    }
-    return { unalloc, alloc };
-  }, [nodes, displayPositions, visuallyAllocated, visibleNodeIds]);
-
-  // Per-node frame texture data — resolved on JS thread after each viewport update.
-  // mastery and ascNormal nodes use the normal frame (no dedicated textures extracted).
-  const nodeFrameData = useMemo(() => {
-    const entries: Array<{ nodeId: number; x: number; y: number; size: number; img: SkImage }> = [];
-    for (const node of Object.values(nodes)) {
-      if (isAnchorNode(node)) continue;
-      const pos = displayPositions[node.skill];
-      if (!pos) continue;
-      if (visibleNodeIds && !visibleNodeIds.has(node.skill)) continue;
-      const cat     = getCategory(node);
-      const isAlloc = visuallyAllocated.has(node.skill);
-      const outerR  = CATEGORY_STYLE[cat].outerR;
-      let img: SkImage | null;
-      switch (cat) {
-        case 'keystone': img = isAlloc ? frameKsAlloc      : frameKsUnalloc;      break;
-        case 'notable':  img = isAlloc ? frameNotableAlloc : frameNotableUnalloc; break;
-        case 'jewel':    img = isAlloc ? frameJewelAlloc   : frameJewelUnalloc;   break;
-        default:         img = isAlloc ? frameNormalAlloc  : frameNormalUnalloc;  break;
-      }
-      if (!img) continue;
-      entries.push({ nodeId: node.skill, x: pos.x - outerR, y: pos.y - outerR, size: outerR * 2, img });
-    }
-    return entries;
-  }, [
-    nodes, displayPositions, visibleNodeIds, visuallyAllocated,
-    frameNormalAlloc, frameNormalUnalloc,
-    frameNotableAlloc, frameNotableUnalloc,
-    frameJewelAlloc, frameJewelUnalloc,
-    frameKsAlloc, frameKsUnalloc,
-  ]);
-
-  // Node icon sprites — only computed when zoomed in enough to be meaningful.
-  // Icons are shown at outerR*1.6 diameter, centred on the node.
-  const nodeIconData = useMemo(() => {
-    if (scaleJS < NODE_ICON_MIN_SCALE) return [];
-    const out: Array<{ nodeId: number; source: number; x: number; y: number; size: number }> = [];
-    for (const node of Object.values(nodes)) {
-      if (isAnchorNode(node) || !node.icon) continue;
-      const pos = displayPositions[node.skill];
-      if (!pos) continue;
-      if (visibleNodeIds && !visibleNodeIds.has(node.skill)) continue;
-      const source = getNodeIconSource(node.icon);
-      if (!source) continue;
-      const outerR = CATEGORY_STYLE[getCategory(node)].outerR;
-      const size = outerR * 1.6;
-      out.push({ nodeId: node.skill, source, x: pos.x - size / 2, y: pos.y - size / 2, size });
-    }
-    return out;
-  }, [scaleJS, nodes, displayPositions, visibleNodeIds]);
-
-  // -------------------------------------------------------------------------
-  // NODE ICONS — sprite-based rendering at sufficient zoom
-  // Each entry: world position + sprite sheet UV coords + allocated flag
-  // Minimum screen size check: only show icons when node renders >= 8px on screen
+  // NODE ICONS — sprite sheet, always rendered
   // -------------------------------------------------------------------------
   interface IconDraw {
-    wx: number; wy: number;   // world-space top-left of icon dest rect
-    sx: number; sy: number;   // sprite sheet source top-left
+    wx: number; wy: number;
+    sx: number; sy: number;
     allocated: boolean;
+    dstSize: number;
   }
-  const ICON_MIN_SCREEN_PX = 8; // don't bother drawing icons below this screen size
 
   const iconDraws = useMemo((): IconDraw[] => {
-    const nodeScreenSize = CATEGORY_STYLE.normal.r * 2 * currentScale;
-    if (nodeScreenSize < ICON_MIN_SCREEN_PX) return [];
-
     const result: IconDraw[] = [];
     for (const node of Object.values(nodes)) {
       if (!node.icon || isAnchorNode(node)) continue;
+      const cat = getCategory(node);
+      if (cat === 'keystone') continue; // no matching sprite in the sheet
       const pos = displayPositions[node.skill];
       if (!pos) continue;
       if (visibleNodeIds && !visibleNodeIds.has(node.skill)) continue;
       const alloc = visuallyAllocated.has(node.skill);
       const coord = getIconCoord(node.icon, alloc);
       if (!coord) continue;
+      // Notables get a larger icon to better fill their bigger frame
+      const dstSize = cat === 'notable' ? SPRITE_SIZE * ICON_SCALE * 1.35 : SPRITE_SIZE * ICON_SCALE;
       result.push({
-        wx: pos.x - SPRITE_SIZE * ICON_SCALE / 2,
-        wy: pos.y - SPRITE_SIZE * ICON_SCALE / 2,
+        wx: pos.x - dstSize / 2,
+        wy: pos.y - dstSize / 2,
         sx: coord.x,
         sy: coord.y,
         allocated: alloc,
+        dstSize,
       });
     }
     return result;
-  }, [nodes, displayPositions, visuallyAllocated, visibleNodeIds, currentScale]);
+  }, [nodes, displayPositions, visuallyAllocated, visibleNodeIds]);
+
+  // -------------------------------------------------------------------------
+  // NODE FRAMES — GGG official frame sprite sheet (frame.webp / frame.json)
+  // -------------------------------------------------------------------------
+  interface FrameDraw {
+    wx: number; wy: number;
+    sx: number; sy: number;
+    sw: number; sh: number;
+  }
+
+  const frameDraws = useMemo((): FrameDraw[] => {
+    const result: FrameDraw[] = [];
+    for (const node of Object.values(nodes)) {
+      if (isAnchorNode(node)) continue;
+      const pos = displayPositions[node.skill];
+      if (!pos) continue;
+      if (visibleNodeIds && !visibleNodeIds.has(node.skill)) continue;
+      const cat   = getCategory(node);
+      const alloc = visuallyAllocated.has(node.skill);
+      const fc    = getFrameCoord(cat, alloc);
+      if (!fc) continue;
+      const dstW = fc.w * FRAME_SCALE;
+      const dstH = fc.h * FRAME_SCALE;
+      result.push({ wx: pos.x - dstW / 2, wy: pos.y - dstH / 2, sx: fc.x, sy: fc.y, sw: fc.w, sh: fc.h });
+    }
+    return result;
+  }, [nodes, displayPositions, visibleNodeIds, visuallyAllocated]);
 
   // -------------------------------------------------------------------------
   // SKIA PATH BUILDING — keystone soft glow (large transparent circle behind
@@ -1096,46 +1047,56 @@ export default function GraphicalSkillTree(_props: Props) {
                 </Rect>
               )}
 
-              {/* Layer 1: Group decorative backgrounds */}
-              {visibleGroups.map(g => {
-                if (g.isAscendancy) return null;
-                const maxOrbit = g.orbits.length > 0 ? Math.max(...g.orbits) : 0;
-                const bgImg = groupBgByOrbit[Math.min(maxOrbit, 9)];
-                if (!bgImg) return null;
-                const bgR = Math.max(g.maxOrbitRadius, 50) * 1.15;
+              {/* Layer 0.7: Ascendancy circular artwork — centred at main tree centre */}
+              {ascBgSprite && selectedClass && (() => {
+                const img = classBgImages[selectedClass];
+                if (!img) return null;
+                const { sx, sy, sheetPx, dstSize } = ascBgSprite;
+                const s = FRAME_SCALE; // 2 — sheet px → world units
+                const cx = mainTreeCenter.x;
+                const cy = mainTreeCenter.y;
+                const imgX = cx - dstSize / 2 - sx * s;
+                const imgY = cy - dstSize / 2 - sy * s;
                 return (
-                  <SkiaImage
-                    key={`gbg-${g.id}`}
-                    image={bgImg}
-                    x={g.x - bgR}
-                    y={g.y - bgR}
-                    width={bgR * 2}
-                    height={bgR * 2}
-                    opacity={0.35}
-                  />
+                  <Group clip={Skia.XYWHRect(cx - dstSize / 2, cy - dstSize / 2, dstSize, dstSize)}>
+                    <SkiaImage
+                      image={img}
+                      x={imgX}
+                      y={imgY}
+                      width={sheetPx * s}
+                      height={sheetPx * s}
+                      opacity={0.7}
+                    />
+                  </Group>
                 );
-              })}
+              })()}
 
-              {/* Layer 2: Orbit ring textures — one image per orbit per group */}
-              {visibleGroups.map(g => {
+              {/* Layer 2: Orbit ring textures from official line sprite sheet */}
+              {lineImage && visibleGroups.map(g => {
                 if (g.isAscendancy) return null;
                 return (
                   <Group key={`orbits-${g.id}`}>
                     {g.orbits.filter(o => o > 0).map(orbit => {
                       const radius = treeConstants.orbitRadii[orbit] ?? 0;
                       if (radius <= 0) return null;
-                      const img = orbitNImgs[orbit];
-                      if (!img) return null;
+                      const frame = getOrbitLineFrame(orbit, false);
+                      if (!frame) return null;
+                      // Scale the sheet so this sprite's width exactly spans the ring diameter
+                      const dst = radius * 2;
+                      const s = dst / frame.w;
+                      const imgX = g.x - radius - frame.x * s;
+                      const imgY = g.y - radius - frame.y * s;
                       return (
-                        <SkiaImage
-                          key={orbit}
-                          image={img}
-                          x={g.x - radius}
-                          y={g.y - radius}
-                          width={radius * 2}
-                          height={radius * 2}
-                          opacity={0.55}
-                        />
+                        <Group key={orbit} clip={Skia.XYWHRect(g.x - radius, g.y - radius, dst, dst)}>
+                          <SkiaImage
+                            image={lineImage}
+                            x={imgX}
+                            y={imgY}
+                            width={LINE_SHEET_W * s}
+                            height={LINE_SHEET_H * s}
+                            opacity={0.55}
+                          />
+                        </Group>
                       );
                     })}
                   </Group>
@@ -1169,7 +1130,7 @@ export default function GraphicalSkillTree(_props: Props) {
 
               {/* Layer 6: Ascendancy highlight rings */}
               <SkiaPath
-                path={nodePaths.highlight}
+                path={ascendancyHighlightPath}
                 color={COLORS.teal}
                 style="stroke"
                 strokeWidth={highlightStroke as any}
@@ -1200,80 +1161,40 @@ export default function GraphicalSkillTree(_props: Props) {
                 opacity={searchRingOpacity as any}
               />
 
-              {/* Layer 7: Unallocated node outer rings */}
-              {CATEGORY_KEYS.map(cat => (
-                <SkiaPath
-                  key={`ur-${cat}`}
-                  path={nodeRingPaths.unalloc[cat]}
-                  color={COLORS.border}
-                  style="stroke"
-                  strokeWidth={(
-                    cat === 'keystone' ? keystoneRingStroke :
-                    cat === 'notable'  ? notableRingStroke  :
-                    cat === 'jewel'    ? jewelRingStroke    :
-                    nodeRingStroke
-                  ) as any}
-                  opacity={0.55}
-                />
-              ))}
-              {/* Layer 8: Unallocated node fill */}
-              {CATEGORY_KEYS.map(cat => (
-                <SkiaPath
-                  key={`u-${cat}`}
-                  path={nodePaths.unalloc[cat]}
-                  color={CATEGORY_STYLE[cat].color}
-                  style="fill"
-                  opacity={0.35}
-                />
-              ))}
-
-              {/* Layer 9: Allocated node outer rings — category colour, heavier stroke */}
-              {CATEGORY_KEYS.map(cat => (
-                <SkiaPath
-                  key={`ar-${cat}`}
-                  path={nodeRingPaths.alloc[cat]}
-                  color={CATEGORY_STYLE[cat].color}
-                  style="stroke"
-                  strokeWidth={(
-                    cat === 'keystone' ? keystoneRingStroke :
-                    cat === 'notable'  ? notableRingStroke  :
-                    cat === 'jewel'    ? jewelRingStroke    :
-                    nodeRingStroke
-                  ) as any}
-                  opacity={0.95}
-                />
-              ))}
-              {/* Layer 10: Allocated node fill */}
-              {CATEGORY_KEYS.map(cat => (
-                <SkiaPath
-                  key={`a-${cat}`}
-                  path={nodePaths.alloc[cat]}
-                  color={CATEGORY_STYLE[cat].color}
-                  style="fill"
-                />
-              ))}
-
-              {/* Layer 11: Node icons from GGG sprite sheet — only at sufficient zoom */}
+              {/* Layer 7: Node icons — rendered under the frame ring */}
               {iconDraws.map((ic, idx) => {
                 const img = ic.allocated ? skillsActiveImage : skillsInactiveImage;
                 if (!img) return null;
-                const dstW = SPRITE_SIZE * ICON_SCALE;
-                const dstH = SPRITE_SIZE * ICON_SCALE;
-                // Position the full sheet so the desired sprite is centred on the node.
-                // The clip rect isolates just that sprite.
-                const imgX = ic.wx - ic.sx * (dstW / SPRITE_SIZE);
-                const imgY = ic.wy - ic.sy * (dstH / SPRITE_SIZE);
+                const s = ic.dstSize / SPRITE_SIZE; // world units per sprite pixel
+                const imgX = ic.wx - ic.sx * s;
+                const imgY = ic.wy - ic.sy * s;
                 return (
-                  <Group
-                    key={idx}
-                    clip={Skia.XYWHRect(ic.wx, ic.wy, dstW, dstH)}
-                  >
+                  <Group key={idx} clip={Skia.XYWHRect(ic.wx, ic.wy, ic.dstSize, ic.dstSize)}>
                     <SkiaImage
                       image={img}
                       x={imgX}
                       y={imgY}
-                      width={SPRITE_SHEET_W * (dstW / SPRITE_SIZE)}
-                      height={SPRITE_SHEET_H * (dstH / SPRITE_SIZE)}
+                      width={SPRITE_SHEET_W * s}
+                      height={SPRITE_SHEET_H * s}
+                    />
+                  </Group>
+                );
+              })}
+
+              {/* Layer 8: Node frames — GGG official sprite sheet, drawn on top of icon */}
+              {frameImage && frameDraws.map((fd, idx) => {
+                const dstW = fd.sw * FRAME_SCALE;
+                const dstH = fd.sh * FRAME_SCALE;
+                const imgX = fd.wx - fd.sx * FRAME_SCALE;
+                const imgY = fd.wy - fd.sy * FRAME_SCALE;
+                return (
+                  <Group key={idx} clip={Skia.XYWHRect(fd.wx, fd.wy, dstW, dstH)}>
+                    <SkiaImage
+                      image={frameImage}
+                      x={imgX}
+                      y={imgY}
+                      width={FRAME_SHEET_W * FRAME_SCALE}
+                      height={FRAME_SHEET_H * FRAME_SCALE}
                     />
                   </Group>
                 );

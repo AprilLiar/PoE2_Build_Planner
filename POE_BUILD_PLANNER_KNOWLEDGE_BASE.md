@@ -633,6 +633,26 @@ Ascendancies (23 total, verified against new official GGG export):
 - Image position formula: `imgX = wx - sx * (dstW/SPRITE_SIZE)`, `imgY = wy - sy * (dstH/SPRITE_SIZE)` — offsets the sheet so sprite UV top-left aligns with clip rect top-left
 - Coverage: 4088/4841 non-anchor nodes have icons (84%); remaining 16% show fill-only circles
 
+### Sprint 9.5 — Official GGG orbit rings + ascendancy artwork (complete)
+**Shipped:**
+- Replaced PoB-extracted orbit ring PNGs (`assets/poe2/tree/orbits/`) with GGG official `line.webp` sprite sheet
+- Replaced flat group-background PNGs (`assets/poe2/tree/group-bgs/`) — removed entirely (the official `group-background.webp` has only `MainCircle`/`MainCircleActive` for class start nodes, no per-orbit variants)
+- Replaced tiling bg `tree-background.png` with GGG official `background.webp`
+- Added per-class ascendancy artwork layer (Layer 0.7): shows the selected ascendancy's sprite from `background-{class}.webp` centered at `mainTreeCenter`; sprite chosen by 0-based ascendancy index into a 2×2 grid in the atlas (1500×1500px sprites, FRAME_SCALE=2 → 3000wu display)
+- Removed all old `orbitNImgs` / `groupBgByOrbit` useMemos; removed 14 stale `useImage()` calls (9 orbit PNGs + 5 group-bg PNGs)
+
+**Orbit ring rendering (line.webp):**
+- `getOrbitLineFrame(orbit, active)` → looks up `line:Orbit{N}Normal/Active` in `LINE_FRAMES`
+- Scale formula: `s = (radius * 2) / frame.w` — scales the sheet so the sprite's width spans the full ring diameter
+- Clip rect = `Skia.XYWHRect(g.x - radius, g.y - radius, radius*2, radius*2)`
+- Image position: `imgX = g.x - radius - frame.x * s`, `imgY = g.y - radius - frame.y * s`
+
+**Ascendancy background sprite layout:**
+- Atlas: 3000×3000px, 4 sprites per class in 2×2 grid (Class0=top-left, Class1=top-right, Class2=bottom-left, Class3=bottom-right)
+- `ascIdx` = 0-based index of `selectedAscendancy` in `cls.ascendancies` array from `classes` store
+- `ascBgSprite` useMemo → `{sx, sy, sheetPx:3000, dstSize:3000}` or `null` when no ascendancy selected
+- `classBgImages` useMemo maps class name → loaded `SkImage` for that class's atlas
+
 ### Sprint Backlog
 - ✅ Sprint 1: Drawer nav + node FlatList
 - ✅ Sprint 2: Zustand store, search, allocate/deallocate, NodeDetailSheet, point counter
@@ -648,6 +668,7 @@ Ascendancies (23 total, verified against new official GGG export):
 - ✅ **Sprint 8:** ItemsScreen (slot grid, ItemPasteModal, ItemDetailSheet, item-icons.json CDN map) + item-icons.json from Exiled-Exchange-2
 - ✅ **Sprint 8.5:** Official GGG tree migration (poe2-skilltree-export) — new data.json (5102 nodes), official sprite sheet assets, updated treeLayout.ts + useTreeStore.ts
 - ✅ **Sprint 9:** Tree edge rendering fix (adjacency-based, replaces broken `node.connections`), node icon sprites from skills.webp/skills-disabled.webp (zoom-gated, clip-group technique)
+- ✅ **Sprint 9.5:** GGG official orbit rings (line.webp), removed PoB orbit PNGs, added ascendancy class artwork at tree centre (background-{class}.webp, 2×2 sprite grid)
 - ⬜ Fix Abyssal Lich ascendancy (no nodes visible in tree — reported but not yet investigated)
 - ⬜ Download remaining 380 gem icons (run `scripts/downloadMissingGemIcons.py` + `scripts/buildGemIconMap.js` locally)
 - ⬜ Item rendering improvements (PoE tooltip style, section classification, rarity header) — partially done in Sprint 8.5; detail sheet implemented
@@ -660,4 +681,4 @@ Ascendancies (23 total, verified against new official GGG export):
 
 ---
 
-*Last updated: 2026-05-26 (Sprint 9)*
+*Last updated: 2026-05-26 (Sprint 9.5)*

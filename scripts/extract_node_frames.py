@@ -93,7 +93,7 @@ DDS10_HEADER_SIZE = 20  # DX10 extended header
 def decompress_zst(zst_path: Path) -> bytes:
     with open(zst_path, "rb") as f:
         ctx = zstd.ZstdDecompressor()
-        return ctx.decompress(f.read(), max_length=200 * 1024 * 1024)
+        return ctx.stream_reader(f).read()
 
 
 def parse_dds_header(data: bytes):
