@@ -4,8 +4,16 @@ Download missing PoE2 gem icons from poe2db.tw CDN.
 Run from the PoE2_Build_Planner project root:
   python3 scripts/downloadMissingGemIcons.py
 
+This script will:
+  1. Download all missing icon webp files
+  2. Automatically update assets/data/gems.json with the correct icon filenames
+  3. Print a reminder to regenerate the static require map
+
 After running, regenerate the icon map:
   node scripts/buildGemIconMap.js
+
+Note: poe2db.tw CDN is Cloudflare-protected and blocks server/CI IPs.
+Run this locally on your machine.
 """
 import requests, os, time
 
@@ -393,6 +401,26 @@ downloads = [
     ("Zarokh's Revolt", "https://cdn.poe2db.tw/image/art/2dart/skillicons/support/zarokhsrevoltsupport.webp", "assets/poe2/skill-gems/support/zarokhsrevoltsupport.webp"),
     ("Zenith I", "https://cdn.poe2db.tw/image/art/2dart/skillicons/support/zenithsupport.webp", "assets/poe2/skill-gems/support/zenithsupport.webp"),
     ("Zenith II", "https://cdn.poe2db.tw/image/art/2dart/skillicons/support/zenithsupporttwo.webp", "assets/poe2/skill-gems/support/zenithsupporttwo.webp"),
+    # --- Active gems added in pass 2 (18 entries not covered in original list) ---
+    ("Charge Infusion", "https://cdn.poe2db.tw/image/Art/2DArt/SkillIcons/ChargeInfusion.webp", "assets/poe2/skill-gems/ChargeInfusion.webp"),
+    ("Compose Requiem", "https://cdn.poe2db.tw/image/Art/2DArt/SkillIcons/ComposeRequiem.webp", "assets/poe2/skill-gems/ComposeRequiem.webp"),
+    ("Explosive Demise", "https://cdn.poe2db.tw/image/Art/2DArt/SkillIcons/ExplosiveDemise.webp", "assets/poe2/skill-gems/ExplosiveDemise.webp"),
+    ("Spectre: {0}", "https://cdn.poe2db.tw/image/Art/2DArt/SkillIcons/SummonSpectre.webp", "assets/poe2/skill-gems/SummonSpectre.webp"),
+    # Load X ammo skills — CDN icon uses name without "Load " prefix
+    ("Load Armour Piercing Rounds", "https://cdn.poe2db.tw/image/Art/2DArt/SkillIcons/ArmourPiercingRounds.webp", "assets/poe2/skill-gems/ArmourPiercingRounds.webp"),
+    ("Load Explosive Shot", "https://cdn.poe2db.tw/image/Art/2DArt/SkillIcons/ExplosiveShot.webp", "assets/poe2/skill-gems/ExplosiveShot.webp"),
+    ("Load Fragmentation Rounds", "https://cdn.poe2db.tw/image/Art/2DArt/SkillIcons/FragmentationRounds.webp", "assets/poe2/skill-gems/FragmentationRounds.webp"),
+    ("Load Galvanic Shards", "https://cdn.poe2db.tw/image/Art/2DArt/SkillIcons/GalvanicShards.webp", "assets/poe2/skill-gems/GalvanicShards.webp"),
+    ("Load Glacial Bolt", "https://cdn.poe2db.tw/image/Art/2DArt/SkillIcons/GlacialBolt.webp", "assets/poe2/skill-gems/GlacialBolt.webp"),
+    ("Load Hailstorm Rounds", "https://cdn.poe2db.tw/image/Art/2DArt/SkillIcons/HailstormRounds.webp", "assets/poe2/skill-gems/HailstormRounds.webp"),
+    ("Load Ice Shards", "https://cdn.poe2db.tw/image/Art/2DArt/SkillIcons/IceShards.webp", "assets/poe2/skill-gems/IceShards.webp"),
+    ("Load Incendiary Shot", "https://cdn.poe2db.tw/image/Art/2DArt/SkillIcons/IncendiaryShot.webp", "assets/poe2/skill-gems/IncendiaryShot.webp"),
+    ("Load Permafrost Bolts", "https://cdn.poe2db.tw/image/Art/2DArt/SkillIcons/PermafrostBolts.webp", "assets/poe2/skill-gems/PermafrostBolts.webp"),
+    ("Load Plasma Blast", "https://cdn.poe2db.tw/image/Art/2DArt/SkillIcons/PlasmaBlast.webp", "assets/poe2/skill-gems/PlasmaBlast.webp"),
+    ("Load Rapid Shot", "https://cdn.poe2db.tw/image/Art/2DArt/SkillIcons/RapidShot.webp", "assets/poe2/skill-gems/RapidShot.webp"),
+    ("Load Shockburst Rounds", "https://cdn.poe2db.tw/image/Art/2DArt/SkillIcons/ShockburstRounds.webp", "assets/poe2/skill-gems/ShockburstRounds.webp"),
+    ("Load Siege Cascade", "https://cdn.poe2db.tw/image/Art/2DArt/SkillIcons/SiegeCascade.webp", "assets/poe2/skill-gems/SiegeCascade.webp"),
+    ("Load Stormblast Bolts", "https://cdn.poe2db.tw/image/Art/2DArt/SkillIcons/StormblastBolts.webp", "assets/poe2/skill-gems/StormblastBolts.webp"),
 ]
 
 downloaded = failed = skipped = 0
@@ -417,4 +445,31 @@ for name, url, dest in downloads:
     time.sleep(DELAY)
 
 print(f'\nDone: {downloaded} downloaded, {skipped} skipped, {failed} failed')
-print('Now run: node scripts/buildGemIconMap.js')
+
+# --- Auto-update gems.json icon fields for any newly downloaded files ---
+import json as _json
+
+GEMS_JSON = 'assets/data/gems.json'
+with open(GEMS_JSON) as f:
+    gem_data = _json.load(f)
+
+# Build name -> icon filename from every download entry whose file now exists on disk
+icon_by_name: dict = {}
+for dl_name, dl_url, dl_dest in downloads:
+    if os.path.exists(dl_dest):
+        icon_by_name[dl_name] = os.path.basename(dl_dest)
+
+updated = 0
+for gem in gem_data['gems']:
+    if not gem.get('icon') and gem['name'] in icon_by_name:
+        gem['icon'] = icon_by_name[gem['name']]
+        updated += 1
+
+if updated:
+    with open(GEMS_JSON, 'w', encoding='utf-8') as f:
+        _json.dump(gem_data, f, ensure_ascii=False, indent=2)
+    print(f'Updated {updated} gem icon field(s) in {GEMS_JSON}')
+else:
+    print('gems.json already up to date (no new icon fields to set)')
+
+print('\nNext step: node scripts/buildGemIconMap.js')

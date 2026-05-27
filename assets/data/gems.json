@@ -738,7 +738,7 @@
       "description": "Load your Crossbow with Piercing bolts that apply Riven Armour to enemies with Fully Broken Armour, causing any Hits against those enemies to deal extra damage.",
       "reqSet": "active",
       "tags": [],
-      "icon": null
+      "icon": "High Velocity Rounds.webp"
     },
     {
       "id": "load_ice_shards",
@@ -3472,7 +3472,7 @@
       "tags": [
         "Minion"
       ],
-      "icon": null
+      "icon": "Skeletal Arsonist.webp"
     },
     {
       "id": "skeletal_brute_minion",
@@ -3487,7 +3487,7 @@
         "Minion",
         "Cold"
       ],
-      "icon": null
+      "icon": "Skeletal Brute.webp"
     },
     {
       "id": "skeletal_cleric_minion",
@@ -3499,7 +3499,7 @@
       "tags": [
         "Minion"
       ],
-      "icon": null
+      "icon": "Skeletal Cleric.webp"
     },
     {
       "id": "skeletal_frost_mage_minion",
@@ -3512,7 +3512,7 @@
         "Minion",
         "Cold"
       ],
-      "icon": null
+      "icon": "Skeletal Frost Mage.webp"
     },
     {
       "id": "skeletal_reaver_minion",
@@ -3525,7 +3525,7 @@
         "Attack",
         "Minion"
       ],
-      "icon": null
+      "icon": "Skeletal Reaver.webp"
     },
     {
       "id": "skeletal_sniper_minion",
@@ -3539,7 +3539,7 @@
         "Minion",
         "Fire"
       ],
-      "icon": null
+      "icon": "Skeletal Sniper.webp"
     },
     {
       "id": "skeletal_storm_mage_minion",
@@ -3553,7 +3553,7 @@
         "Minion",
         "Lightning"
       ],
-      "icon": null
+      "icon": "Skeletal Storm Mage.webp"
     },
     {
       "id": "skeletal_warrior_minion",
@@ -3565,7 +3565,7 @@
       "tags": [
         "Minion"
       ],
-      "icon": null
+      "icon": "Skeletal Warrior.webp"
     },
     {
       "id": "snap",
