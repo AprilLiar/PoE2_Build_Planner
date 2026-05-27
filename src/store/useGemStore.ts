@@ -1,17 +1,24 @@
 import { create } from 'zustand';
 
+// ─── Level requirement sets (shared curves, read from gems.json at load time) ──
+// Stored as [gemLevel, charLevelReq] pairs. getLevelReq() interpolates.
+type ReqPairs = [number, number][];
+let _reqSets: Record<string, ReqPairs> = {
+  active:   [[1,0],[2,3],[3,6],[4,10],[5,14],[6,18],[7,22],[8,26],[9,31],[10,36],[11,41],[12,46],[13,52],[14,58],[15,64],[16,66],[17,72],[18,78],[19,84],[20,90]],
+  support:  [[1, 0]],
+  fixed_26: [[1, 26]],
+};
+
 // A single gem entry from the gems.json catalog
 export interface GemCatalogEntry {
   id: string;
   name: string;
   color: 1 | 2 | 3; // 1 = STR / red, 2 = DEX / green, 3 = INT / blue
   is_support: boolean;
-  tags: string[];           // raw tags from gems.json; empty for most supports
   description: string;
-  // Level requirement at each gem level — only a subset of levels is stored
-  levelRequirements: Array<{ gemLevel: number; levelReq: number }>;
-  // Webp filename for GEM_ICON_MAP lookup (e.g. "Leap Slam.webp" or "acrimonysupport.webp")
-  icon: string | null;
+  reqSet: string;       // key into reqSets — replaces per-gem levelRequirements array
+  tags: string[];       // keyword tags extracted from description (e.g. "Fire", "AoE", "Strike")
+  icon: string | null;  // webp filename for GEM_ICON_MAP lookup
 }
 
 interface GemStoreState {
@@ -20,28 +27,6 @@ interface GemStoreState {
   isLoading: boolean;
   error: string | null;
   loadGems: () => Promise<void>;
-}
-
-// Flat-array schema from gems.json (Sprint 6.5 format)
-interface RawGem {
-  id: string;
-  name: string;
-  is_support: boolean;
-  icon?: string | null;
-  tags?: string[];
-}
-
-// Derive gem color from tags.
-// Priority order: DEX (most specific ranged tags) → STR (melee/physical/warcry) → INT (elemental/spell) → STR fallback for attacks → INT default.
-// Support gems in the current gems.json have no tags, so their color cannot be determined; they keep the INT default for display only.
-function deriveColor(tags: string[] = []): 1 | 2 | 3 {
-  const t = new Set(tags.map(x => x.toLowerCase()));
-  if (t.has('trap') || t.has('mine') || t.has('projectile')) return 2;           // DEX
-  if (t.has('melee') || t.has('warcry') || t.has('physical')) return 1;          // STR
-  if (t.has('spell') || t.has('cold') || t.has('fire') || t.has('lightning')     // INT
-      || t.has('chaos') || t.has('curse') || t.has('minion')) return 3;
-  if (t.has('attack')) return 1;                                                  // STR fallback for generic attacks
-  return 3;
 }
 
 export const useGemStore = create<GemStoreState>((set, get) => ({
@@ -57,46 +42,44 @@ export const useGemStore = create<GemStoreState>((set, get) => ({
     set({ isLoading: true, error: null });
     try {
       // eslint-disable-next-line @typescript-eslint/no-require-imports
-      const raw = require('../../assets/data/gems.json') as RawGem[] | { gems: RawGem[] };
-      const items: RawGem[] = Array.isArray(raw) ? raw : (raw.gems ?? []);
-      const gems: GemCatalogEntry[] = items.map((r) => ({
-        id: r.id,
-        name: r.name,
-        is_support: r.is_support,
-        tags: r.tags ?? [],
-        color: deriveColor(r.tags),
-        description: (r.tags ?? []).length > 0
-          ? (r.tags!).map(t => t.charAt(0).toUpperCase() + t.slice(1)).join(' · ')
-          : '',
-        levelRequirements: [],
-      }));
-      set({ gems, isLoaded: true, isLoading: false });
+      const data = require('../../assets/data/gems.json') as {
+        reqSets: Record<string, ReqPairs>;
+        gems: GemCatalogEntry[];
+      };
+      // Hydrate shared req sets from JSON so future updates only need the JSON file
+      if (data.reqSets) _reqSets = { ..._reqSets, ...data.reqSets };
+      set({ gems: data.gems ?? [], isLoaded: true, isLoading: false });
     } catch (err) {
       set({ error: (err as Error).message, isLoading: false });
     }
   },
 }));
 
-// --- Pure helpers exported for components ---
+// ─── Pure helpers exported for components ────────────────────────────────────
 
 /** Character-level requirement for a gem at a given gem level */
 export function getLevelReq(gem: GemCatalogEntry, gemLevel: number): number {
-  if (!gem.levelRequirements.length) return 0;
-  // Find the highest stored entry whose gemLevel ≤ the requested level
-  const sorted = [...gem.levelRequirements].sort((a, b) => b.gemLevel - a.gemLevel);
-  return (sorted.find((lr) => lr.gemLevel <= gemLevel) ?? sorted[sorted.length - 1]).levelReq;
+  const pairs = _reqSets[gem.reqSet] ?? _reqSets.active;
+  // Find the highest stored gemLevel ≤ requested
+  let best = pairs[0];
+  for (const pair of pairs) {
+    if (pair[0] <= gemLevel && pair[0] >= best[0]) best = pair;
+  }
+  return best[1];
 }
 
 /**
- * Derive STR / DEX / INT attribute requirements from a gem's color and level.
- * PoE2 Lua data only stores levelRequirement; the attribute demand is
- * approximately 60% of levelRequirement for the gem's matching attribute.
+ * STR / DEX / INT attribute requirements for a gem at a given gem level.
+ *
+ * In PoE2, stat requirements scale proportionally to the character-level
+ * requirement. The maximum requirement at gem level 20 (charLevel 90) is
+ * ~155. Formula: round(charLevelReq × 1.72).
  */
 export function getAttrRequirement(
   color: 1 | 2 | 3,
   levelReq: number
 ): { str: number; dex: number; int: number } {
-  const v = Math.max(0, Math.floor(levelReq * 0.6));
+  const v = Math.round(levelReq * 1.72);
   return {
     str: color === 1 ? v : 0,
     dex: color === 2 ? v : 0,
@@ -125,7 +108,7 @@ export function gemColorLabel(color: 1 | 2 | 3): string {
   return 'INT';
 }
 
-/** First 4 characters of a gem name to display inside a small circle */
+/** First 4 characters of a gem name for the fallback circle label */
 export function gemAbbrev(name: string): string {
   return name.slice(0, 4).trim();
 }

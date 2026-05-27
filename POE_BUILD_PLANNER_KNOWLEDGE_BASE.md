@@ -653,6 +653,23 @@ Ascendancies (23 total, verified against new official GGG export):
 - `ascBgSprite` useMemo → `{sx, sy, sheetPx:3000, dstSize:3000}` or `null` when no ascendancy selected
 - `classBgImages` useMemo maps class name → loaded `SkImage` for that class's atlas
 
+### Sprint 10 — Gems screen overhaul (complete)
+**Shipped:**
+- `assets/data/gems.json` v2 schema — `levelRequirements` arrays (56 KB of repeated data) replaced with `reqSet` references + top-level `reqSets` dict; `tags[]` array added per gem via description keyword extraction. JSON shrunk from ~56 KB lines to 351 KB total (was larger with full arrays).
+- `reqSets` defined: `"active"` (286 gems, uniform 0→90 curve), `"support"` (558 gems, always 0), `"fixed_26"` (2 gems — Cast on Melee Kill/Stun).
+- `tags[]` generated for 816/846 gems; 30 gems with no description have empty tags. Example: Ancestral Cry → `["Melee","Warcry","Trigger","Fire"]`.
+- `src/store/useGemStore.ts` — updated `GemCatalogEntry` interface (`reqSet`, `tags`); `getLevelReq()` now looks up `_reqSets[gem.reqSet]`; fixed `getAttrRequirement()` formula from `× 0.6` (max 54) to `× 1.72` (max ~155, matching actual PoE2 stat requirements at gem level 20).
+- `src/screens/GemsScreen.tsx` — fixed tap behavior: **tap filled gem → detail sheet** (was always opening search); **tap empty slot → search**; **long-press filled gem → replace** (open search).
+- `src/components/GemDetailSheet.tsx` — added stat requirements row (STR/DEX/INT in their colors), tags chips row below the divider.
+- `src/components/GemSearchModal.tsx` — search now matches against tags in addition to name (type "fire" to see all fire gems).
+- `scripts/migrateGems.js` — one-time migration script; can be re-run to regenerate gems.json if descriptions change.
+
+**Key schema facts:**
+- Old: `levelRequirements: [{gemLevel, levelReq}, ...]` (up to 40 entries per gem)
+- New: `reqSet: "active" | "support" | "fixed_26"`, looked up in `reqSets` at runtime
+- Stat req formula: `Math.round(charLevelReq * 1.72)` — gives 0 at L1 (charReq=0), ~155 at L20 (charReq=90)
+- Tag keywords: Attack/Spell/AoE/Projectile/Melee/Strike/Slam/Bow/Warcry/Totem/Minion/Channelling/Trigger/Movement/Fire/Cold/Lightning/Chaos/Physical/Duration/Buff/Debuff/Aura/Herald/Curse/Mark/Vaal
+
 ### Sprint Backlog
 - ✅ Sprint 1: Drawer nav + node FlatList
 - ✅ Sprint 2: Zustand store, search, allocate/deallocate, NodeDetailSheet, point counter
@@ -669,6 +686,7 @@ Ascendancies (23 total, verified against new official GGG export):
 - ✅ **Sprint 8.5:** Official GGG tree migration (poe2-skilltree-export) — new data.json (5102 nodes), official sprite sheet assets, updated treeLayout.ts + useTreeStore.ts
 - ✅ **Sprint 9:** Tree edge rendering fix (adjacency-based, replaces broken `node.connections`), node icon sprites from skills.webp/skills-disabled.webp (zoom-gated, clip-group technique)
 - ✅ **Sprint 9.5:** GGG official orbit rings (line.webp), removed PoB orbit PNGs, added ascendancy class artwork at tree centre (background-{class}.webp, 2×2 sprite grid)
+- ✅ **Sprint 10:** Gems screen overhaul — JSON simplification (reqSets), tag extraction, correct stat requirements (1.72× formula), tap-to-view-detail UX fix, tag-based search
 - ⬜ Fix Abyssal Lich ascendancy (no nodes visible in tree — reported but not yet investigated)
 - ⬜ Download remaining 380 gem icons (run `scripts/downloadMissingGemIcons.py` + `scripts/buildGemIconMap.js` locally)
 - ⬜ Item rendering improvements (PoE tooltip style, section classification, rarity header) — partially done in Sprint 8.5; detail sheet implemented
@@ -681,4 +699,4 @@ Ascendancies (23 total, verified against new official GGG export):
 
 ---
 
-*Last updated: 2026-05-26 (Sprint 9.5)*
+*Last updated: 2026-05-27 (Sprint 10)*
